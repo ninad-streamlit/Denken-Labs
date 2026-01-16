@@ -1,0 +1,57 @@
+**Updated Project Specifications for the Denken Bot**
+
+I. Project Overview:
+The project involves building a Streamlit app, named 'Denken Bot', capable of answering user questions using a GPT model. The bot should support text, voice, and image inputs. It must be compatible with laptop, mobile, and iPad devices. Additionally, four blue lines should now be added on the top of the page for aesthetic purposes.
+
+II. Stakeholders:
+
+1. The Business Owner who has specified the requirements
+2. The Development Team building the application
+3. End-Users who will interact with the bot
+
+III. User Stories:
+
+1. As a user, I want a bot that can answer my questions accurately and promptly.
+2. As a user, I want to interact with the bot using text, voice, or image inputs for convenience.
+3. As a user, I want the bot to work seamlessly on my device (laptop, mobile, or iPad) for on-the-go access.
+4. As a user, I want to see four blue lines at the top of the page for a pleasing aesthetic appeal.
+
+IV. Acceptance Criteria:
+
+1. The bot should correctly interpret and respond to any question asked by the user.
+2. The bot should accept inputs in text, voice, or image format.
+3. The bot should function correctly on laptop, mobile, and iPad devices.
+4. The bot should display the 'Denken Labs' logo in the top right corner of the screen.
+5. Four blue lines should be visible on the top of the page. The lines should be of the specified shade of blue, size, and placement. They should adapt appropriately to different screen sizes.
+
+V. Business Rules:
+
+1. The bot must always refer to itself as 'Denken Bot'.
+2. The bot must always have the 'Denken Labs' logo displayed.
+3. The color, size, and placement of the blue lines should be as per the specifications provided.
+
+VI. Technical Requirements:
+
+1. The bot should be built using the Streamlit framework.
+2. The bot should utilize a GPT model for answering questions.
+3. The bot should have a chat GPT type UI.
+4. The bot should support both text and voice inputs.
+5. The bot should support image uploads.
+6. The 'Denken Labs' logo should be sourced from the provided file path.
+7. The page should have four blue lines on the top as per the specifications.
+
+VII. Assumptions:
+
+1. The GPT model is capable of interpreting and accurately responding to user questions.
+2. The Streamlit framework can support all the required functionalities.
+3. The 'Denken Labs' logo is available at the provided path and is in a compatible format.
+4. The bot will be hosted on a platform that supports all the functionalities and is easily accessible by the end-users.
+
+**Actionable Items:**
+
+- Design the UI for the bot considering all the required functionalities and new aesthetic requirement.
+- Integrate the GPT model to handle question answering.
+- Implement support for text, voice, and image inputs.
+- Ensure compatibility across laptop, mobile, and iPad devices.
+- Add the 'Denken Labs' logo and the four blue lines to the UI.
+- Test the bot thoroughly to ensure it meets the acceptance criteria.
