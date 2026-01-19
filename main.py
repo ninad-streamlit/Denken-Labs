@@ -354,8 +354,8 @@ def main():
                                         bot['number'] = bot_number
                                         break
                             
-                            # Display number below bot, center-aligned
-                            st.markdown(f"<div style='text-align: center; margin-top: 5px;'><strong>#{bot.get('number', bot_number)}</strong></div>", unsafe_allow_html=True)
+                            # Display number below bot, left-aligned
+                            st.markdown(f"<div style='text-align: left; margin-top: 5px;'><strong>#{bot.get('number', bot_number)}</strong></div>", unsafe_allow_html=True)
                         
                         with col2:
                             st.markdown(f"**{bot['name']}**")
