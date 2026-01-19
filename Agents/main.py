@@ -535,6 +535,10 @@ def main():
         st.session_state.mission_story = ""
     if 'mission_story_title' not in st.session_state:
         st.session_state.mission_story_title = ""
+    if 'story_qa_history' not in st.session_state:
+        st.session_state.story_qa_history = []
+    if 'story_question_example' not in st.session_state:
+        st.session_state.story_question_example = ""
     if 'agent_example' not in st.session_state:
         st.session_state.agent_example = generate_agent_example()
     if 'mission_example' not in st.session_state:
