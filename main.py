@@ -16,16 +16,36 @@ def main():
     # Mobile-responsive CSS
     st.markdown("""
     <style>
+    .header-container {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 10px;
+    }
+    .logo-container {
+        flex-shrink: 0;
+    }
+    .title-version-container {
+        flex: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
     @media (max-width: 768px) {
-        .main-header {
+        .header-container {
             flex-direction: column !important;
             text-align: center !important;
+            gap: 10px !important;
+        }
+        .title-version-container {
+            flex-direction: column !important;
+            gap: 5px !important;
         }
         .stTitle {
             font-size: 1.5rem !important;
         }
         .logo-image {
-            width: 200px !important;
+            width: 150px !important;
             max-width: 100% !important;
         }
         .main-content {
@@ -40,52 +60,48 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Header - responsive
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        # Display logo above the title
-        # Try multiple possible paths for the logo
-        logo_paths = [
-            os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png"),
-            os.path.join(os.path.dirname(__file__), "Agents", "Logo-DenkenLabs.png"),
-            os.path.join(os.path.dirname(__file__), "Agents", "agents", "Logo-DenkenLabs.png"),
-        ]
-        logo_path = None
-        for path in logo_paths:
-            if os.path.exists(path):
-                logo_path = path
-                break
-        
-        try:
-            if logo_path:
-                st.image(logo_path, width=250)
-            else:
-                # Debug: show which paths were checked
-                st.info(f"Logo not found. Checked: {logo_paths}")
-        except Exception as e:
-            st.error(f"Error loading logo: {e}")
-        
-        # Create a container with title and version on the same line
-        st.markdown(f"""
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 style="margin: 0;">Denken Labs</h1>
-            </div>
-            <div style="text-align: right;">
-                <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v{APP_VERSION}</h2>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    # Compact header with logo, title, and version in one row
+    # Try multiple possible paths for the logo
+    logo_paths = [
+        os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png"),
+        os.path.join(os.path.dirname(__file__), "Agents", "Logo-DenkenLabs.png"),
+        os.path.join(os.path.dirname(__file__), "Agents", "agents", "Logo-DenkenLabs.png"),
+    ]
+    logo_path = None
+    for path in logo_paths:
+        if os.path.exists(path):
+            logo_path = path
+            break
     
-    with col2:
-        # Empty column for layout consistency
-        pass
+    # Create compact header layout
+    st.markdown("""
+    <div class="header-container">
+        <div class="logo-container">
+    """, unsafe_allow_html=True)
+    
+    try:
+        if logo_path:
+            st.image(logo_path, width=120)
+        else:
+            # Debug: show which paths were checked
+            st.info(f"Logo not found. Checked: {logo_paths}")
+    except Exception as e:
+        st.error(f"Error loading logo: {e}")
+    
+    st.markdown(f"""
+        </div>
+        <div class="title-version-container">
+            <h1 style="margin: 0; font-size: 2rem;">Denken Labs</h1>
+            <h2 style="color: #1f77b4; margin: 0; font-size: 1.2rem; font-weight: 400;">v{APP_VERSION}</h2>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # Main content - centered and mobile-friendly
+    # Main content - more compact
     st.markdown("""
-    <div class="main-content" style='text-align: center; padding: 50px 0;'>
+    <div class="main-content" style='text-align: center; padding: 30px 0;'>
     """, unsafe_allow_html=True)
     
     st.markdown("## Welcome to Denken Labs")
