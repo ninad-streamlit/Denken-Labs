@@ -27,7 +27,7 @@ def main():
         --border-color: #e2e8f0;
     }
     .main .block-container {
-        padding-top: 0.5rem !important;
+        padding-top: 0.2rem !important;
         padding-bottom: 0.5rem !important;
         background-color: var(--background);
     }
@@ -35,7 +35,7 @@ def main():
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 0 !important;
+        margin-bottom: -0.3rem !important;
         margin-top: 0 !important;
     }
     .logo-container {
@@ -48,7 +48,7 @@ def main():
         align-items: center;
     }
     hr {
-        margin-top: 0 !important;
+        margin-top: -0.5rem !important;
         margin-bottom: 0.5rem !important;
         border-color: var(--border-color) !important;
         background-color: var(--border-color) !important;
