@@ -52,23 +52,32 @@ class GoogleAuth:
             configured_redirect_uri = os.getenv('GOOGLE_REDIRECT_URI')
         
         # Use configured redirect URI or default
-        if configured_redirect_uri:
-            self.redirect_uri = configured_redirect_uri.rstrip('/')
-        else:
-            # For local development, always use port 8501 to match Google Cloud Console
-            # This ensures the redirect URI matches what's registered, regardless of what port Streamlit is actually on
-            try:
-                # Check if we're on Streamlit Cloud
-                server_url = os.getenv('STREAMLIT_SERVER_URL', '')
-                if server_url and 'streamlit.app' in server_url:
-                    self.redirect_uri = server_url.rstrip('/')
+        # IMPORTANT: For local development, always use port 8501 to match Google Cloud Console
+        # Even if .env file or Streamlit is on a different port, we force 8501 for OAuth
+        try:
+            # Check if we're on Streamlit Cloud
+            server_url = os.getenv('STREAMLIT_SERVER_URL', '')
+            if server_url and 'streamlit.app' in server_url:
+                self.redirect_uri = server_url.rstrip('/')
+            else:
+                # For local dev, ALWAYS use port 8501 (must match Google Cloud Console)
+                # Override any configured redirect URI from .env if it's localhost with different port
+                if configured_redirect_uri and 'localhost' in configured_redirect_uri:
+                    # Extract port from configured URI
+                    if ':8501' in configured_redirect_uri:
+                        self.redirect_uri = configured_redirect_uri.rstrip('/')
+                    else:
+                        # Force port 8501 even if .env has different port
+                        self.redirect_uri = 'http://localhost:8501'
+                elif configured_redirect_uri and 'streamlit.app' in configured_redirect_uri:
+                    # Use configured URI if it's Streamlit Cloud
+                    self.redirect_uri = configured_redirect_uri.rstrip('/')
                 else:
-                    # For local dev, always use port 8501 (must match Google Cloud Console)
-                    # Even if Streamlit is running on a different port, we use 8501 for OAuth
+                    # Default to port 8501 for local development
                     self.redirect_uri = 'http://localhost:8501'
-            except:
-                # Default fallback to port 8501
-                self.redirect_uri = 'http://localhost:8501'
+        except:
+            # Default fallback to port 8501
+            self.redirect_uri = 'http://localhost:8501'
         
         self.scopes = [
             'https://www.googleapis.com/auth/userinfo.email',
