@@ -315,11 +315,15 @@ class GoogleAuth:
                 st.write(f"**Scopes being requested:**")
                 for scope in self.scopes:
                     st.write(f"  - `{scope}`")
-                st.write("\n⚠️ **Verify in Google Cloud Console:**")
-                st.write("1. These scopes are added in OAuth consent screen → Scopes section")
-                st.write("2. Redirect URI matches exactly (including https/http)")
-                st.write("3. Your email is in Test users list")
-                st.write("4. App is in 'Testing' mode (or published)")
+                st.write("\n⚠️ **If you're getting a 403 error, check:**")
+                st.write("1. ✅ **Redirect URI:** Make sure `http://localhost:8501` is EXACTLY in Google Cloud Console → Credentials → Authorized redirect URIs")
+                st.write("2. ✅ **Test Users:** Go to OAuth consent screen → Test users → Add your email (`ninad123@gmail.com`)")
+                st.write("3. ✅ **Scopes:** Go to OAuth consent screen → Scopes → Make sure these scopes are added:")
+                for scope in self.scopes:
+                    st.write(f"   - `{scope}`")
+                st.write("4. ✅ **App Status:** OAuth consent screen should be in 'Testing' mode (or 'In production')")
+                st.write("5. ✅ **APIs Enabled:** Go to APIs & Services → Library → Enable 'People API' or 'Google+ API'")
+                st.write("\n💡 **Most common cause of 403:** Your email is not in the Test users list!")
             
             auth_url = self.get_authorization_url()
             
