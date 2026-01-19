@@ -1054,20 +1054,24 @@ def main():
                 st.markdown("---")
                 st.markdown("### 💬 Ask Questions About the Story")
                 
-                # Generate example question if not exists or story changed
-                if not st.session_state.story_question_example or st.session_state.get('last_story_title') != st.session_state.mission_story_title:
+                # Generate example question if not exists, story changed, or after Q&A (force refresh)
+                if (not st.session_state.story_question_example or 
+                    st.session_state.get('last_story_title') != st.session_state.mission_story_title or
+                    st.session_state.get('refresh_question_example', False)):
                     st.session_state.story_question_example = generate_story_question_example(
                         st.session_state.mission_story_title,
                         st.session_state.mission_story
                     )
                     st.session_state.last_story_title = st.session_state.mission_story_title
+                    st.session_state.refresh_question_example = False
                 
-                # Question input form
+                # Question input form - use Q&A history length in key to force refresh when new answer is added
+                qa_key_suffix = len(st.session_state.story_qa_history)
                 with st.form("story_qa_form", clear_on_submit=True):
                     user_question = st.text_input(
                         "Ask a question about the story:",
                         placeholder=f"Example: {st.session_state.story_question_example}",
-                        key="story_question_input"
+                        key=f"story_question_input_{qa_key_suffix}"
                     )
                     submit_question = st.form_submit_button("Ask", type="primary", use_container_width=True)
                     
@@ -1102,6 +1106,8 @@ def main():
                                     st.session_state.mission_story_title,
                                     st.session_state.mission_story
                                 )
+                                # Set flag to ensure example is refreshed on next render
+                                st.session_state.refresh_question_example = True
                                 
                                 st.rerun()
                             except Exception as e:
