@@ -646,49 +646,9 @@ def main():
                                 mime="application/pdf",
                                 use_container_width=True
                             )
-                        except Exception as e:
-                            st.error(f"Error generating PDF: {str(e)}")
-                    else:
-                        # Fallback if reportlab not available - create simple text-based PDF
-                        try:
-                            from fpdf import FPDF
-                            
-                            pdf = FPDF()
-                            pdf.set_auto_page_break(auto=True, margin=15)
-                            pdf.add_page()
-                            
-                            # Title
-                            pdf.set_font("Arial", "B", 16)
-                            if st.session_state.mission_story_title:
-                                pdf.cell(0, 10, st.session_state.mission_story_title, ln=True, align='C')
-                                pdf.ln(10)
-                            
-                            # Story content
-                            pdf.set_font("Arial", size=12)
-                            story_text = st.session_state.mission_story.replace('\n\n', '\n')
-                            for line in story_text.split('\n'):
-                                if line.strip():
-                                    pdf.multi_cell(0, 8, line.strip(), align='L')
-                                    pdf.ln(3)
-                            
-                            buffer = BytesIO()
-                            pdf_bytes = pdf.output(dest='S')
-                            buffer.write(pdf_bytes.encode('latin-1'))
-                            buffer.seek(0)
-                            
-                            st.download_button(
-                                label="📄 Download PDF",
-                                data=buffer.getvalue(),
-                                file_name=f"{st.session_state.mission_story_title.replace(' ', '_')}.pdf",
-                                mime="application/pdf",
-                                use_container_width=True
-                            )
-                        except ImportError:
-                            # Try installing fpdf2 if reportlab not available
+                        else:
+                            # Fallback if reportlab not available - use fpdf2
                             try:
-                                import subprocess
-                                import sys
-                                subprocess.check_call([sys.executable, "-m", "pip", "install", "fpdf2", "--quiet"])
                                 from fpdf import FPDF
                                 
                                 pdf = FPDF()
@@ -698,7 +658,8 @@ def main():
                                 # Title
                                 pdf.set_font("Arial", "B", 16)
                                 if st.session_state.mission_story_title:
-                                    pdf.cell(0, 10, st.session_state.mission_story_title, ln=True, align='C')
+                                    title = st.session_state.mission_story_title[:50]  # Limit title length
+                                    pdf.cell(0, 10, title, ln=True, align='C')
                                     pdf.ln(10)
                                 
                                 # Story content
@@ -706,7 +667,9 @@ def main():
                                 story_text = st.session_state.mission_story.replace('\n\n', '\n')
                                 for line in story_text.split('\n'):
                                     if line.strip():
-                                        pdf.multi_cell(0, 8, line.strip(), align='L')
+                                        # Handle special characters
+                                        line_clean = line.strip().encode('latin-1', 'replace').decode('latin-1')
+                                        pdf.multi_cell(0, 8, line_clean, align='L')
                                         pdf.ln(3)
                                 
                                 buffer = BytesIO()
@@ -717,14 +680,14 @@ def main():
                                 st.download_button(
                                     label="📄 Download PDF",
                                     data=buffer.getvalue(),
-                                    file_name=f"{st.session_state.mission_story_title.replace(' ', '_')}.pdf",
+                                    file_name=f"{st.session_state.mission_story_title.replace(' ', '_')[:30]}.pdf",
                                     mime="application/pdf",
                                     use_container_width=True
                                 )
-                            except Exception as install_error:
-                                st.warning("📄 PDF generation requires 'reportlab' or 'fpdf2'. Install with: `pip install reportlab` or `pip install fpdf2`")
-                        except Exception as e:
-                            st.error(f"Error generating PDF: {str(e)}")
+                            except ImportError:
+                                st.info("📄 PDF generation will be available after libraries are installed. The app needs to redeploy with updated requirements.txt.")
+                    except Exception as e:
+                        st.warning(f"PDF generation temporarily unavailable: {str(e)}")
                 
                 # Display story content
                 st.markdown(f"""
