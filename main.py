@@ -1050,7 +1050,7 @@ def main():
                 """, unsafe_allow_html=True)
                 
                 # Q&A Section
-    st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("---")
                 st.markdown("### 💬 Ask Questions About the Story")
                 
