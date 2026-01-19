@@ -2,6 +2,68 @@ import streamlit as st
 import os
 import openai
 from config import STREAMLIT_CONFIG, APP_VERSION, OPENAI_API_KEY
+import random
+import json
+
+def generate_agent_example():
+    """Generate a random agent description example with personalities"""
+    personalities = [
+        "calm and thoughtful", "strong and brave", "fast and energetic", "big and friendly",
+        "gentle and caring", "smart and curious", "playful and cheerful", "wise and patient",
+        "creative and artistic", "bold and adventurous", "kind and helpful", "clever and quick"
+    ]
+    activities = [
+        "helping with homework", "solving puzzles", "answering questions", "telling fun stories",
+        "drawing pictures", "exploring new places", "protecting friends", "sharing knowledge",
+        "making people laugh", "creating games", "learning new things", "helping others"
+    ]
+    traits = [
+        "patience and kindness", "creativity and imagination", "bravery and courage",
+        "wisdom and understanding", "humor and joy", "curiosity and wonder",
+        "compassion and empathy", "determination and perseverance"
+    ]
+    
+    personality = random.choice(personalities)
+    activity = random.choice(activities)
+    trait = random.choice(traits)
+    
+    examples = [
+        f"A {personality} agent who loves {activity} with {trait}.",
+        f"An agent who is {personality} and enjoys {activity}, always showing {trait}.",
+        f"A {personality} helper that specializes in {activity} and brings {trait} to everything they do."
+    ]
+    
+    return random.choice(examples)
+
+def generate_mission_example():
+    """Generate a random mission example suitable for 7-year-olds"""
+    scenarios = [
+        "find a hidden treasure in a magical forest",
+        "rescue lost animals and return them to their homes",
+        "organize a fun birthday party with games and treats",
+        "discover a secret garden full of colorful flowers",
+        "help build a treehouse for woodland creatures",
+        "solve the mystery of the missing rainbow colors",
+        "plan a perfect picnic adventure in the park",
+        "create a storybook filled with amazing adventures",
+        "design a playground for all the neighborhood kids",
+        "help organize a community talent show",
+        "find and return a magical key to unlock happy dreams",
+        "discover friendly aliens and help them learn about Earth"
+    ]
+    activities = [
+        "solving clues and helping friendly animals along the way",
+        "meeting new friends and working together as a team",
+        "using creativity and imagination to make everything special",
+        "exploring new places and discovering exciting secrets",
+        "learning valuable lessons about friendship and cooperation",
+        "overcoming challenges with teamwork and determination"
+    ]
+    
+    scenario = random.choice(scenarios)
+    activity = random.choice(activities)
+    
+    return f"Go on an adventure to {scenario}, {activity}!"
 
 def main():
     # Set page config with logo as favicon
