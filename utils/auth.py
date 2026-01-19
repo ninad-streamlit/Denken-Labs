@@ -48,23 +48,37 @@ class GoogleAuth:
         
         # Use configured redirect URI or default
         if configured_redirect_uri:
-            self.redirect_uri = configured_redirect_uri
+            self.redirect_uri = configured_redirect_uri.rstrip('/')
         else:
-            # Try to detect Streamlit Cloud URL from query params or environment
-            # For Streamlit Cloud, the redirect URI should be the app URL
+            # Try to detect Streamlit Cloud URL
             default_port = 8501
             try:
-                # Check if we're on Streamlit Cloud
-                if 'streamlit.app' in os.getenv('STREAMLIT_SERVER_URL', ''):
-                    # Extract the app URL from environment
-                    server_url = os.getenv('STREAMLIT_SERVER_URL', '')
-                    if server_url:
-                        self.redirect_uri = server_url.rstrip('/')
-                    else:
-                        self.redirect_uri = f'http://localhost:{default_port}'
+                # Check if we're on Streamlit Cloud by trying to get the current URL
+                # For Streamlit Cloud, try to construct from query params or use environment
+                try:
+                    # Try to get the current page URL from Streamlit
+                    query_params = st.query_params
+                    if query_params:
+                        # If we have query params, we might be able to infer the base URL
+                        pass
+                except:
+                    pass
+                
+                # Check environment variable for Streamlit Cloud
+                server_url = os.getenv('STREAMLIT_SERVER_URL', '')
+                if server_url and 'streamlit.app' in server_url:
+                    self.redirect_uri = server_url.rstrip('/')
                 else:
-                    # Default to common ports for local development
-                    self.redirect_uri = f'http://localhost:{default_port}'
+                    # Try to get from Streamlit's internal URL
+                    try:
+                        # Streamlit Cloud sets this environment variable
+                        streamlit_base_url = os.getenv('STREAMLIT_SERVER_BASE_URL', '')
+                        if streamlit_base_url:
+                            self.redirect_uri = streamlit_base_url.rstrip('/')
+                        else:
+                            self.redirect_uri = f'http://localhost:{default_port}'
+                    except:
+                        self.redirect_uri = f'http://localhost:{default_port}'
             except:
                 # Default to common ports - user should configure this in .env or Streamlit secrets
                 self.redirect_uri = f'http://localhost:8501'
@@ -119,10 +133,13 @@ class GoogleAuth:
         
         # IMPORTANT: Make sure redirect_uri matches EXACTLY what's in Google Cloud Console
         try:
+            # Use a simpler prompt to avoid potential issues
+            # 'select_account' shows account picker, 'consent' forces consent screen
             authorization_url, _ = self.flow.authorization_url(
                 access_type='offline',
                 state=state,
-                prompt='consent select_account'  # Show account selection screen
+                prompt='select_account',  # Show account selection screen first
+                include_granted_scopes='true'
             )
             return authorization_url
         except Exception as e:
@@ -301,6 +318,9 @@ class GoogleAuth:
         
         # Create login button
         try:
+            # Show redirect URI for debugging (user can verify it matches Google Cloud Console)
+            st.info(f"🔗 **Redirect URI being used:** `{self.redirect_uri}`\n\n⚠️ Make sure this EXACTLY matches the redirect URI in your Google Cloud Console OAuth credentials.")
+            
             auth_url = self.get_authorization_url()
             
             if auth_url:
