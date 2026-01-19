@@ -275,17 +275,29 @@ class GoogleAuth:
             2. Create a new project or select existing one
             3. Enable Google+ API
             4. Create OAuth 2.0 credentials
-            5. Add the following environment variables to your `.env` file:
+            5. Add the following to Streamlit Cloud Secrets (Settings → Secrets):
             
-            ```
-            GOOGLE_CLIENT_ID=your_client_id_here
-            GOOGLE_CLIENT_SECRET=your_client_secret_here
-            GOOGLE_REDIRECT_URI=http://localhost:8501
+            ```toml
+            GOOGLE_CLIENT_ID = "your_client_id_here"
+            GOOGLE_CLIENT_SECRET = "your_client_secret_here"
+            GOOGLE_REDIRECT_URI = "https://agentbuilder.streamlit.app"
             ```
             
             **⚠️ IMPORTANT:** Make sure the redirect URI in Google Cloud Console matches exactly!
             """)
+            # Debug info (remove in production)
+            with st.expander("🔍 Debug Info"):
+                st.write(f"Client ID configured: {bool(self.client_id)}")
+                st.write(f"Client Secret configured: {bool(self.client_secret)}")
+                st.write(f"Redirect URI: {self.redirect_uri}")
             return False
+        
+        # Debug info (temporary - remove in production)
+        with st.expander("🔍 Debug Info (Click to verify configuration)"):
+            st.write(f"✅ Client ID configured: {bool(self.client_id)}")
+            st.write(f"✅ Client Secret configured: {bool(self.client_secret)}")
+            st.write(f"📍 Redirect URI: `{self.redirect_uri}`")
+            st.write(f"🔗 Make sure this redirect URI matches exactly in Google Cloud Console!")
         
         # Create login button
         try:
