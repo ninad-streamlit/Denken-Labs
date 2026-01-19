@@ -113,6 +113,21 @@ def generate_story_question_example(story_title, story_content, existing_questio
         else:
             return random.choice(fallback_questions)
 
+def generate_creative_name_examples():
+    """Generate fancy example names for creative input"""
+    fancy_names = [
+        "Stellar Commander", "Cosmic Navigator", "Neon Phoenix", "Quantum Explorer",
+        "Starfire Guardian", "Aurora Whisper", "Nebula Warrior", "Galaxy Seeker",
+        "Thunder Bolt", "Silver Shadow", "Crystal Knight", "Solar Flare",
+        "Mystic Voyager", "Echo Runner", "Zen Master", "Swift Arrow",
+        "Golden Dreamer", "Velvet Thunder", "Azure Dragon", "Crimson Hawk",
+        "Midnight Spark", "Dawn Breaker", "Frost Walker", "Blaze Rider",
+        "Ocean Sage", "Forest Whisper", "Mountain Peak", "Desert Storm"
+    ]
+    import random
+    # Return 3 random examples
+    return random.sample(fancy_names, 3)
+
 def generate_mission_example():
     """Generate a random Star Trek-style mission example (around 20 words)"""
     star_trek_missions = [
@@ -674,25 +689,29 @@ def main():
                 if not agent_description or not agent_description.strip():
                     agent_description = st.session_state.agent_example
                 
+                # Use example name if creative name is blank
+                if not creative_name or not creative_name.strip():
+                    creative_name = name_examples[0]
+                
                 if agent_description and agent_description.strip():
                     try:
-                        # Generate bot name, description, and elaborate character using OpenAI
+                        # Use the creative name provided by the user
+                        bot_name = creative_name.strip()
+                        
+                        # Generate description and elaborate character using OpenAI
                         client = openai.OpenAI(api_key=OPENAI_API_KEY)
-                        # Get existing agent names to avoid duplicates
-                        existing_names = [bot.get('name', '').lower() for bot in st.session_state.created_bots]
                         
                         response = client.chat.completions.create(
                             model="gpt-4o-mini",
                             messages=[
-                                {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. The name should be inspired by cartoon characters, superheroes, or famous personalities - it should feel like an actual character name (e.g., 'Flash Writer', 'Captain Code', 'Sparky Bot') rather than an adjective. Make it unique and original, catchy, adventurous, and playful. Description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
-                                {"role": "user", "content": f"Based on this agent description, create a unique character name (inspired by cartoon characters/superheroes/famous personalities but original), short description, and elaborate character profile. Avoid these existing names: {', '.join(existing_names) if existing_names else 'none'}\n\nAgent description:\n{agent_description}"}
+                                {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'description' and 'character' fields. Description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach. The character profile should align with the agent's name and description."},
+                                {"role": "user", "content": f"Create a short description and elaborate character profile for an AI agent named '{bot_name}'.\n\nAgent description:\n{agent_description}"}
                             ],
                             response_format={"type": "json_object"},
                             temperature=0.9
                         )
                         
                         bot_data = json.loads(response.choices[0].message.content)
-                        bot_name = bot_data.get("name", "AI Agent")
                         bot_desc = bot_data.get("description", agent_description[:100])
                         bot_character = bot_data.get("character", "A versatile AI agent ready to assist.")
                         
