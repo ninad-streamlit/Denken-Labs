@@ -341,8 +341,7 @@ def main():
                                 st.image(bot_path, width=80)
                             else:
                                 st.info("🤖")
-                        
-                        with col2:
+                            
                             # Handle bots that might not have a number (created before this feature)
                             bot_number = bot.get('number', 'N/A')
                             if bot_number == 'N/A' and 'number' not in bot:
@@ -354,7 +353,12 @@ def main():
                                         st.session_state.used_numbers.add(bot_number)
                                         bot['number'] = bot_number
                                         break
-                            st.markdown(f"**{bot['name']}** (#{bot.get('number', bot_number)})")
+                            
+                            # Display number below bot, center-aligned
+                            st.markdown(f"<div style='text-align: center; margin-top: 5px;'><strong>#{bot.get('number', bot_number)}</strong></div>", unsafe_allow_html=True)
+                        
+                        with col2:
+                            st.markdown(f"**{bot['name']}**")
                             st.markdown(f"{bot['description']}")
                         
                         with col3:
