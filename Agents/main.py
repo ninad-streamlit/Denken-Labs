@@ -230,21 +230,21 @@ def main():
                     try:
                         # Generate bot name, description, and elaborate character using OpenAI
                         client = openai.OpenAI(api_key=OPENAI_API_KEY)
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. Name should be 2-4 words, description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
-                            {"role": "user", "content": f"Based on this agent description, create a catchy name, short description, and elaborate character profile:\n\n{agent_description}"}
-                        ],
-                        response_format={"type": "json_object"},
-                        temperature=0.8
-                    )
-                    
-                    import json
-                    bot_data = json.loads(response.choices[0].message.content)
-                    bot_name = bot_data.get("name", "AI Agent")
-                    bot_desc = bot_data.get("description", agent_description[:100])
-                    bot_character = bot_data.get("character", "A versatile AI agent ready to assist.")
+                        response = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=[
+                                {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. Name should be 2-4 words, description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
+                                {"role": "user", "content": f"Based on this agent description, create a catchy name, short description, and elaborate character profile:\n\n{agent_description}"}
+                            ],
+                            response_format={"type": "json_object"},
+                            temperature=0.8
+                        )
+                        
+                        import json
+                        bot_data = json.loads(response.choices[0].message.content)
+                        bot_name = bot_data.get("name", "AI Agent")
+                        bot_desc = bot_data.get("description", agent_description[:100])
+                        bot_character = bot_data.get("character", "A versatile AI agent ready to assist.")
                         
                         # Generate unique 3-digit number
                         import random
