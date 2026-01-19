@@ -182,6 +182,8 @@ def main():
         st.session_state.used_numbers = set()
     if 'mission_story' not in st.session_state:
         st.session_state.mission_story = ""
+    if 'mission_story_title' not in st.session_state:
+        st.session_state.mission_story_title = ""
     
     if not st.session_state.show_agent_builder:
         st.markdown("## Welcome to Denken Labs")
@@ -449,14 +451,18 @@ def main():
                             story_response = client.chat.completions.create(
                                 model="gpt-4o-mini",
                                 messages=[
-                                    {"role": "system", "content": "You are a creative children's storyteller. Write short, fun stories (2-3 short paragraphs) for children aged 5-10. Use simple language, make it engaging and positive. Stories should be about teamwork and friendship."},
-                                    {"role": "user", "content": f"Write a short, child-friendly story (2-3 paragraphs) about how these AI agents worked together to complete a mission:\n\nAgents:\n{agent_info}\n\nMission: {mission_description}\n\nStructure:\n1. First paragraph: Agents gather and plan together\n2. Second paragraph: They execute the mission (based on the mission description)\n3. Third paragraph: Agents compliment, thank, and appreciate each other's help\n\nMake it fun, positive, and suitable for ages 5-10!"}
+                                    {"role": "system", "content": "You are a creative children's storyteller. Write short, fun stories (2-3 short paragraphs) for children aged 5-10. Use simple language, make it engaging and positive. Stories should be about teamwork and friendship. Respond in JSON format with 'title' and 'story' fields. Title should be catchy and fun (5-10 words), story should be 2-3 paragraphs."},
+                                    {"role": "user", "content": f"Write a short, child-friendly story (2-3 paragraphs) with a catchy title about how these AI agents worked together to complete a mission:\n\nAgents:\n{agent_info}\n\nMission: {mission_description}\n\nStructure:\n1. Title: A fun, catchy title (5-10 words)\n2. First paragraph: Agents gather and plan together\n3. Second paragraph: They execute the mission (based on the mission description)\n4. Third paragraph: Agents compliment, thank, and appreciate each other's help\n\nMake it fun, positive, and suitable for ages 5-10! Respond in JSON with 'title' and 'story' fields."}
                                 ],
+                                response_format={"type": "json_object"},
                                 temperature=0.8
                             )
                             
-                            st.session_state.mission_story = story_response.choices[0].message.content
+                            story_data = json.loads(story_response.choices[0].message.content)
+                            st.session_state.mission_story_title = story_data.get("title", "The Amazing Team Adventure")
+                            st.session_state.mission_story = story_data.get("story", "Once upon a time, the agents worked together to complete the mission!")
                         except Exception as e:
+                            st.session_state.mission_story_title = "The Amazing Team Adventure"
                             st.session_state.mission_story = f"Once upon a time, the agents worked together to complete the mission! They planned, executed, and thanked each other for their wonderful teamwork!"
                         
                         st.rerun()
@@ -467,6 +473,14 @@ def main():
             if st.session_state.team_mission and st.session_state.mission_story:
                 st.markdown("---")
                 st.markdown("### 📖 The Story of Teamwork")
+                # Display story title
+                if st.session_state.mission_story_title:
+                    st.markdown(f"""
+                    <div style='text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--primary-color); margin-bottom: 15px;'>
+                        {st.session_state.mission_story_title}
+                    </div>
+                    """, unsafe_allow_html=True)
+                # Display story content
                 st.markdown(f"""
                 <div style='background-color: #f0f8ff; padding: 20px; border-radius: 10px; border-left: 5px solid var(--primary-color);'>
                     {st.session_state.mission_story.replace(chr(10), '<br>')}
