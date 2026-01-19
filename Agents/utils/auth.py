@@ -113,12 +113,32 @@ class GoogleAuth:
             st.error("❌ Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.")
             return None
         
-        # Ensure redirect URI is always port 8501 for local development
-        # Recreate flow if needed to ensure correct redirect URI
+        # Ensure redirect URI is correct for local development (force port 8501)
+        # For Streamlit Cloud, use the configured redirect URI as-is
         if 'localhost' in self.redirect_uri and ':8501' not in self.redirect_uri:
-            # Force port 8501
+            # Force port 8501 for local development only
             self.redirect_uri = 'http://localhost:8501'
             # Recreate flow with correct redirect URI
+            try:
+                self.flow = Flow.from_client_config(
+                    {
+                        "web": {
+                            "client_id": self.client_id,
+                            "client_secret": self.client_secret,
+                            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                            "redirect_uris": [self.redirect_uri]
+                        }
+                    },
+                    scopes=self.scopes,
+                    redirect_uri=self.redirect_uri
+                )
+            except Exception as e:
+                st.error(f"❌ Error creating OAuth flow: {e}")
+                return None
+        elif 'streamlit.app' in self.redirect_uri:
+            # For Streamlit Cloud, ensure we're using the correct redirect URI
+            # Recreate flow to ensure it matches what's in Google Cloud Console
             try:
                 self.flow = Flow.from_client_config(
                     {
