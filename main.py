@@ -200,47 +200,93 @@ def main():
     </style>
     <script>
     function styleButtons() {
-        // Purple for agent buttons
-        var buttons = document.querySelectorAll('button[kind="primary"]');
+        // Purple for agent buttons - more aggressive targeting
+        var buttons = document.querySelectorAll('button[kind="primary"], button.stButton > button, button[data-testid*="baseButton"]');
         buttons.forEach(function(btn) {
-            var text = btn.textContent || btn.innerText || '';
-            // Purple for Build Your Own Agent and Create (agent creation)
-            if (text.includes('Build Your Own Agent') || (text.includes('Create') && !text.includes('Mission'))) {
-                btn.style.backgroundColor = '#6b46c1';
-                btn.style.borderColor = '#6b46c1';
-                btn.style.color = 'white';
-                btn.onmouseenter = function() {
-                    this.style.backgroundColor = '#553c9a';
-                    this.style.borderColor = '#553c9a';
-                };
-                btn.onmouseleave = function() {
-                    this.style.backgroundColor = '#6b46c1';
-                    this.style.borderColor = '#6b46c1';
-                };
+            var text = (btn.textContent || btn.innerText || '').trim();
+            // Purple for Build Your Own Agent
+            if (text.includes('Build Your Own Agent') || text.includes('🚀 Build Your Own Agent')) {
+                btn.style.cssText += 'background-color: #6b46c1 !important; border-color: #6b46c1 !important; color: white !important;';
+                var originalBg = '#6b46c1';
+                var hoverBg = '#553c9a';
+                btn.addEventListener('mouseenter', function() {
+                    this.style.cssText += 'background-color: ' + hoverBg + ' !important; border-color: ' + hoverBg + ' !important;';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.style.cssText += 'background-color: ' + originalBg + ' !important; border-color: ' + originalBg + ' !important;';
+                });
+            }
+            // Purple for Create button (but not for mission-related)
+            if ((text.includes('Create') || text === 'Create') && !text.includes('Mission') && !text.includes('Save')) {
+                btn.style.cssText += 'background-color: #6b46c1 !important; border-color: #6b46c1 !important; color: white !important;';
+                var originalBg = '#6b46c1';
+                var hoverBg = '#553c9a';
+                btn.addEventListener('mouseenter', function() {
+                    this.style.cssText += 'background-color: ' + hoverBg + ' !important; border-color: ' + hoverBg + ' !important;';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.style.cssText += 'background-color: ' + originalBg + ' !important; border-color: ' + originalBg + ' !important;';
+                });
             }
             // Dark green for Activate Mission
-            if (text.includes('Activate Mission')) {
-                btn.style.backgroundColor = '#059669';
-                btn.style.borderColor = '#059669';
-                btn.style.color = 'white';
-                btn.onmouseenter = function() {
-                    this.style.backgroundColor = '#047857';
-                    this.style.borderColor = '#047857';
-                };
-                btn.onmouseleave = function() {
-                    this.style.backgroundColor = '#059669';
-                    this.style.borderColor = '#059669';
-                };
+            if (text.includes('Activate Mission') || text.includes('🚀 Activate Mission')) {
+                btn.style.cssText += 'background-color: #059669 !important; border-color: #059669 !important; color: white !important;';
+                var originalBg = '#059669';
+                var hoverBg = '#047857';
+                btn.addEventListener('mouseenter', function() {
+                    this.style.cssText += 'background-color: ' + hoverBg + ' !important; border-color: ' + hoverBg + ' !important;';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.style.cssText += 'background-color: ' + originalBg + ' !important; border-color: ' + originalBg + ' !important;';
+                });
+            }
+        });
+        
+        // Also check all buttons more broadly
+        var allButtons = document.querySelectorAll('button');
+        allButtons.forEach(function(btn) {
+            var text = (btn.textContent || btn.innerText || '').trim();
+            var parent = btn.closest('form') || btn.closest('[data-testid*="form"]');
+            
+            // Purple for Create button in agent creation form
+            if (text === 'Create' || text.includes('Create')) {
+                // Check if it's in the agent creation form (not mission form)
+                var isAgentForm = parent && (parent.querySelector('textarea[placeholder*="agent"]') || parent.querySelector('textarea[placeholder*="Agent"]'));
+                if (isAgentForm || (parent && !parent.querySelector('textarea[placeholder*="mission"]') && !parent.querySelector('textarea[placeholder*="Mission"]'))) {
+                    btn.style.cssText += 'background-color: #6b46c1 !important; border-color: #6b46c1 !important; color: white !important;';
+                }
             }
         });
     }
-    // Run on page load
+    
+    // Run immediately and on intervals
+    styleButtons();
     setTimeout(styleButtons, 100);
+    setTimeout(styleButtons, 500);
+    setTimeout(styleButtons, 1000);
+    
     // Run after Streamlit reruns
     window.addEventListener('load', styleButtons);
+    document.addEventListener('DOMContentLoaded', styleButtons);
+    
     // Use MutationObserver to catch dynamically added buttons
-    var observer = new MutationObserver(styleButtons);
+    var observer = new MutationObserver(function(mutations) {
+        var shouldStyle = false;
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length > 0) {
+                shouldStyle = true;
+            }
+        });
+        if (shouldStyle) {
+            setTimeout(styleButtons, 100);
+        }
+    });
     observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Also listen for Streamlit's custom events
+    window.addEventListener('streamlit:rerun', function() {
+        setTimeout(styleButtons, 300);
+    });
     </script>
     """, unsafe_allow_html=True)
     
@@ -290,7 +336,7 @@ def main():
         else:
             # Debug: show which paths were checked
             st.info(f"Logo not found. Checked: {logo_paths}")
-    except Exception as e:
+        except Exception as e:
         st.error(f"Error loading logo: {e}")
     
     st.markdown(f"""
