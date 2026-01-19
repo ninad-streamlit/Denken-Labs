@@ -35,7 +35,7 @@ def main():
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 2px !important;
+        margin-bottom: 0 !important;
         margin-top: 0 !important;
     }
     .logo-container {
@@ -48,7 +48,7 @@ def main():
         align-items: center;
     }
     hr {
-        margin-top: 0.5rem !important;
+        margin-top: 0 !important;
         margin-bottom: 0.5rem !important;
         border-color: var(--border-color) !important;
         background-color: var(--border-color) !important;
