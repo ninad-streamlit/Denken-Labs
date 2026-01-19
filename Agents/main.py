@@ -46,46 +46,37 @@ def generate_agent_example():
     return random.choice(examples)
 
 def generate_mission_example():
-    """Generate a random mission example suitable for 7-year-olds (around 20 words)"""
-    scenarios = [
-        "find a hidden treasure in a magical forest",
-        "rescue lost animals and return them to their homes",
-        "organize a fun birthday party with games and treats",
-        "discover a secret garden full of colorful flowers",
-        "help build a treehouse for woodland creatures",
-        "solve the mystery of the missing rainbow colors",
-        "plan a perfect picnic adventure in the park",
-        "create a storybook filled with amazing adventures",
-        "design a playground for all the neighborhood kids",
-        "help organize a community talent show",
-        "find and return a magical key to unlock happy dreams",
-        "discover friendly aliens and help them learn about Earth"
+    """Generate a random Star Trek-style mission example (around 20 words)"""
+    star_trek_missions = [
+        "explore an unknown planet and make contact with friendly alien civilizations",
+        "investigate strange energy readings from a distant nebula and discover its source",
+        "rescue a stranded spaceship crew from a dangerous asteroid field",
+        "establish diplomatic relations with a newly discovered planet's inhabitants",
+        "study an unusual space anomaly that could reveal secrets about the universe",
+        "help a peaceful alien species protect their homeworld from a natural disaster",
+        "investigate reports of mysterious signals coming from an abandoned space station",
+        "explore a new star system and map planets that might support life",
+        "rescue scientists trapped on a research outpost during a solar storm",
+        "discover the origin of ancient artifacts found floating in deep space",
+        "mediate a peace agreement between two warring alien civilizations",
+        "investigate a time distortion that threatens the fabric of space"
     ]
-    activities = [
-        "solving clues and helping friendly animals along the way",
-        "meeting new friends and working together as a team",
-        "using creativity and imagination to make everything special",
-        "exploring new places and discovering exciting secrets",
-        "learning valuable lessons about friendship and cooperation",
-        "overcoming challenges with teamwork and determination"
-    ]
-    additional_details = [
-        "Make sure everyone has fun and works together happily",
-        "Remember to be kind and helpful to everyone you meet",
-        "Share your ideas and listen to others with respect",
-        "Celebrate your achievements and thank your teammates",
-        "Have lots of fun while completing the mission together"
+    mission_objectives = [
+        "ensuring the safety of all crew members and new friends",
+        "working together to solve complex problems and challenges",
+        "using science, teamwork, and friendship to complete the mission",
+        "gathering valuable information while respecting new cultures",
+        "bringing peace and understanding to the galaxy"
     ]
     
-    scenario = random.choice(scenarios)
-    activity = random.choice(activities)
-    detail = random.choice(additional_details)
+    mission = random.choice(star_trek_missions)
+    objective = random.choice(mission_objectives)
     
-    # Generate ~20 word examples
+    # Generate Star Trek-style mission examples (~20 words)
     examples = [
-        f"Go on an adventure to {scenario}, {activity}. {detail}",
-        f"Your mission is to {scenario}. {activity}. {detail}",
-        f"Work together to {scenario} by {activity}. {detail}"
+        f"Mission: {mission}, {objective}.",
+        f"Your mission is to {mission}, {objective}.",
+        f"Explore and discover: {mission}, {objective}."
     ]
     
     return random.choice(examples)
