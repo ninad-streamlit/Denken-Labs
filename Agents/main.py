@@ -408,78 +408,55 @@ def main():
             pass
     
     # Add meta tags for better sharing (title, description, and image)
-    # Using components.v1.html to properly inject into head
-    try:
-        import streamlit.components.v1 as components
-        meta_html = f"""
-        <head>
-            <title>Denken Labs - Begin your space adventure</title>
-            <meta name="title" content="Denken Labs">
-            <meta name="description" content="Begin your space adventure">
-            <meta property="og:type" content="website">
-            <meta property="og:title" content="Denken Labs">
-            <meta property="og:description" content="Begin your space adventure">
-            <meta property="og:site_name" content="Denken Labs">
-            <meta name="twitter:card" content="summary_large_image">
-            <meta name="twitter:title" content="Denken Labs">
-            <meta name="twitter:description" content="Begin your space adventure">
-        """
-        if logo_url:
-            meta_html += f'<meta property="og:image" content="{logo_url}">'
-            meta_html += f'<meta property="og:image:type" content="image/png">'
-            meta_html += f'<meta property="og:image:width" content="1200">'
-            meta_html += f'<meta property="og:image:height" content="630">'
-            meta_html += f'<meta name="twitter:image" content="{logo_url}">'
-        
-        meta_html += """
-        </head>
-        """
-        components.html(meta_html, height=0)
-    except Exception:
-        # Fallback: use st.markdown with script injection
-        meta_script = f"""
-        <script>
-        (function() {{
-            // Update page title
+    # Use JavaScript to inject meta tags into the head (runs immediately)
+    meta_tags_js = """
+    <script>
+    (function() {
+        // Update page title immediately
+        if (document.title !== "Denken Labs - Begin your space adventure") {
             document.title = "Denken Labs - Begin your space adventure";
-            
-            // Create or update meta tags
-            function setMetaTag(property, content) {{
-                let tag = document.querySelector(`meta[property="${{property}}"]`) || 
-                         document.querySelector(`meta[name="${{property}}"]`);
-                if (!tag) {{
-                    tag = document.createElement('meta');
-                    if (property.startsWith('og:') || property.startsWith('twitter:')) {{
-                        tag.setAttribute('property', property);
-                    }} else {{
-                        tag.setAttribute('name', property);
-                    }}
-                    document.head.appendChild(tag);
-                }}
-                tag.setAttribute('content', content);
-            }}
-            
-            // Set all meta tags
-            setMetaTag('og:title', 'Denken Labs');
-            setMetaTag('og:description', 'Begin your space adventure');
-            setMetaTag('og:type', 'website');
-            setMetaTag('og:site_name', 'Denken Labs');
-            setMetaTag('twitter:card', 'summary_large_image');
-            setMetaTag('twitter:title', 'Denken Labs');
-            setMetaTag('twitter:description', 'Begin your space adventure');
-            setMetaTag('description', 'Begin your space adventure');
+        }
+        
+        // Helper function to create or update meta tags
+        function setMetaTag(attr, value, content) {
+            let selector = `meta[${attr}="${value}"]`;
+            let tag = document.querySelector(selector);
+            if (!tag) {
+                tag = document.createElement('meta');
+                tag.setAttribute(attr, value);
+                document.head.appendChild(tag);
+            }
+            tag.setAttribute('content', content);
+        }
+        
+        // Set all Open Graph and Twitter Card meta tags
+        setMetaTag('property', 'og:type', 'website');
+        setMetaTag('property', 'og:title', 'Denken Labs');
+        setMetaTag('property', 'og:description', 'Begin your space adventure');
+        setMetaTag('property', 'og:site_name', 'Denken Labs');
+        setMetaTag('name', 'description', 'Begin your space adventure');
+        setMetaTag('name', 'twitter:card', 'summary_large_image');
+        setMetaTag('name', 'twitter:title', 'Denken Labs');
+        setMetaTag('name', 'twitter:description', 'Begin your space adventure');
+    """
+    
+    # Add image meta tags if logo is available
+    if logo_url:
+        meta_tags_js += f"""
+        setMetaTag('property', 'og:image', '{logo_url}');
+        setMetaTag('property', 'og:image:type', 'image/png');
+        setMetaTag('property', 'og:image:width', '1200');
+        setMetaTag('property', 'og:image:height', '630');
+        setMetaTag('name', 'twitter:image', '{logo_url}');
         """
-        if logo_url:
-            meta_script += f"""
-            setMetaTag('og:image', '{logo_url}');
-            setMetaTag('og:image:type', 'image/png');
-            setMetaTag('twitter:image', '{logo_url}');
-            """
-        meta_script += """
-        })();
-        </script>
-        """
-        st.markdown(meta_script, unsafe_allow_html=True)
+    
+    meta_tags_js += """
+    })();
+    </script>
+    """
+    
+    # Inject meta tags immediately using st.markdown
+    st.markdown(meta_tags_js, unsafe_allow_html=True)
     
     # Add favicon link to HTML head for better control
     if logo_path:
