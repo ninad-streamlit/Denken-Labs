@@ -423,14 +423,14 @@ def main():
             if 'team_mission' not in st.session_state:
                 st.session_state.team_mission = ""
             
-                with st.form("mission_form", clear_on_submit=False):
-                    mission_description = st.text_area(
-                        "Describe the mission for your team:",
-                        placeholder="Example: Go on an adventure to find a hidden treasure in a magical forest, solving clues and helping friendly animals along the way! Or create a fun birthday party plan with games, decorations, and yummy treats that everyone will love!",
-                        height=150,
-                        value=st.session_state.team_mission,
-                        key="mission_description_input"
-                    )
+            with st.form("mission_form", clear_on_submit=False):
+                mission_description = st.text_area(
+                    "Describe the mission for your team:",
+                    placeholder="Example: Go on an adventure to find a hidden treasure in a magical forest, solving clues and helping friendly animals along the way!",
+                    height=150,
+                    value=st.session_state.team_mission,
+                    key="mission_description_input"
+                )
                 
                 activate_clicked = st.form_submit_button("🚀 Activate Mission", type="primary", use_container_width=True)
                 
