@@ -504,7 +504,7 @@ def main():
         else:
             # Debug: show which paths were checked
             st.info(f"Logo not found. Checked: {logo_paths}")
-        except Exception as e:
+    except Exception as e:
         st.error(f"Error loading logo: {e}")
     
     st.markdown(f"""
