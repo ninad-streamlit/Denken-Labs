@@ -1102,6 +1102,35 @@ def main():
                                     pdf.multi_cell(0, 8, line_clean, align='L')
                                     pdf.ln(3)
                             
+                            # Add Q&A section if there are questions and answers
+                            if st.session_state.story_qa_history:
+                                pdf.ln(10)
+                                
+                                # Q&A Section Title
+                                pdf.set_font("Arial", "B", 14)
+                                pdf.set_text_color(107, 70, 193)  # Purple color #6b46c1
+                                pdf.cell(0, 10, "Questions & Answers", ln=True, align='L')
+                                pdf.ln(5)
+                                
+                                # Add each Q&A pair
+                                pdf.set_text_color(0, 0, 0)  # Black for content
+                                for idx, qa in enumerate(st.session_state.story_qa_history, 1):
+                                    # Question
+                                    pdf.set_font("Arial", "B", 11)
+                                    pdf.set_text_color(85, 60, 154)  # Dark purple #553c9a
+                                    question_text = f"Q{idx}: {qa['question']}"
+                                    question_clean = question_text.encode('latin-1', 'replace').decode('latin-1')
+                                    pdf.multi_cell(0, 8, question_clean, align='L')
+                                    pdf.ln(2)
+                                    
+                                    # Answer
+                                    pdf.set_font("Arial", size=10)
+                                    pdf.set_text_color(30, 41, 59)  # Dark gray #1e293b
+                                    answer_text = f"A{idx}: {qa['answer']}"
+                                    answer_clean = answer_text.encode('latin-1', 'replace').decode('latin-1')
+                                    pdf.multi_cell(0, 7, answer_clean, align='L')
+                                    pdf.ln(5)
+                            
                             buffer = BytesIO()
                             pdf_bytes = pdf.output(dest='S')
                             buffer.write(pdf_bytes.encode('latin-1'))
