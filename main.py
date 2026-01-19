@@ -1085,12 +1085,16 @@ def main():
                 st.markdown("### 💬 Ask Questions About the Story")
                 
                 # Generate example question if not exists, story changed, or after Q&A (force refresh)
+                # Get list of already asked questions to avoid repetition
+                existing_questions = [qa['question'] for qa in st.session_state.story_qa_history] if st.session_state.story_qa_history else []
+                
                 if (not st.session_state.story_question_example or 
                     st.session_state.get('last_story_title') != st.session_state.mission_story_title or
                     st.session_state.get('refresh_question_example', False)):
                     st.session_state.story_question_example = generate_story_question_example(
                         st.session_state.mission_story_title,
-                        st.session_state.mission_story
+                        st.session_state.mission_story,
+                        existing_questions=existing_questions
                     )
                     st.session_state.last_story_title = st.session_state.mission_story_title
                     st.session_state.refresh_question_example = False
