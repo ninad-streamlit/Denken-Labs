@@ -4,7 +4,7 @@ from config import STREAMLIT_CONFIG
 from utils.auth import check_authentication, get_user_display_info, GoogleAuth
 
 # Version number - increment by 0.1 for each code change
-APP_VERSION = "0.3"
+APP_VERSION = "0.4"
 
 def main():
     # Set page config with bot icon as favicon
@@ -52,9 +52,19 @@ def main():
     user_info = get_user_display_info()
     
     # Header - responsive
-    col1, col2, col3 = st.columns([3, 1, 1])
+    col1, col2 = st.columns([4, 1])
     with col1:
-        st.title("🤖 AI Vibe Agents")
+        # Create a container with title and version on the same line
+        st.markdown(f"""
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="margin: 0;">🤖 AI Vibe Agents</h1>
+            </div>
+            <div style="text-align: right;">
+                <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v{APP_VERSION}</h2>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         # Add custom bot icon
         bot_icon_path = os.path.join(os.path.dirname(__file__), "bot.png")
         try:
@@ -69,13 +79,6 @@ def main():
             auth = GoogleAuth()
             auth.logout()
             return
-    
-    with col3:
-        st.markdown(f"""
-        <div style="text-align: right; padding-top: 20px;">
-            <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v{APP_VERSION}</h2>
-        </div>
-        """, unsafe_allow_html=True)
     
     st.markdown("---")
     
