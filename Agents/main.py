@@ -211,12 +211,13 @@ def main():
         
         # Agent description text input
         st.markdown("### Describe Your Agent")
+        st.markdown("**Create individual AI agents with specific capabilities. When you have 2 or more agents, they form a team and can be assigned missions to work together.**")
         
         # Use form to handle submission and clear input
         with st.form("agent_creation_form", clear_on_submit=True):
             agent_description = st.text_area(
                 "Enter a detailed description of the AI agent you want to build:",
-                placeholder="Example: An AI agent that helps users create marketing content for social media posts...",
+                placeholder="Example: An AI agent that helps users create marketing content for social media posts...\n\nNote: Create at least 2 agents to form a team and assign missions.",
                 height=150,
                 key="agent_description_input"
             )
@@ -393,6 +394,35 @@ def main():
                                         st.rerun()
                     
                     st.markdown("---")
+        
+        # Team mission assignment (when 2+ agents exist)
+        if len(st.session_state.created_bots) >= 2:
+            st.markdown("---")
+            st.markdown("### 🎯 Assign Mission to Team")
+            st.markdown(f"**Team Size:** {len(st.session_state.created_bots)} agents")
+            
+            # Initialize mission state
+            if 'team_mission' not in st.session_state:
+                st.session_state.team_mission = ""
+            
+            with st.form("mission_form", clear_on_submit=False):
+                mission_description = st.text_area(
+                    "Describe the mission for your team:",
+                    placeholder="Example: Create a comprehensive marketing campaign for a new product launch, including social media posts, email content, and a press release...",
+                    height=150,
+                    value=st.session_state.team_mission,
+                    key="mission_description_input"
+                )
+                
+                activate_clicked = st.form_submit_button("🚀 Activate Mission", type="primary", use_container_width=True)
+                
+                if activate_clicked:
+                    if mission_description and mission_description.strip():
+                        st.session_state.team_mission = mission_description
+                        st.success(f"✅ Mission activated! Your team of {len(st.session_state.created_bots)} agents is now working on: {mission_description[:100]}...")
+                        st.rerun()
+                    else:
+                        st.warning("Please enter a mission description first.")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
