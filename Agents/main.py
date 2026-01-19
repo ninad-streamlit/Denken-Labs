@@ -1136,9 +1136,12 @@ def main():
                                 })
                                 
                                 # Regenerate example question after answer is generated
+                                # Get updated list of asked questions (including the one just asked)
+                                updated_existing_questions = [qa['question'] for qa in st.session_state.story_qa_history]
                                 st.session_state.story_question_example = generate_story_question_example(
                                     st.session_state.mission_story_title,
-                                    st.session_state.mission_story
+                                    st.session_state.mission_story,
+                                    existing_questions=updated_existing_questions
                                 )
                                 # Set flag to ensure example is refreshed on next render
                                 st.session_state.refresh_question_example = True
