@@ -50,6 +50,39 @@ def generate_agent_example():
     
     return random.choice(examples)
 
+def generate_story_question_example(story_title, story_content):
+    """Generate a relevant example question about the story"""
+    # Extract key elements from the story for context
+    story_preview = story_content[:200] if story_content else ""
+    
+    # Generate a question example using OpenAI
+    try:
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that generates relevant questions about children's stories. Generate ONE simple question that a child (5-10 years old) might ask about the story. The question should reference specific elements from the story. Keep it simple and engaging. Return ONLY the question, nothing else."},
+                {"role": "user", "content": f"Story Title: {story_title}\n\nStory Preview: {story_preview}\n\nGenerate one simple, relevant question that a child might ask about this story. Reference something specific from the story."}
+            ],
+            temperature=0.8,
+            max_tokens=50
+        )
+        question = response.choices[0].message.content.strip()
+        # Remove any quotes if present
+        question = question.strip('"').strip("'")
+        return question
+    except Exception as e:
+        # Fallback examples
+        fallback_questions = [
+            "What was the most exciting part of the mission?",
+            "How did the agents work together?",
+            "What problem did the team solve?",
+            "What was each agent's special skill?",
+            "How did the mission end?"
+        ]
+        import random
+        return random.choice(fallback_questions)
+
 def generate_mission_example():
     """Generate a random Star Trek-style mission example (around 20 words)"""
     star_trek_missions = [
@@ -471,7 +504,7 @@ def main():
         else:
             # Debug: show which paths were checked
             st.info(f"Logo not found. Checked: {logo_paths}")
-    except Exception as e:
+        except Exception as e:
         st.error(f"Error loading logo: {e}")
     
     st.markdown(f"""
