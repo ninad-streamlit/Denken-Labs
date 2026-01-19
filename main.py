@@ -280,7 +280,8 @@ def main():
                     
                     if is_editing:
                         # Edit mode
-                        st.markdown(f"**Editing Agent #{bot['number']}**")
+                        bot_number = bot.get('number', 'N/A')
+                        st.markdown(f"**Editing Agent #{bot_number}**")
                         
                         with st.form(f"edit_form_{bot['id']}", clear_on_submit=False):
                             edited_description = st.text_area(
@@ -342,7 +343,18 @@ def main():
                                 st.info("🤖")
                         
                         with col2:
-                            st.markdown(f"**{bot['name']}** (#{bot['number']})")
+                            # Handle bots that might not have a number (created before this feature)
+                            bot_number = bot.get('number', 'N/A')
+                            if bot_number == 'N/A' and 'number' not in bot:
+                                # Generate a number for old bots without one
+                                import random
+                                while True:
+                                    bot_number = random.randint(100, 999)
+                                    if bot_number not in st.session_state.used_numbers:
+                                        st.session_state.used_numbers.add(bot_number)
+                                        bot['number'] = bot_number
+                                        break
+                            st.markdown(f"**{bot['name']}** (#{bot.get('number', bot_number)})")
                             st.markdown(f"{bot['description']}")
                         
                         with col3:
@@ -356,7 +368,8 @@ def main():
                                 with col_yes:
                                     if st.button("✓ Yes", key=f"yes_{bot['id']}", type="primary", use_container_width=True):
                                         # Remove bot from list and free up the number
-                                        st.session_state.used_numbers.discard(bot['number'])
+                                        if 'number' in bot:
+                                            st.session_state.used_numbers.discard(bot['number'])
                                         st.session_state.created_bots = [b for b in st.session_state.created_bots if b['id'] != bot['id']]
                                         st.session_state.delete_confirm[confirm_key] = False
                                         st.rerun()
