@@ -35,5 +35,10 @@ STREAMLIT_CONFIG = {
     "page_title": "Denken Labs",
     "page_icon": "🤖",
     "layout": "wide",  # Keep wide for desktop, but we'll add mobile-specific CSS
-    "initial_sidebar_state": "expanded"
+    "initial_sidebar_state": "expanded",
+    "menu_items": {
+        "Get Help": None,
+        "Report a bug": None,
+        "About": "Denken Labs - Begin your space adventure"
+    }
 }

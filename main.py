@@ -394,6 +394,17 @@ def main():
         config['page_icon'] = "🤖"  # Fallback to emoji if image not found
     st.set_page_config(**config)
     
+    # Add meta tags for better sharing (title and description)
+    st.markdown("""
+    <head>
+        <meta property="og:title" content="Denken Labs">
+        <meta property="og:description" content="Begin your space adventure">
+        <meta name="twitter:title" content="Denken Labs">
+        <meta name="twitter:description" content="Begin your space adventure">
+        <meta name="description" content="Begin your space adventure">
+    </head>
+    """, unsafe_allow_html=True)
+    
     # Add favicon link to HTML head for better control
     if logo_path:
         st.markdown(f"""
