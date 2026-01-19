@@ -1044,6 +1044,72 @@ def main():
                     {st.session_state.mission_story.replace(chr(10), '<br>')}
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # Q&A Section
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("---")
+                st.markdown("### 💬 Ask Questions About the Story")
+                
+                # Generate example question if not exists or story changed
+                if not st.session_state.story_question_example or st.session_state.get('last_story_title') != st.session_state.mission_story_title:
+                    st.session_state.story_question_example = generate_story_question_example(
+                        st.session_state.mission_story_title,
+                        st.session_state.mission_story
+                    )
+                    st.session_state.last_story_title = st.session_state.mission_story_title
+                
+                # Question input form
+                with st.form("story_qa_form", clear_on_submit=True):
+                    user_question = st.text_input(
+                        "Ask a question about the story:",
+                        placeholder=f"Example: {st.session_state.story_question_example}",
+                        key="story_question_input"
+                    )
+                    submit_question = st.form_submit_button("Ask", type="primary", use_container_width=True)
+                    
+                    if submit_question:
+                        # Use example if question is blank
+                        if not user_question or not user_question.strip():
+                            user_question = st.session_state.story_question_example
+                        
+                        if user_question and user_question.strip():
+                            try:
+                                # Generate answer using OpenAI
+                                client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                                answer_response = client.chat.completions.create(
+                                    model="gpt-4o-mini",
+                                    messages=[
+                                        {"role": "system", "content": "You are a helpful teacher explaining children's stories to kids aged 5-10. Answer questions in a simple, friendly way using very simple words. Keep answers short (2-3 sentences). Make it fun and easy to understand."},
+                                        {"role": "user", "content": f"Story Title: {st.session_state.mission_story_title}\n\nStory:\n{st.session_state.mission_story}\n\nQuestion: {user_question}\n\nAnswer this question in a simple, child-friendly way (2-3 short sentences)."}
+                                    ],
+                                    temperature=0.7,
+                                    max_tokens=150
+                                )
+                                answer = answer_response.choices[0].message.content.strip()
+                                
+                                # Add to Q&A history
+                                st.session_state.story_qa_history.append({
+                                    "question": user_question,
+                                    "answer": answer
+                                })
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error generating answer: {str(e)}")
+                
+                # Display Q&A history
+                if st.session_state.story_qa_history:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    for idx, qa in enumerate(st.session_state.story_qa_history):
+                        st.markdown(f"""
+                        <div style='background-color: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;'>
+                            <div style='font-weight: bold; color: #553c9a; margin-bottom: 8px;'>
+                                ❓ Question: {qa['question']}
+                            </div>
+                            <div style='color: #1e293b; padding-left: 10px;'>
+                                💡 {qa['answer']}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
