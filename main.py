@@ -504,7 +504,7 @@ def main():
         else:
             # Debug: show which paths were checked
             st.info(f"Logo not found. Checked: {logo_paths}")
-    except Exception as e:
+        except Exception as e:
         st.error(f"Error loading logo: {e}")
     
     st.markdown(f"""
@@ -1050,7 +1050,7 @@ def main():
                 """, unsafe_allow_html=True)
                 
                 # Q&A Section
-                st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("---")
                 st.markdown("### 💬 Ask Questions About the Story")
                 
@@ -1096,6 +1096,13 @@ def main():
                                     "question": user_question,
                                     "answer": answer
                                 })
+                                
+                                # Regenerate example question after answer is generated
+                                st.session_state.story_question_example = generate_story_question_example(
+                                    st.session_state.mission_story_title,
+                                    st.session_state.mission_story
+                                )
+                                
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Error generating answer: {str(e)}")
