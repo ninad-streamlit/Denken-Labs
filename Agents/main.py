@@ -954,6 +954,17 @@ def main():
             st.markdown(f"**Enter your creative name!** *{example_text}*")
             
             with st.form("user_name_form", clear_on_submit=True):
+                # Add CSS to make name input slightly bigger
+                st.markdown("""
+                <style>
+                input[data-testid*="user_name_input"] {
+                    padding: 0.75rem 1rem !important;
+                    font-size: 1rem !important;
+                    min-height: 48px !important;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                
                 user_creative_name = st.text_input(
                     "Enter your creative name:",
                     placeholder=f"Example: {name_examples[0]}",
