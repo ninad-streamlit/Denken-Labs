@@ -104,14 +104,22 @@ class GoogleAuth:
         st.session_state['oauth_state_backup'] = state
         
         # Force account selection and consent to ensure user can choose the right account
-        authorization_url, _ = self.flow.authorization_url(
-            access_type='offline',
-            include_granted_scopes='true',
-            state=state,
-            prompt='consent select_account',  # Force both consent and account selection screens
-            login_hint='ninad123@gmail.com'  # Hint which account to use
-        )
-        return authorization_url
+        # IMPORTANT: Make sure redirect_uri matches EXACTLY what's in Google Cloud Console
+        try:
+            authorization_url, _ = self.flow.authorization_url(
+                access_type='offline',
+                include_granted_scopes='true',
+                state=state,
+                prompt='consent select_account',  # Force both consent and account selection screens
+                login_hint='ninad123@gmail.com'  # Hint which account to use
+            )
+            # Debug: Show the redirect URI being used in the URL
+            st.info(f"🔍 DEBUG: Authorization URL redirect_uri parameter: {self.redirect_uri}")
+            return authorization_url
+        except Exception as e:
+            st.error(f"❌ Error creating authorization URL: {e}")
+            st.error(f"Redirect URI being used: {self.redirect_uri}")
+            raise
 
     def handle_callback(self, code, state):
         """Handle the OAuth callback and exchange code for tokens"""
