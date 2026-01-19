@@ -50,38 +50,68 @@ def generate_agent_example():
     
     return random.choice(examples)
 
-def generate_story_question_example(story_title, story_content):
-    """Generate a relevant example question about the story"""
+def generate_story_question_example(story_title, story_content, existing_questions=None):
+    """Generate a relevant example question about the story with variety"""
     # Extract key elements from the story for context
-    story_preview = story_content[:200] if story_content else ""
+    story_preview = story_content[:300] if story_content else ""
     
-    # Generate a question example using OpenAI
+    # Get list of already asked questions to avoid repetition
+    asked_questions = existing_questions or []
+    asked_questions_text = "\n".join([f"- {q}" for q in asked_questions]) if asked_questions else "None yet"
+    
+    # Different question types for variety
+    question_types = [
+        "about a specific character or agent",
+        "about what happened during the mission",
+        "about how the agents solved a problem",
+        "about the outcome or ending",
+        "about a specific event or moment",
+        "about the teamwork or collaboration",
+        "about a challenge they faced",
+        "about what they discovered or learned"
+    ]
+    import random
+    selected_type = random.choice(question_types)
+    
+    # Generate a question example using OpenAI with emphasis on variety
     try:
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that generates relevant questions about children's stories. Generate ONE simple question that a child (5-10 years old) might ask about the story. The question should reference specific elements from the story. Keep it simple and engaging. Return ONLY the question, nothing else."},
-                {"role": "user", "content": f"Story Title: {story_title}\n\nStory Preview: {story_preview}\n\nGenerate one simple, relevant question that a child might ask about this story. Reference something specific from the story."}
+                {"role": "system", "content": "You are a helpful assistant that generates diverse, relevant questions about children's stories. Generate ONE simple question that a child (5-10 years old) might ask about the story. IMPORTANT: Make each question DIFFERENT from previous questions. Vary the question type, focus, and perspective. The question should reference specific elements from the story. Keep it simple and engaging. Return ONLY the question, nothing else."},
+                {"role": "user", "content": f"Story Title: {story_title}\n\nStory Preview: {story_preview}\n\nPreviously asked questions:\n{asked_questions_text}\n\nGenerate a NEW, DIFFERENT question that a child might ask about this story. Focus on: {selected_type}. Make sure it's completely different from the previously asked questions. Reference something specific from the story."}
             ],
-            temperature=0.8,
-            max_tokens=50
+            temperature=1.0,  # Higher temperature for more variety
+            max_tokens=60
         )
         question = response.choices[0].message.content.strip()
         # Remove any quotes if present
         question = question.strip('"').strip("'")
+        # Remove "Question:" prefix if present
+        if question.lower().startswith("question:"):
+            question = question[9:].strip()
         return question
     except Exception as e:
-        # Fallback examples
+        # Fallback examples with more variety
         fallback_questions = [
             "What was the most exciting part of the mission?",
             "How did the agents work together?",
             "What problem did the team solve?",
             "What was each agent's special skill?",
-            "How did the mission end?"
+            "How did the mission end?",
+            "What challenge did they face?",
+            "What did the agents discover?",
+            "How did they help each other?",
+            "What was the biggest surprise?",
+            "What made the mission successful?"
         ]
-        import random
-        return random.choice(fallback_questions)
+        # Filter out already asked questions
+        available_questions = [q for q in fallback_questions if q not in asked_questions]
+        if available_questions:
+            return random.choice(available_questions)
+        else:
+            return random.choice(fallback_questions)
 
 def generate_mission_example():
     """Generate a random Star Trek-style mission example (around 20 words)"""
