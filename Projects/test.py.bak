@@ -1,0 +1,108 @@
+import streamlit as st
+import openai
+import os  # Import os module to handle file paths
+import warnings  # Import warnings module to suppress warnings
+
+# Suppress all warnings
+warnings.filterwarnings("ignore")
+
+# Use hard-coded OpenAI client initialization with provided API key
+# API key should be loaded from environment variable or secrets
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Streamlit app configuration
+st.set_page_config(page_title="DenkenBot", page_icon="💬", layout="centered")
+
+# Setup layout for the title and image
+col1, col2 = st.columns([3, 1])
+
+# Main title and description in the first column
+with col1:
+    st.title("💬 DenkenBot")
+    st.markdown("The most intelligent bot ever")
+    st.markdown("Ask anything you want")
+
+# Display bot image and label in the second column
+with col2:
+    # Using a container to vertically align the image and label
+    with st.container():
+        # Load the image
+        image_path = os.path.join(os.getcwd(), "bot.png")
+        
+        # Check if image exists and display
+        if os.path.exists(image_path):
+            st.image(image_path, width=100)
+        else:
+            st.warning("Image 'bot.png' not found. Please ensure it is in the current directory.")
+
+        # Add the label with bold font, centered with respect to the image
+        st.markdown("""
+            <div style='text-align: center; margin-top: 10px;'>
+                <h3 style='margin: 0; font-family: "Courier New", Courier, monospace; font-size: 24px; color: #4A90E2; text-shadow: 2px 2px #f0f0f0; font-weight: bold;'>
+                    Denken Labs
+                </h3>
+            </div>
+        """, unsafe_allow_html=True)
+
+# Initialize chat history in session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Function to reset chat
+def reset_chat():
+    st.session_state.messages = []
+
+# Add a button to restart the app
+if st.button("Restart Chat"):
+    reset_chat()
+
+# Display previous messages if any
+if st.session_state.messages:
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+# Chat input for user
+if prompt := st.chat_input("Ask me anything..."):
+    # Store user message
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    # Display user message
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Generate assistant response
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+
+        # Show "Thinking..." while processing
+        message_placeholder.markdown("Thinking...")
+
+        try:
+            # Stream response from OpenAI API
+            response = client.ChatCompletion.create(
+                model="gpt-4",
+                messages=st.session_state.messages,
+                stream=True,
+            )
+
+            # Process the streaming response
+            for chunk in response:
+                if 'choices' in chunk and chunk.choices:
+                    delta = chunk.choices[0].delta
+                    if getattr(delta, "content", None):  # Safely check for content
+                        full_response += delta.content
+                        message_placeholder.markdown(full_response + "▌")
+                else:
+                    print("Received unexpected response structure. Please try again.")
+                    break
+
+            # Final display of response
+            message_placeholder.markdown(full_response)
+
+            # Store assistant response in chat history
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+
+        except Exception as e:
+            print(f"Error occurred: {e}")  # Log error to the console for debugging
