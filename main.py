@@ -912,6 +912,10 @@ def main():
                                 
                                 st.session_state.mission_story_title = story_title
                                 st.session_state.mission_story = story_content
+                                
+                                # Clear Q&A history for the new mission
+                                st.session_state.story_qa_history = []
+                                st.session_state.story_question_example = ""
                             else:
                                 # If story is too short or empty, try again with a simpler prompt
                                 raise ValueError("Generated story is too short or empty")
