@@ -247,68 +247,87 @@ def main():
             
             // Purple for Build Your Own Agent button
             if (text.includes('Build Your Own Agent') || text.includes('🚀 Build Your Own Agent')) {
-                btn.style.setProperty('background-color', '#6b46c1', 'important');
-                btn.style.setProperty('border-color', '#6b46c1', 'important');
-                btn.style.setProperty('color', 'white', 'important');
-                var purpleHover = function() {
-                    this.style.setProperty('background-color', '#553c9a', 'important');
-                    this.style.setProperty('border-color', '#553c9a', 'important');
+                // Force override with multiple methods
+                btn.style.cssText = btn.style.cssText + '; background-color: #6b46c1 !important; border-color: #6b46c1 !important; color: white !important;';
+                btn.setAttribute('style', (btn.getAttribute('style') || '') + ' background-color: #6b46c1 !important; border-color: #6b46c1 !important; color: white !important;');
+                var purpleHover = function(e) {
+                    e.target.style.cssText = e.target.style.cssText + '; background-color: #553c9a !important; border-color: #553c9a !important;';
                 };
-                var purpleLeave = function() {
-                    this.style.setProperty('background-color', '#6b46c1', 'important');
-                    this.style.setProperty('border-color', '#6b46c1', 'important');
+                var purpleLeave = function(e) {
+                    e.target.style.cssText = e.target.style.cssText + '; background-color: #6b46c1 !important; border-color: #6b46c1 !important;';
                 };
-                btn.removeEventListener('mouseenter', purpleHover);
-                btn.removeEventListener('mouseleave', purpleLeave);
-                btn.addEventListener('mouseenter', purpleHover);
-                btn.addEventListener('mouseleave', purpleLeave);
+                btn.addEventListener('mouseenter', purpleHover, true);
+                btn.addEventListener('mouseleave', purpleLeave, true);
             }
             
-            // Purple for Create button in agent creation form
-            if (text === 'Create' || (text.includes('Create') && !text.includes('Mission'))) {
+            // Purple for Create button - VERY AGGRESSIVE targeting
+            if (text === 'Create' || (text.includes('Create') && !text.includes('Mission') && !text.includes('Save'))) {
                 // Check if it's in an agent form (has "agent" in placeholder) or NOT in a mission form
-                var isAgentForm = placeholder && (placeholder.toLowerCase().includes('agent') || placeholder.toLowerCase().includes('description'));
+                var isAgentForm = placeholder && (placeholder.toLowerCase().includes('agent') || placeholder.toLowerCase().includes('description') || placeholder.toLowerCase().includes('example'));
                 var isMissionForm = placeholder && (placeholder.toLowerCase().includes('mission') || placeholder.toLowerCase().includes('Mission'));
                 
                 // Apply purple if it's an agent form OR if it's not explicitly a mission form
+                // Be more permissive - if it's Create and NOT in a mission form, make it purple
                 if (isAgentForm || (!isMissionForm && formParent)) {
-                    btn.style.setProperty('background-color', '#6b46c1', 'important');
-                    btn.style.setProperty('border-color', '#6b46c1', 'important');
-                    btn.style.setProperty('color', 'white', 'important');
-                    var purpleHover = function() {
-                        this.style.setProperty('background-color', '#553c9a', 'important');
-                        this.style.setProperty('border-color', '#553c9a', 'important');
+                    // Force override with multiple methods
+                    btn.style.cssText = btn.style.cssText + '; background-color: #6b46c1 !important; border-color: #6b46c1 !important; color: white !important;';
+                    btn.setAttribute('style', (btn.getAttribute('style') || '') + ' background-color: #6b46c1 !important; border-color: #6b46c1 !important; color: white !important;');
+                    // Also set as inline style directly
+                    btn.setAttribute('data-button-color', 'purple');
+                    var purpleHover = function(e) {
+                        e.target.style.cssText = e.target.style.cssText + '; background-color: #553c9a !important; border-color: #553c9a !important;';
                     };
-                    var purpleLeave = function() {
-                        this.style.setProperty('background-color', '#6b46c1', 'important');
-                        this.style.setProperty('border-color', '#6b46c1', 'important');
+                    var purpleLeave = function(e) {
+                        e.target.style.cssText = e.target.style.cssText + '; background-color: #6b46c1 !important; border-color: #6b46c1 !important;';
                     };
-                    btn.removeEventListener('mouseenter', purpleHover);
-                    btn.removeEventListener('mouseleave', purpleLeave);
-                    btn.addEventListener('mouseenter', purpleHover);
-                    btn.addEventListener('mouseleave', purpleLeave);
+                    btn.addEventListener('mouseenter', purpleHover, true);
+                    btn.addEventListener('mouseleave', purpleLeave, true);
                 }
             }
             
             // Dark green for Activate Mission button
             if (text.includes('Activate Mission') || text.includes('🚀 Activate Mission')) {
-                btn.style.setProperty('background-color', '#059669', 'important');
-                btn.style.setProperty('border-color', '#059669', 'important');
-                btn.style.setProperty('color', 'white', 'important');
-                var greenHover = function() {
-                    this.style.setProperty('background-color', '#047857', 'important');
-                    this.style.setProperty('border-color', '#047857', 'important');
+                // Force override with multiple methods
+                btn.style.cssText = btn.style.cssText + '; background-color: #059669 !important; border-color: #059669 !important; color: white !important;';
+                btn.setAttribute('style', (btn.getAttribute('style') || '') + ' background-color: #059669 !important; border-color: #059669 !important; color: white !important;');
+                btn.setAttribute('data-button-color', 'green');
+                var greenHover = function(e) {
+                    e.target.style.cssText = e.target.style.cssText + '; background-color: #047857 !important; border-color: #047857 !important;';
                 };
-                var greenLeave = function() {
-                    this.style.setProperty('background-color', '#059669', 'important');
-                    this.style.setProperty('border-color', '#059669', 'important');
+                var greenLeave = function(e) {
+                    e.target.style.cssText = e.target.style.cssText + '; background-color: #059669 !important; border-color: #059669 !important;';
                 };
-                btn.removeEventListener('mouseenter', greenHover);
-                btn.removeEventListener('mouseleave', greenLeave);
-                btn.addEventListener('mouseenter', greenHover);
-                btn.addEventListener('mouseleave', greenLeave);
+                btn.addEventListener('mouseenter', greenHover, true);
+                btn.addEventListener('mouseleave', greenLeave, true);
             }
         });
+        
+        // Also add CSS rules dynamically for buttons with data attributes
+        var style = document.createElement('style');
+        style.id = 'custom-button-styles';
+        style.textContent = `
+            button[data-button-color="purple"] {
+                background-color: #6b46c1 !important;
+                border-color: #6b46c1 !important;
+                color: white !important;
+            }
+            button[data-button-color="purple"]:hover {
+                background-color: #553c9a !important;
+                border-color: #553c9a !important;
+            }
+            button[data-button-color="green"] {
+                background-color: #059669 !important;
+                border-color: #059669 !important;
+                color: white !important;
+            }
+            button[data-button-color="green"]:hover {
+                background-color: #047857 !important;
+                border-color: #047857 !important;
+            }
+        `;
+        if (!document.getElementById('custom-button-styles')) {
+            document.head.appendChild(style);
+        }
     }
     
     // Run immediately and on intervals
