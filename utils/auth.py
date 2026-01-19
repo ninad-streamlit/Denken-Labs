@@ -75,25 +75,35 @@ class GoogleAuth:
             'openid'
         ]
         
-        # Initialize the OAuth flow
-        self.flow = Flow.from_client_config(
-            {
-                "web": {
-                    "client_id": self.client_id,
-                    "client_secret": self.client_secret,
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                    "redirect_uris": [self.redirect_uri]
-                }
-            },
-            scopes=self.scopes,
-            redirect_uri=self.redirect_uri
-        )
+        # Initialize the OAuth flow only if credentials are available
+        self.flow = None
+        if self.client_id and self.client_secret:
+            try:
+                self.flow = Flow.from_client_config(
+                    {
+                        "web": {
+                            "client_id": self.client_id,
+                            "client_secret": self.client_secret,
+                            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                            "redirect_uris": [self.redirect_uri]
+                        }
+                    },
+                    scopes=self.scopes,
+                    redirect_uri=self.redirect_uri
+                )
+            except Exception as e:
+                # Log error but don't fail here - will be caught in get_authorization_url
+                pass
 
     def get_authorization_url(self):
         """Get the Google OAuth authorization URL"""
         if not self.client_id or not self.client_secret:
             st.error("❌ Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.")
+            return None
+        
+        if not self.flow:
+            st.error("❌ OAuth flow not initialized. Check your credentials.")
             return None
         
         # Generate a random state parameter for security
