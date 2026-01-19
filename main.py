@@ -1019,7 +1019,7 @@ def main():
     
     if not st.session_state.show_agent_builder:
         st.markdown("## Welcome to Denken Labs")
-        st.markdown("**Get ready for an exiting mission**")
+        st.markdown('<div class="tagline-text">**Get ready for an exiting mission**</div>', unsafe_allow_html=True)
         
         # Build your own agent button - compact (purple)
         st.markdown("""
@@ -1058,7 +1058,7 @@ def main():
             st.markdown("### ✨ Your Creative Name")
             name_examples = generate_creative_name_examples()
             example_text = f"Examples: {', '.join(name_examples)}"
-            st.markdown(f"**Enter your creative name!** *{example_text}*")
+            st.markdown(f'<div class="creative-name-intro">**Enter your creative name!** *{example_text}*</div>', unsafe_allow_html=True)
             
             with st.form("user_name_form", clear_on_submit=True):
                 # Add CSS to make name input slightly bigger
@@ -1090,7 +1090,7 @@ def main():
         
         # Show user's name if already entered
         if st.session_state.user_creative_name:
-            st.markdown(f"**Welcome, {st.session_state.user_creative_name}!** 🎉")
+            st.markdown(f'<div class="welcome-message">**Welcome, {st.session_state.user_creative_name}!** 🎉</div>', unsafe_allow_html=True)
             if st.button("Change Name", key="change_name_btn"):
                 st.session_state.user_creative_name = ""
                 st.rerun()
