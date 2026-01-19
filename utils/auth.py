@@ -96,7 +96,7 @@ class GoogleAuth:
                 # Log error but don't fail here - will be caught in get_authorization_url
                 pass
 
-    def get_authorization_url(self):
+    def get_authorization_url(self, login_hint_email=None):
         """Get the Google OAuth authorization URL"""
         if not self.client_id or not self.client_secret:
             st.error("❌ Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.")
@@ -113,15 +113,20 @@ class GoogleAuth:
         # Also store it in a more persistent way
         st.session_state['oauth_state_backup'] = state
         
-        # Force account selection and consent to ensure user can choose the right account
+        # Build authorization URL parameters
+        auth_params = {
+            'access_type': 'offline',
+            'state': state,
+            'prompt': 'consent select_account'  # Show account selection screen
+        }
+        
+        # Only add login_hint if email is provided
+        if login_hint_email and '@' in login_hint_email:
+            auth_params['login_hint'] = login_hint_email
+        
         # IMPORTANT: Make sure redirect_uri matches EXACTLY what's in Google Cloud Console
         try:
-            # Simplified authorization URL - remove parameters that might cause issues
-            authorization_url, _ = self.flow.authorization_url(
-                access_type='offline',
-                state=state,
-                prompt='consent'  # Just consent, let Google handle account selection
-            )
+            authorization_url, _ = self.flow.authorization_url(**auth_params)
             # Debug: Show the redirect URI being used in the URL
             st.info(f"🔍 DEBUG: Authorization URL redirect_uri parameter: {self.redirect_uri}")
             return authorization_url
@@ -305,10 +310,15 @@ class GoogleAuth:
         Please log in with your Google account to access the system.
         """)
         
-        st.warning("""
-        ⚠️ **Important:** Make sure you're signed into `ninad123@gmail.com` in your browser, or sign out of all Google accounts before clicking Login.
-        If you get a 403 error, it means the Google account you're currently signed into is not authorized.
-        """)
+        # Ask for email first
+        user_email = st.text_input(
+            "Enter your Google email address:",
+            value=st.session_state.get('login_email', ''),
+            placeholder="your-email@gmail.com"
+        )
+        
+        if user_email:
+            st.session_state.login_email = user_email
         
         # Check if credentials are configured
         if not self.client_id or not self.client_secret:
@@ -337,10 +347,14 @@ class GoogleAuth:
                 st.write(f"Redirect URI: {self.redirect_uri}")
             return False
         
-        # Create login button
+        # Create login button - only show if email is entered
+        if not user_email or '@' not in user_email:
+            st.info("👆 Please enter your Google email address above to continue.")
+            return
+        
         try:
             st.info("🔍 DEBUG: Calling get_authorization_url()...")
-            auth_url = self.get_authorization_url()
+            auth_url = self.get_authorization_url(user_email)
             st.info(f"🔍 DEBUG: get_authorization_url() returned: {auth_url is not None}")
             
             if auth_url:
