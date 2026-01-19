@@ -13,14 +13,19 @@ def main():
         config['page_icon'] = "🤖"  # Fallback to emoji if image not found
     st.set_page_config(**config)
     
-    # Mobile-responsive CSS
+    # Mobile-responsive CSS with reduced spacing
     st.markdown("""
     <style>
+    .main .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
     .header-container {
         display: flex;
         align-items: center;
-        gap: 20px;
-        margin-bottom: 10px;
+        gap: 15px;
+        margin-bottom: 5px;
+        margin-top: 0;
     }
     .logo-container {
         flex-shrink: 0;
@@ -31,25 +36,44 @@ def main():
         justify-content: space-between;
         align-items: center;
     }
+    .main-content {
+        padding: 15px 0 !important;
+        margin-top: 10px !important;
+    }
+    h1 {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    h2 {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    .stMarkdown h2 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .stMarkdown p {
+        margin-bottom: 0.5rem !important;
+    }
     @media (max-width: 768px) {
         .header-container {
             flex-direction: column !important;
             text-align: center !important;
-            gap: 10px !important;
+            gap: 8px !important;
         }
         .title-version-container {
             flex-direction: column !important;
-            gap: 5px !important;
+            gap: 3px !important;
         }
         .stTitle {
             font-size: 1.5rem !important;
         }
         .logo-image {
-            width: 180px !important;
+            width: 200px !important;
             max-width: 100% !important;
         }
         .main-content {
-            padding: 20px 0 !important;
+            padding: 10px 0 !important;
         }
         .stButton > button {
             width: 100% !important;
@@ -81,7 +105,7 @@ def main():
     
     try:
         if logo_path:
-            st.image(logo_path, width=200)
+            st.image(logo_path, width=280)
         else:
             # Debug: show which paths were checked
             st.info(f"Logo not found. Checked: {logo_paths}")
@@ -91,23 +115,21 @@ def main():
     st.markdown(f"""
         </div>
         <div class="title-version-container">
-            <h1 style="margin: 0; font-size: 2rem;">Denken Labs</h1>
-            <h2 style="color: #1f77b4; margin: 0; font-size: 1.2rem; font-weight: 400;">v{APP_VERSION}</h2>
+            <h1 style="margin: 0; font-size: 1.8rem;">Denken Labs</h1>
+            <h2 style="color: #1f77b4; margin: 0; font-size: 1.1rem; font-weight: 400;">v{APP_VERSION}</h2>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # Main content - more compact
+    # Main content - very compact
     st.markdown("""
-    <div class="main-content" style='text-align: center; padding: 30px 0;'>
+    <div class="main-content" style='text-align: center;'>
     """, unsafe_allow_html=True)
     
     st.markdown("## Welcome to Denken Labs")
     st.markdown("**Build your own AI agent eco-system with ease**")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
     
     # Build your own agent button
     if st.button("🚀 Build Your Own Agent", type="primary", use_container_width=True):
