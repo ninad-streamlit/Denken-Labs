@@ -7,8 +7,19 @@ def main():
     # Set page config with logo as favicon
     config = STREAMLIT_CONFIG.copy()
     # Use relative path for logo (works locally and on Streamlit Cloud)
-    logo_path = os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png")
-    if os.path.exists(logo_path):
+    # Try multiple possible paths for the logo
+    logo_paths = [
+        os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png"),
+        os.path.join(os.path.dirname(__file__), "Agents", "Logo-DenkenLabs.png"),
+        os.path.join(os.path.dirname(__file__), "Agents", "agents", "Logo-DenkenLabs.png"),
+    ]
+    logo_path = None
+    for path in logo_paths:
+        if os.path.exists(path):
+            logo_path = path
+            break
+    
+    if logo_path:
         config['page_icon'] = logo_path
     else:
         config['page_icon'] = "🤖"  # Fallback to emoji if image not found
@@ -128,18 +139,7 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    # Compact header with logo, title, and version in one row
-    # Try multiple possible paths for the logo
-    logo_paths = [
-        os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png"),
-        os.path.join(os.path.dirname(__file__), "Agents", "Logo-DenkenLabs.png"),
-        os.path.join(os.path.dirname(__file__), "Agents", "agents", "Logo-DenkenLabs.png"),
-    ]
-    logo_path = None
-    for path in logo_paths:
-        if os.path.exists(path):
-            logo_path = path
-            break
+    # Use the logo_path found earlier for the header display
     
     # Create compact header layout with logo above version on the right
     st.markdown("""
