@@ -241,8 +241,8 @@ class GoogleAuth:
 
     def create_login_ui(self):
         """Create the login user interface"""
-        # Import version from main
-        from main import APP_VERSION
+        # Import version from config
+        from config import APP_VERSION
         
         # Mobile-responsive CSS
         st.markdown("""

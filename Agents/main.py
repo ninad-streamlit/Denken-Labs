@@ -1,10 +1,7 @@
 import streamlit as st
 import os
-from config import STREAMLIT_CONFIG
+from config import STREAMLIT_CONFIG, APP_VERSION
 from utils.auth import check_authentication, get_user_display_info, GoogleAuth
-
-# Version number - increment by 0.1 for each code change
-APP_VERSION = "0.5"
 
 def main():
     # Set page config with bot icon as favicon
