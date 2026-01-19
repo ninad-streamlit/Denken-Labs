@@ -197,7 +197,6 @@ def main():
         background-color: #dbeafe !important;
         border-left: 4px solid var(--primary-color) !important;
     }
-    /* Use JavaScript to target buttons by text content for custom colors */
     </style>
     <script>
     function styleButtons() {
