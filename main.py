@@ -84,49 +84,80 @@ def generate_agent_example():
     return example
 
 def generate_story_question_example(story_title, story_content, existing_questions=None):
-    """Generate a relevant example question about the story with variety"""
+    """Generate a relevant example question about the story with extensive variety"""
     # Extract key elements from the story for context
-    story_preview = story_content[:300] if story_content else ""
+    story_preview = story_content[:500] if story_content else ""  # Increased preview length
     
     # Get list of already asked questions to avoid repetition
     asked_questions = existing_questions or []
     asked_questions_text = "\n".join([f"- {q}" for q in asked_questions]) if asked_questions else "None yet"
     
-    # Different question types for variety
+    # Extensive list of question types for variety
     question_types = [
-        "about a specific character or agent",
-        "about what happened during the mission",
-        "about how the agents solved a problem",
-        "about the outcome or ending",
-        "about a specific event or moment",
-        "about the teamwork or collaboration",
-        "about a challenge they faced",
-        "about what they discovered or learned"
+        "about a specific character or agent and their role",
+        "about what happened during a specific part of the mission",
+        "about how the agents solved a particular problem",
+        "about the outcome or ending of the story",
+        "about a specific event or exciting moment",
+        "about the teamwork or collaboration between agents",
+        "about a challenge or obstacle they faced",
+        "about what they discovered or learned",
+        "about why something happened the way it did",
+        "about what would happen next after the story",
+        "about which agent was most important and why",
+        "about a funny or interesting moment",
+        "about how they used their special skills",
+        "about what the mission taught them",
+        "about the most dangerous part of the mission",
+        "about how they became friends",
+        "about what surprised them the most",
+        "about the happiest moment in the story",
+        "about how they worked as a team",
+        "about what made the mission special"
     ]
     import random
     selected_type = random.choice(question_types)
     
+    # Track all generated questions in session state for better tracking
+    if 'all_generated_questions' not in st.session_state:
+        st.session_state.all_generated_questions = []
+    
     # Generate a question example using OpenAI with emphasis on variety
     try:
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        
+        # Build more comprehensive context including all previously generated questions
+        all_previous = list(set(asked_questions + st.session_state.all_generated_questions[-20:]))
+        all_previous_text = "\n".join([f"- {q}" for q in all_previous]) if all_previous else "None yet"
+        
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that generates diverse, relevant questions about children's stories. Generate ONE simple question that a child (5-10 years old) might ask about the story. IMPORTANT: Make each question DIFFERENT from previous questions. Vary the question type, focus, and perspective. The question should reference specific elements from the story. Keep it simple and engaging. Return ONLY the question, nothing else."},
-                {"role": "user", "content": f"Story Title: {story_title}\n\nStory Preview: {story_preview}\n\nPreviously asked questions:\n{asked_questions_text}\n\nGenerate a NEW, DIFFERENT question that a child might ask about this story. Focus on: {selected_type}. Make sure it's completely different from the previously asked questions. Reference something specific from the story."}
+                {"role": "system", "content": "You are a helpful assistant that generates diverse, relevant questions about children's stories. Generate ONE simple question that a child (5-10 years old) might ask about the story. CRITICAL: Make each question COMPLETELY DIFFERENT from ALL previous questions. Vary the question type, focus, perspective, wording, and what aspect of the story it asks about. The question should reference specific elements from the story. Keep it simple, engaging, and age-appropriate. Return ONLY the question, nothing else."},
+                {"role": "user", "content": f"Story Title: {story_title}\n\nStory Preview: {story_preview}\n\nALL previously asked/generated questions:\n{all_previous_text}\n\nGenerate a COMPLETELY NEW and DIFFERENT question that a child might ask about this story. Focus on: {selected_type}. The question must be unique and different from ALL previous questions in wording, focus, and perspective. Reference something specific from the story."}
             ],
-            temperature=1.0,  # Higher temperature for more variety
-            max_tokens=60
+            temperature=0.95,  # Higher temperature for more variety
+            max_tokens=120
         )
         question = response.choices[0].message.content.strip()
-        # Remove any quotes if present
-        question = question.strip('"').strip("'")
-        # Remove "Question:" prefix if present
+        # Clean up question (remove quotes if present)
+        if question.startswith('"') and question.endswith('"'):
+            question = question[1:-1]
+        if question.startswith("'") and question.endswith("'"):
+            question = question[1:-1]
         if question.lower().startswith("question:"):
             question = question[9:].strip()
+        
+        # Track this question
+        if question not in st.session_state.all_generated_questions:
+            st.session_state.all_generated_questions.append(question)
+            # Keep only last 100 questions
+            if len(st.session_state.all_generated_questions) > 100:
+                st.session_state.all_generated_questions = st.session_state.all_generated_questions[-50:]
+        
         return question
     except Exception as e:
-        # Fallback examples with more variety
+        # Extensive fallback examples with variety
         fallback_questions = [
             "What was the most exciting part of the mission?",
             "How did the agents work together?",
@@ -137,13 +168,39 @@ def generate_story_question_example(story_title, story_content, existing_questio
             "What did the agents discover?",
             "How did they help each other?",
             "What was the biggest surprise?",
-            "What made the mission successful?"
+            "What made the mission successful?",
+            "Which agent was the bravest?",
+            "What was the hardest part?",
+            "How did they become friends?",
+            "What did they learn?",
+            "What happened first?",
+            "What made them happy?",
+            "How did they solve the problem?",
+            "What was the funniest moment?",
+            "Why did they need to work together?",
+            "What would happen next?",
+            "Which part was the most dangerous?",
+            "How did each agent help?",
+            "What was their goal?",
+            "How did the mission start?",
+            "What special thing did they do?",
+            "Why was teamwork important?",
+            "What was the best part?",
+            "How did they celebrate?",
+            "What obstacle did they overcome?",
+            "What made them proud?"
         ]
         # Filter out already asked questions
-        available_questions = [q for q in fallback_questions if q not in asked_questions]
+        available_questions = [q for q in fallback_questions if q not in (asked_questions + st.session_state.get('all_generated_questions', []))[-20:]]
         if available_questions:
-            return random.choice(available_questions)
+            selected = random.choice(available_questions)
+            if selected not in st.session_state.get('all_generated_questions', []):
+                if 'all_generated_questions' not in st.session_state:
+                    st.session_state.all_generated_questions = []
+                st.session_state.all_generated_questions.append(selected)
+            return selected
         else:
+            # If all fallbacks used, cycle through them
             return random.choice(fallback_questions)
 
 def generate_creative_name_examples():
@@ -209,40 +266,111 @@ def generate_creative_name_examples():
     return selected
 
 def generate_mission_example():
-    """Generate a random Star Trek-style mission example (around 20 words)"""
+    """Generate a random Star Trek-style mission example (around 20 words) with extensive variety"""
     star_trek_missions = [
+        # Exploration Missions
         "explore an unknown planet and make contact with friendly alien civilizations",
         "investigate strange energy readings from a distant nebula and discover its source",
-        "rescue a stranded spaceship crew from a dangerous asteroid field",
-        "establish diplomatic relations with a newly discovered planet's inhabitants",
-        "study an unusual space anomaly that could reveal secrets about the universe",
-        "help a peaceful alien species protect their homeworld from a natural disaster",
-        "investigate reports of mysterious signals coming from an abandoned space station",
         "explore a new star system and map planets that might support life",
+        "chart an unexplored sector of space and document all discoveries",
+        "investigate an ancient alien structure found on a remote moon",
+        "explore a binary star system to study its unique planetary formations",
+        "discover new habitable worlds in the outer reaches of the galaxy",
+        "investigate a mysterious void in space where stars seem to disappear",
+        
+        # Rescue Missions
+        "rescue a stranded spaceship crew from a dangerous asteroid field",
         "rescue scientists trapped on a research outpost during a solar storm",
-        "discover the origin of ancient artifacts found floating in deep space",
+        "save a colony from an approaching comet by redirecting its path",
+        "rescue an alien ship damaged by space debris",
+        "evacuate a space station threatened by a plasma storm",
+        "rescue a survey team lost on a dangerous ice planet",
+        
+        # Diplomatic Missions
+        "establish diplomatic relations with a newly discovered planet's inhabitants",
         "mediate a peace agreement between two warring alien civilizations",
-        "investigate a time distortion that threatens the fabric of space"
+        "negotiate a trade agreement with a friendly merchant species",
+        "host a galactic summit to discuss inter-species cooperation",
+        "resolve a territorial dispute between neighboring star systems",
+        "facilitate cultural exchange between humans and a new alien species",
+        
+        # Scientific Missions
+        "study an unusual space anomaly that could reveal secrets about the universe",
+        "discover the origin of ancient artifacts found floating in deep space",
+        "investigate a time distortion that threatens the fabric of space",
+        "analyze a new form of energy discovered in a stellar nursery",
+        "study a planet where time moves differently than normal space",
+        "investigate reports of mysterious signals coming from an abandoned space station",
+        "research a phenomenon that could revolutionize faster-than-light travel",
+        "study an ecosystem that exists entirely in zero gravity",
+        "investigate a planet with multiple moons that create unique weather patterns",
+        
+        # Protection Missions
+        "help a peaceful alien species protect their homeworld from a natural disaster",
+        "defend a space station from approaching meteoroids",
+        "protect a rare species from poachers in deep space",
+        "guard a sacred alien site from unauthorized visitors",
+        "shield a developing civilization from dangerous cosmic radiation",
+        
+        # Mystery Missions
+        "solve the mystery of a starship that disappeared decades ago",
+        "investigate why all electronic devices fail near a certain planet",
+        "uncover the truth behind strange disappearances in a space corridor",
+        "solve the puzzle of a planet with no day or night cycle",
+        "investigate a signal that appears to be from Earth's past",
+        
+        # Cultural Missions
+        "participate in an alien festival to learn about their traditions",
+        "help preserve ancient knowledge from a dying alien civilization",
+        "assist in relocating a species whose planet is becoming uninhabitable",
+        "document the unique art and music of a newly contacted species"
     ]
     mission_objectives = [
         "ensuring the safety of all crew members and new friends",
         "working together to solve complex problems and challenges",
         "using science, teamwork, and friendship to complete the mission",
         "gathering valuable information while respecting new cultures",
-        "bringing peace and understanding to the galaxy"
+        "bringing peace and understanding to the galaxy",
+        "learning and growing through new experiences together",
+        "overcoming obstacles with creativity and cooperation",
+        "making new friends across the stars",
+        "proving that teamwork makes any mission possible",
+        "demonstrating courage, wisdom, and kindness in action"
     ]
     
-    mission = random.choice(star_trek_missions)
-    objective = random.choice(mission_objectives)
+    # Track used mission examples to avoid repetition
+    if 'used_mission_examples' not in st.session_state:
+        st.session_state.used_mission_examples = []
     
-    # Generate Star Trek-style mission examples (~20 words)
-    examples = [
-        f"Mission: {mission}, {objective}.",
-        f"Your mission is to {mission}, {objective}.",
-        f"Explore and discover: {mission}, {objective}."
-    ]
+    # Try multiple combinations to find one not recently used
+    max_attempts = 15
+    for _ in range(max_attempts):
+        mission = random.choice(star_trek_missions)
+        objective = random.choice(mission_objectives)
+        
+        # Generate different example formats for variety
+        example_formats = [
+            f"Mission: {mission}, {objective}.",
+            f"Your mission is to {mission}, {objective}.",
+            f"The team's mission: {mission}, all while {objective}.",
+            f"Embark on a mission to {mission}, {objective}.",
+            f"Assigned mission: {mission}, {objective}.",
+            f"Your team must {mission}, always {objective}.",
+            f"The mission requires you to {mission}, while {objective}.",
+            f"Prepare for a mission where you will {mission}, {objective}."
+        ]
+        example = random.choice(example_formats)
+        
+        # Check if this combination was recently used
+        if example not in st.session_state.used_mission_examples[-30:]:
+            st.session_state.used_mission_examples.append(example)
+            # Keep only last 100 examples
+            if len(st.session_state.used_mission_examples) > 100:
+                st.session_state.used_mission_examples = st.session_state.used_mission_examples[-50:]
+            return example
     
-    return random.choice(examples)
+    # If all attempts failed, return anyway
+    return example
 
 def main():
     # Set page config with logo as favicon
