@@ -592,9 +592,9 @@ def main():
                         """, unsafe_allow_html=True)
                 with col_pdf:
                     st.markdown("<br>", unsafe_allow_html=True)  # Spacing
-                    try:
-                        if REPORTLAB_AVAILABLE:
-                            # Generate PDF
+                    if REPORTLAB_AVAILABLE:
+                        try:
+                            # Generate PDF using reportlab
                             buffer = BytesIO()
                             doc = SimpleDocTemplate(buffer, pagesize=letter)
                             story = []
@@ -646,48 +646,50 @@ def main():
                                 mime="application/pdf",
                                 use_container_width=True
                             )
-                        else:
-                            # Fallback if reportlab not available - use fpdf2
-                            try:
-                                from fpdf import FPDF
-                                
-                                pdf = FPDF()
-                                pdf.set_auto_page_break(auto=True, margin=15)
-                                pdf.add_page()
-                                
-                                # Title
-                                pdf.set_font("Arial", "B", 16)
-                                if st.session_state.mission_story_title:
-                                    title = st.session_state.mission_story_title[:50]  # Limit title length
-                                    pdf.cell(0, 10, title, ln=True, align='C')
-                                    pdf.ln(10)
-                                
-                                # Story content
-                                pdf.set_font("Arial", size=12)
-                                story_text = st.session_state.mission_story.replace('\n\n', '\n')
-                                for line in story_text.split('\n'):
-                                    if line.strip():
-                                        # Handle special characters
-                                        line_clean = line.strip().encode('latin-1', 'replace').decode('latin-1')
-                                        pdf.multi_cell(0, 8, line_clean, align='L')
-                                        pdf.ln(3)
-                                
-                                buffer = BytesIO()
-                                pdf_bytes = pdf.output(dest='S')
-                                buffer.write(pdf_bytes.encode('latin-1'))
-                                buffer.seek(0)
-                                
-                                st.download_button(
-                                    label="📄 Download PDF",
-                                    data=buffer.getvalue(),
-                                    file_name=f"{st.session_state.mission_story_title.replace(' ', '_')[:30]}.pdf",
-                                    mime="application/pdf",
-                                    use_container_width=True
-                                )
-                            except ImportError:
-                                st.info("📄 PDF generation will be available after libraries are installed. The app needs to redeploy with updated requirements.txt.")
-                    except Exception as e:
-                        st.warning(f"PDF generation temporarily unavailable: {str(e)}")
+                        except Exception as e:
+                            st.warning(f"PDF generation error: {str(e)}")
+                    else:
+                        # Fallback if reportlab not available - use fpdf2
+                        try:
+                            from fpdf import FPDF
+                            
+                            pdf = FPDF()
+                            pdf.set_auto_page_break(auto=True, margin=15)
+                            pdf.add_page()
+                            
+                            # Title
+                            pdf.set_font("Arial", "B", 16)
+                            if st.session_state.mission_story_title:
+                                title = st.session_state.mission_story_title[:50]  # Limit title length
+                                pdf.cell(0, 10, title, ln=True, align='C')
+                                pdf.ln(10)
+                            
+                            # Story content
+                            pdf.set_font("Arial", size=12)
+                            story_text = st.session_state.mission_story.replace('\n\n', '\n')
+                            for line in story_text.split('\n'):
+                                if line.strip():
+                                    # Handle special characters
+                                    line_clean = line.strip().encode('latin-1', 'replace').decode('latin-1')
+                                    pdf.multi_cell(0, 8, line_clean, align='L')
+                                    pdf.ln(3)
+                            
+                            buffer = BytesIO()
+                            pdf_bytes = pdf.output(dest='S')
+                            buffer.write(pdf_bytes.encode('latin-1'))
+                            buffer.seek(0)
+                            
+                            st.download_button(
+                                label="📄 Download PDF",
+                                data=buffer.getvalue(),
+                                file_name=f"{st.session_state.mission_story_title.replace(' ', '_')[:30]}.pdf",
+                                mime="application/pdf",
+                                use_container_width=True
+                            )
+                        except ImportError:
+                            st.info("📄 PDF generation will be available after libraries are installed. The app needs to redeploy with updated requirements.txt.")
+                        except Exception as e:
+                            st.warning(f"PDF generation error: {str(e)}")
                 
                 # Display story content
                 st.markdown(f"""
