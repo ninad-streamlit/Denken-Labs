@@ -70,7 +70,7 @@ def main():
     with col3:
         st.markdown("""
         <div style="text-align: right; padding-top: 20px;">
-            <h3 style="color: #1f77b4; margin: 0; font-weight: normal;">v0.1</h3>
+            <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v0.1</h2>
         </div>
         """, unsafe_allow_html=True)
     
