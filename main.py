@@ -13,12 +13,23 @@ def main():
         config['page_icon'] = "🤖"  # Fallback to emoji if image not found
     st.set_page_config(**config)
     
-    # Mobile-responsive CSS with minimal spacing
+    # Mobile-responsive CSS with minimal spacing and logo-matching colors
     st.markdown("""
     <style>
+    :root {
+        --primary-color: #2563eb;
+        --primary-dark: #1e40af;
+        --primary-light: #3b82f6;
+        --accent-color: #0ea5e9;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --background: #ffffff;
+        --border-color: #e2e8f0;
+    }
     .main .block-container {
         padding-top: 0.5rem !important;
         padding-bottom: 0.5rem !important;
+        background-color: var(--background);
     }
     .header-container {
         display: flex;
@@ -39,31 +50,51 @@ def main():
     hr {
         margin-top: 0.5rem !important;
         margin-bottom: 0.5rem !important;
+        border-color: var(--border-color) !important;
+        background-color: var(--border-color) !important;
     }
     .main-content {
         padding: 8px 0 !important;
         margin-top: 5px !important;
+        color: var(--text-primary);
     }
     h1 {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
+        color: var(--text-primary) !important;
     }
     h2 {
         margin-top: 0 !important;
         margin-bottom: 0 !important;
+        color: var(--text-primary) !important;
     }
     .stMarkdown h2 {
         margin-top: 0.3rem !important;
         margin-bottom: 0.3rem !important;
         font-size: 1.5rem !important;
+        color: var(--text-primary) !important;
     }
     .stMarkdown p {
         margin-bottom: 0.3rem !important;
         margin-top: 0.2rem !important;
+        color: var(--text-secondary) !important;
+    }
+    .stMarkdown strong {
+        color: var(--text-primary) !important;
     }
     .stButton > button {
         margin-top: 0.5rem !important;
         margin-bottom: 0.5rem !important;
+        background-color: var(--primary-color) !important;
+        color: white !important;
+        border: none !important;
+    }
+    .stButton > button:hover {
+        background-color: var(--primary-dark) !important;
+    }
+    .stInfo {
+        background-color: #dbeafe !important;
+        border-left: 4px solid var(--primary-color) !important;
     }
     @media (max-width: 768px) {
         .header-container {
@@ -126,7 +157,7 @@ def main():
         </div>
         <div class="title-version-container">
             <div></div>
-            <h2 style="color: #1f77b4; margin: 0; font-size: 1.1rem; font-weight: 400;">v{APP_VERSION}</h2>
+            <h2 style="color: var(--primary-color); margin: 0; font-size: 1.1rem; font-weight: 400;">v{APP_VERSION}</h2>
         </div>
     </div>
     """, unsafe_allow_html=True)
