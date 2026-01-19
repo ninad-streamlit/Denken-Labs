@@ -646,11 +646,39 @@ def main():
         else:
             st.info("🤖 Bot logo")
         
-        # Creative Name section
-        st.markdown("### ✨ Creative Name")
-        name_examples = generate_creative_name_examples()
-        example_text = f"Examples: {', '.join(name_examples)}"
-        st.markdown(f"**Give your agent any name you like!** *{example_text}*")
+        # User's Creative Name section (first time only)
+        if 'user_creative_name' not in st.session_state or not st.session_state.user_creative_name:
+            st.markdown("### ✨ Your Creative Name")
+            name_examples = generate_creative_name_examples()
+            example_text = f"Examples: {', '.join(name_examples)}"
+            st.markdown(f"**Enter your creative name!** *{example_text}*")
+            
+            with st.form("user_name_form", clear_on_submit=True):
+                user_creative_name = st.text_input(
+                    "Enter your creative name:",
+                    placeholder=f"Example: {name_examples[0]}",
+                    key="user_name_input"
+                )
+                name_submitted = st.form_submit_button("Continue", type="primary", use_container_width=True)
+                
+                if name_submitted:
+                    if user_creative_name and user_creative_name.strip():
+                        st.session_state.user_creative_name = user_creative_name.strip()
+                    else:
+                        st.session_state.user_creative_name = name_examples[0]
+                    st.rerun()
+            return  # Stop here until user enters their name
+        
+        # Show user's name if already entered
+        if st.session_state.user_creative_name:
+            st.markdown(f"**Welcome, {st.session_state.user_creative_name}!** 🎉")
+            if st.button("Change Name", key="change_name_btn"):
+                st.session_state.user_creative_name = ""
+                st.rerun()
+        
+        # Agent description text input
+        st.markdown("### Describe Your Agent")
+        st.markdown("**Create individual AI agents with specific capabilities and personalities. When you have 2 or more agents, they form a team and can be assigned missions to work together.**")
         
         # Use form to handle submission and clear input
         # Generate example if not exists (will be regenerated after agent creation)
@@ -658,19 +686,6 @@ def main():
             st.session_state.agent_example = generate_agent_example()
         
         with st.form("agent_creation_form", clear_on_submit=True):
-            # Creative Name input
-            creative_name = st.text_input(
-                "Enter a creative name for your agent:",
-                placeholder=f"Example: {name_examples[0]}",
-                key="creative_name_input"
-            )
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Agent description text input
-            st.markdown("### Describe Your Agent")
-            st.markdown("**Create individual AI agents with specific capabilities and personalities. When you have 2 or more agents, they form a team and can be assigned missions to work together.**")
-            
             agent_description = st.text_area(
                 "Enter a detailed description of the AI agent you want to build:",
                 placeholder=f"Example: {st.session_state.agent_example}",
@@ -1022,13 +1037,22 @@ def main():
                 # PDF download button
                 col_title, col_pdf = st.columns([3, 1])
                 with col_title:
-                    # Display story title
+                    # Display story title and author
                     if st.session_state.mission_story_title:
                         st.markdown(f"""
-                        <div style='text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--primary-color); margin-bottom: 15px;'>
+                        <div style='text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--primary-color); margin-bottom: 10px;'>
                             {st.session_state.mission_story_title}
                         </div>
                         """, unsafe_allow_html=True)
+                        # Display author name if available
+                        if st.session_state.get('user_creative_name'):
+                            st.markdown(f"""
+                            <div style='text-align: center; font-size: 1rem; color: var(--text-secondary); margin-bottom: 15px; font-style: italic;'>
+                                by {st.session_state.user_creative_name}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
                 with col_pdf:
                     st.markdown("<br>", unsafe_allow_html=True)  # Spacing
                     if REPORTLAB_AVAILABLE:
@@ -1252,11 +1276,14 @@ def main():
                             try:
                                 # Generate answer using OpenAI
                                 client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                                # Get user's name for personalization
+                                user_name = st.session_state.get('user_creative_name', 'friend')
+                                
                                 answer_response = client.chat.completions.create(
                                     model="gpt-4o-mini",
                                     messages=[
-                                        {"role": "system", "content": "You are a creative storyteller and teacher explaining children's stories to kids aged 5-10. Answer questions in a simple, friendly way using very simple words. IMPORTANT: You are NOT limited to just the story content. Be creative and build upon the story with additional details, background, character motivations, and fun nuances that enhance the story. Expand on the story world while staying consistent with what was told. Keep answers engaging and imaginative (2-4 sentences). Make it fun and easy to understand."},
-                                        {"role": "user", "content": f"Story Title: {st.session_state.mission_story_title}\n\nStory:\n{st.session_state.mission_story}\n\nQuestion: {user_question}\n\nAnswer this question creatively, building upon and expanding the story with additional details and nuances. You can add background information, character motivations, fun facts, or imaginative details that enhance the story world. Keep it simple and child-friendly (2-4 short sentences)."}
+                                        {"role": "system", "content": f"You are a creative storyteller and teacher explaining children's stories to kids aged 5-10. Answer questions in a simple, friendly way using very simple words. IMPORTANT: You are NOT limited to just the story content. Be creative and build upon the story with additional details, background, character motivations, and fun nuances that enhance the story. Expand on the story world while staying consistent with what was told. Keep answers engaging and imaginative (2-4 sentences). Make it fun and easy to understand. Address the reader by their name '{user_name}' to make it personal and friendly."},
+                                        {"role": "user", "content": f"Story Title: {st.session_state.mission_story_title}\n\nStory:\n{st.session_state.mission_story}\n\nQuestion from {user_name}: {user_question}\n\nAnswer this question creatively for {user_name}, building upon and expanding the story with additional details and nuances. You can add background information, character motivations, fun facts, or imaginative details that enhance the story world. Address {user_name} by name to make it personal. Keep it simple and child-friendly (2-4 short sentences)."}
                                     ],
                                     temperature=0.9,  # Higher temperature for more creativity
                                     max_tokens=200  # Increased to allow for more detailed, creative answers
