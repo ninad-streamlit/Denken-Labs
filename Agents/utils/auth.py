@@ -17,38 +17,25 @@ load_dotenv()
 class GoogleAuth:
     def __init__(self):
         # Google OAuth configuration
-        self.client_id = os.getenv('GOOGLE_CLIENT_ID')
-        self.client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
+        # Try Streamlit secrets first (for Streamlit Cloud), then fall back to environment variables (for local)
+        try:
+            self.client_id = st.secrets.get('GOOGLE_CLIENT_ID') or os.getenv('GOOGLE_CLIENT_ID')
+            self.client_secret = st.secrets.get('GOOGLE_CLIENT_SECRET') or os.getenv('GOOGLE_CLIENT_SECRET')
+            configured_redirect_uri = st.secrets.get('GOOGLE_REDIRECT_URI') or os.getenv('GOOGLE_REDIRECT_URI')
+        except (AttributeError, KeyError):
+            # If st.secrets is not available or key doesn't exist, use environment variables
+            self.client_id = os.getenv('GOOGLE_CLIENT_ID')
+            self.client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
+            configured_redirect_uri = os.getenv('GOOGLE_REDIRECT_URI')
         
-        # Try to get the current port from Streamlit config or environment
         # Default to 8501 if not found
         default_port = 8501
-        try:
-            # Try to get port from Streamlit's server config
-            import streamlit.web.server.websocket_headers as ws_headers
-            # This is a workaround - Streamlit doesn't directly expose port
-            # We'll use the configured redirect URI or try to detect it
-            pass
-        except:
-            pass
-        
-        # Get redirect URI from environment or use default
-        # Also try to detect from query params or session state
-        configured_redirect_uri = os.getenv('GOOGLE_REDIRECT_URI')
-        
-        # Try to get current port from query params (if available)
-        try:
-            query_params = st.query_params
-            # Check if we can infer the port from the current URL
-            # This is a fallback - the redirect URI should be set in .env
-        except:
-            pass
         
         # Use configured redirect URI or default
         if configured_redirect_uri:
             self.redirect_uri = configured_redirect_uri
         else:
-            # Default to common ports - user should configure this in .env
+            # Default to common ports - user should configure this in .env or Streamlit secrets
             self.redirect_uri = f'http://localhost:{default_port}'
         
         self.scopes = [
