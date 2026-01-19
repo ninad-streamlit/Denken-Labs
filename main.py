@@ -409,13 +409,16 @@ def main():
     
     # Add meta tags for better sharing (title, description, and image)
     # Use JavaScript to inject meta tags into the head (runs immediately)
+    # Note: Social media platforms cache link previews. After updating meta tags,
+    # you may need to clear the cache using their debug tools:
+    # - Facebook: https://developers.facebook.com/tools/debug/
+    # - Twitter: https://cards-dev.twitter.com/validator
+    # - LinkedIn: Use their post inspector
     meta_tags_js = """
     <script>
     (function() {
         // Update page title immediately
-        if (document.title !== "Denken Labs - Begin your space adventure") {
-            document.title = "Denken Labs - Begin your space adventure";
-        }
+        document.title = "Denken Labs - Begin your space adventure";
         
         // Helper function to create or update meta tags
         function setMetaTag(attr, value, content) {
@@ -424,7 +427,7 @@ def main():
             if (!tag) {
                 tag = document.createElement('meta');
                 tag.setAttribute(attr, value);
-                document.head.appendChild(tag);
+                document.head.insertBefore(tag, document.head.firstChild);
             }
             tag.setAttribute('content', content);
         }
@@ -434,6 +437,7 @@ def main():
         setMetaTag('property', 'og:title', 'Denken Labs');
         setMetaTag('property', 'og:description', 'Begin your space adventure');
         setMetaTag('property', 'og:site_name', 'Denken Labs');
+        setMetaTag('property', 'og:url', window.location.href);
         setMetaTag('name', 'description', 'Begin your space adventure');
         setMetaTag('name', 'twitter:card', 'summary_large_image');
         setMetaTag('name', 'twitter:title', 'Denken Labs');
