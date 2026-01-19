@@ -228,22 +228,23 @@ def main():
             if submitted:
                 if agent_description and agent_description.strip():
                     try:
-                        # Generate bot name and short description using OpenAI
-                        client = openai.OpenAI(api_key=OPENAI_API_KEY)
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=[
-                                {"role": "system", "content": "You are a helpful assistant that creates concise bot names and descriptions. Respond in JSON format with 'name' and 'description' fields. Name should be 2-4 words, description should be 1-2 sentences."},
-                                {"role": "user", "content": f"Based on this agent description, create a catchy name and a short description:\n\n{agent_description}"}
-                            ],
-                            response_format={"type": "json_object"},
-                            temperature=0.7
-                        )
-                        
-                        import json
-                        bot_data = json.loads(response.choices[0].message.content)
-                        bot_name = bot_data.get("name", "AI Agent")
-                        bot_desc = bot_data.get("description", agent_description[:100])
+                    # Generate bot name, description, and elaborate character using OpenAI
+                    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. Name should be 2-4 words, description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
+                            {"role": "user", "content": f"Based on this agent description, create a catchy name, short description, and elaborate character profile:\n\n{agent_description}"}
+                        ],
+                        response_format={"type": "json_object"},
+                        temperature=0.8
+                    )
+                    
+                    import json
+                    bot_data = json.loads(response.choices[0].message.content)
+                    bot_name = bot_data.get("name", "AI Agent")
+                    bot_desc = bot_data.get("description", agent_description[:100])
+                    bot_character = bot_data.get("character", "A versatile AI agent ready to assist.")
                         
                         # Generate unique 3-digit number
                         import random
@@ -260,6 +261,7 @@ def main():
                             "number": bot_number,
                             "name": bot_name,
                             "description": bot_desc,
+                            "character": bot_character,
                             "full_description": agent_description
                         })
                         
@@ -300,28 +302,30 @@ def main():
                             
                             if save_clicked and edited_description and edited_description.strip():
                                 try:
-                                    # Regenerate name based on new description
+                                    # Regenerate name, description, and character based on new description
                                     client = openai.OpenAI(api_key=OPENAI_API_KEY)
                                     response = client.chat.completions.create(
                                         model="gpt-4o-mini",
                                         messages=[
-                                            {"role": "system", "content": "You are a helpful assistant that creates concise bot names and descriptions. Respond in JSON format with 'name' and 'description' fields. Name should be 2-4 words, description should be 1-2 sentences."},
-                                            {"role": "user", "content": f"Based on this agent description, create a catchy name and a short description:\n\n{edited_description}"}
+                                            {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. Name should be 2-4 words, description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
+                                            {"role": "user", "content": f"Based on this agent description, create a catchy name, short description, and elaborate character profile:\n\n{edited_description}"}
                                         ],
                                         response_format={"type": "json_object"},
-                                        temperature=0.7
+                                        temperature=0.8
                                     )
                                     
                                     import json
                                     bot_data = json.loads(response.choices[0].message.content)
                                     new_name = bot_data.get("name", "AI Agent")
                                     new_desc = bot_data.get("description", edited_description[:100])
+                                    new_character = bot_data.get("character", "A versatile AI agent ready to assist.")
                                     
                                     # Update bot (keep same number and id)
                                     for i, b in enumerate(st.session_state.created_bots):
                                         if b['id'] == bot['id']:
                                             st.session_state.created_bots[i]['name'] = new_name
                                             st.session_state.created_bots[i]['description'] = new_desc
+                                            st.session_state.created_bots[i]['character'] = new_character
                                             st.session_state.created_bots[i]['full_description'] = edited_description
                                             break
                                     
@@ -361,6 +365,10 @@ def main():
                         with col2:
                             st.markdown(f"**{bot['name']}**")
                             st.markdown(f"{bot['description']}")
+                            # Display character profile if available
+                            if bot.get('character'):
+                                with st.expander("👤 Character Profile", expanded=False):
+                                    st.markdown(f"*{bot['character']}*")
                         
                         with col3:
                             delete_key = f"delete_{bot['id']}"
