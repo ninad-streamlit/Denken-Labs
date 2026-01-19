@@ -3,12 +3,12 @@ import os
 from config import STREAMLIT_CONFIG, APP_VERSION
 
 def main():
-    # Set page config with bot icon as favicon
+    # Set page config with logo as favicon
     config = STREAMLIT_CONFIG.copy()
-    # Use relative path for bot icon (works locally and on Streamlit Cloud)
-    bot_icon_path = os.path.join(os.path.dirname(__file__), "bot.png")
-    if os.path.exists(bot_icon_path):
-        config['page_icon'] = bot_icon_path
+    # Use relative path for logo (works locally and on Streamlit Cloud)
+    logo_path = os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png")
+    if os.path.exists(logo_path):
+        config['page_icon'] = logo_path
     else:
         config['page_icon'] = "🤖"  # Fallback to emoji if image not found
     st.set_page_config(**config)
@@ -24,9 +24,9 @@ def main():
         .stTitle {
             font-size: 1.5rem !important;
         }
-        .bot-icon {
-            width: 80px !important;
-            height: 80px !important;
+        .logo-image {
+            width: 200px !important;
+            max-width: 100% !important;
         }
         .main-content {
             padding: 20px 0 !important;
@@ -43,24 +43,25 @@ def main():
     # Header - responsive
     col1, col2 = st.columns([4, 1])
     with col1:
+        # Display logo above the title
+        logo_path = os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png")
+        try:
+            if os.path.exists(logo_path):
+                st.image(logo_path, width=250)
+        except Exception as e:
+            pass
+        
         # Create a container with title and version on the same line
         st.markdown(f"""
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h1 style="margin: 0;">🤖 Denken Labs</h1>
+                <h1 style="margin: 0;">Denken Labs</h1>
             </div>
             <div style="text-align: right;">
                 <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v{APP_VERSION}</h2>
             </div>
         </div>
         """, unsafe_allow_html=True)
-        # Add custom bot icon
-        bot_icon_path = os.path.join(os.path.dirname(__file__), "bot.png")
-        try:
-            if os.path.exists(bot_icon_path):
-                st.image(bot_icon_path, width=100)
-        except Exception as e:
-            pass
     
     with col2:
         # Empty column for layout consistency
