@@ -1,6 +1,7 @@
 import streamlit as st
 import os
-from config import STREAMLIT_CONFIG, APP_VERSION
+import openai
+from config import STREAMLIT_CONFIG, APP_VERSION, OPENAI_API_KEY
 
 def main():
     # Set page config with logo as favicon
@@ -171,6 +172,10 @@ def main():
     # Initialize session state
     if 'show_agent_builder' not in st.session_state:
         st.session_state.show_agent_builder = False
+    if 'created_bots' not in st.session_state:
+        st.session_state.created_bots = []
+    if 'delete_confirm' not in st.session_state:
+        st.session_state.delete_confirm = {}
     
     if not st.session_state.show_agent_builder:
         st.markdown("## Welcome to Denken Labs")
@@ -211,10 +216,80 @@ def main():
         
         # Create button
         if st.button("Create", type="primary", use_container_width=True):
-            if agent_description:
-                st.success(f"Agent created! Description: {agent_description}")
+            if agent_description and agent_description.strip():
+                try:
+                    # Generate bot name and short description using OpenAI
+                    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant that creates concise bot names and descriptions. Respond in JSON format with 'name' and 'description' fields. Name should be 2-4 words, description should be 1-2 sentences."},
+                            {"role": "user", "content": f"Based on this agent description, create a catchy name and a short description:\n\n{agent_description}"}
+                        ],
+                        response_format={"type": "json_object"},
+                        temperature=0.7
+                    )
+                    
+                    import json
+                    bot_data = json.loads(response.choices[0].message.content)
+                    bot_name = bot_data.get("name", "AI Agent")
+                    bot_desc = bot_data.get("description", agent_description[:100])
+                    
+                    # Add bot to session state
+                    bot_id = len(st.session_state.created_bots)
+                    st.session_state.created_bots.append({
+                        "id": bot_id,
+                        "name": bot_name,
+                        "description": bot_desc,
+                        "full_description": agent_description
+                    })
+                    
+                    # Clear the input
+                    st.session_state.agent_description = ""
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error creating bot: {str(e)}")
             else:
                 st.warning("Please enter an agent description first.")
+        
+        # Display all created bots
+        if st.session_state.created_bots:
+            st.markdown("---")
+            st.markdown("### Created Agents")
+            
+            for bot in st.session_state.created_bots:
+                with st.container():
+                    col1, col2, col3 = st.columns([1, 8, 1])
+                    
+                    with col1:
+                        if bot_path:
+                            st.image(bot_path, width=80)
+                        else:
+                            st.info("🤖")
+                    
+                    with col2:
+                        st.markdown(f"**{bot['name']}**")
+                        st.markdown(f"{bot['description']}")
+                    
+                    with col3:
+                        delete_key = f"delete_{bot['id']}"
+                        confirm_key = f"confirm_{bot['id']}"
+                        
+                        if st.session_state.delete_confirm.get(confirm_key, False):
+                            if st.button("✓ Yes", key=f"yes_{bot['id']}", type="primary"):
+                                # Remove bot from list
+                                st.session_state.created_bots = [b for b in st.session_state.created_bots if b['id'] != bot['id']]
+                                st.session_state.delete_confirm[confirm_key] = False
+                                st.rerun()
+                            if st.button("✗ No", key=f"no_{bot['id']}"):
+                                st.session_state.delete_confirm[confirm_key] = False
+                                st.rerun()
+                        else:
+                            if st.button("🗑️", key=delete_key, help="Delete this agent"):
+                                st.session_state.delete_confirm[confirm_key] = True
+                                st.rerun()
+                    
+                    st.markdown("---")
     
     st.markdown("</div>", unsafe_allow_html=True)
 
