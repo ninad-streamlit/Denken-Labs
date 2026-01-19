@@ -197,7 +197,7 @@ def main():
         
         # Display bot logo
         if bot_path:
-            st.image(bot_path, width=200)
+            st.image(bot_path, width=100)
         else:
             st.info("🤖 Bot logo")
         
