@@ -127,16 +127,10 @@ class GoogleAuth:
         # IMPORTANT: Make sure redirect_uri matches EXACTLY what's in Google Cloud Console
         try:
             authorization_url, _ = self.flow.authorization_url(**auth_params)
-            # Debug: Show the redirect URI being used in the URL
-            st.info(f"🔍 DEBUG: Authorization URL redirect_uri parameter: {self.redirect_uri}")
             return authorization_url
         except Exception as e:
             st.error(f"❌ Error creating authorization URL: {e}")
-            st.error(f"Redirect URI being used: {self.redirect_uri}")
-            st.error(f"Client ID: {self.client_id[:20] if self.client_id else 'None'}...")
-            import traceback
-            st.code(traceback.format_exc())
-            raise
+            return None
 
     def handle_callback(self, code, state):
         """Handle the OAuth callback and exchange code for tokens"""
@@ -250,25 +244,6 @@ class GoogleAuth:
 
     def create_login_ui(self):
         """Create the login user interface"""
-        # Debug info FIRST - before anything else
-        st.info("🔍 DEBUG: Login UI function called")
-        try:
-            with st.expander("🔍 Debug Info - OAuth Configuration", expanded=True):
-                st.write(f"**Client ID configured:** {bool(self.client_id)}")
-                st.write(f"**Client Secret configured:** {bool(self.client_secret)}")
-                st.write(f"**Redirect URI:** `{self.redirect_uri}`")
-                if self.client_id:
-                    st.write(f"**Client ID (first 20 chars):** `{str(self.client_id)[:20]}...`")
-                if self.redirect_uri:
-                    st.write(f"**Full Redirect URI:** `{self.redirect_uri}`")
-                st.write("")
-                st.write("**⚠️ IMPORTANT:** Make sure this redirect URI matches EXACTLY in Google Cloud Console!")
-                st.write("Go to: APIs & Services → Credentials → Your OAuth Client → Authorized redirect URIs")
-        except Exception as e:
-            st.error(f"Debug error: {e}")
-            import traceback
-            st.code(traceback.format_exc())
-        
         # Mobile-responsive CSS
         st.markdown("""
         <style>
@@ -463,9 +438,6 @@ class GoogleAuth:
 
 def check_authentication():
     """Check if user is authenticated, redirect to login if not"""
-    # DEBUG: Always show this to verify function is called
-    st.info("🔍 DEBUG: check_authentication() called")
-    
     # Initialize session state to prevent refresh logout
     initialize_session()
     
@@ -490,8 +462,6 @@ def check_authentication():
                 return False
         except Exception as e:
             st.error(f"❌ Error in OAuth callback: {e}")
-            import traceback
-            st.code(traceback.format_exc())
             return False
     
     # Check for persistent authentication first
@@ -507,15 +477,11 @@ def check_authentication():
     
     if not is_authenticated:
         try:
-            st.info("🔍 DEBUG: Creating GoogleAuth() object...")
             auth = GoogleAuth()
-            st.info("🔍 DEBUG: GoogleAuth() created successfully, calling create_login_ui()...")
             auth.create_login_ui()
             return False
         except Exception as e:
-            st.error(f"❌ Error creating GoogleAuth or login UI: {e}")
-            import traceback
-            st.code(traceback.format_exc())
+            st.error(f"❌ Error: {e}")
             return False
     return True
 
