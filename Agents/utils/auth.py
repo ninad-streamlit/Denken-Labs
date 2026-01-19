@@ -46,15 +46,13 @@ class GoogleAuth:
         if not configured_redirect_uri:
             configured_redirect_uri = os.getenv('GOOGLE_REDIRECT_URI')
         
-        # Default to 8501 if not found
-        default_port = 8501
-        
         # Use configured redirect URI or default
         if configured_redirect_uri:
             self.redirect_uri = configured_redirect_uri
         else:
             # Try to detect Streamlit Cloud URL from query params or environment
             # For Streamlit Cloud, the redirect URI should be the app URL
+            default_port = 8501
             try:
                 # Check if we're on Streamlit Cloud
                 if 'streamlit.app' in os.getenv('STREAMLIT_SERVER_URL', ''):
@@ -62,12 +60,14 @@ class GoogleAuth:
                     server_url = os.getenv('STREAMLIT_SERVER_URL', '')
                     if server_url:
                         self.redirect_uri = server_url.rstrip('/')
+                    else:
+                        self.redirect_uri = f'http://localhost:{default_port}'
                 else:
                     # Default to common ports for local development
                     self.redirect_uri = f'http://localhost:{default_port}'
             except:
                 # Default to common ports - user should configure this in .env or Streamlit secrets
-                self.redirect_uri = f'http://localhost:{default_port}'
+                self.redirect_uri = f'http://localhost:8501'
         
         self.scopes = [
             'https://www.googleapis.com/auth/userinfo.email',
@@ -77,6 +77,7 @@ class GoogleAuth:
         
         # Initialize the OAuth flow only if credentials are available
         self.flow = None
+        self.flow_error = None
         if self.client_id and self.client_secret:
             try:
                 self.flow = Flow.from_client_config(
@@ -93,8 +94,8 @@ class GoogleAuth:
                     redirect_uri=self.redirect_uri
                 )
             except Exception as e:
-                # Log error but don't fail here - will be caught in get_authorization_url
-                pass
+                # Store error for debugging - will be caught in get_authorization_url
+                self.flow_error = str(e)
 
     def get_authorization_url(self):
         """Get the Google OAuth authorization URL"""
@@ -103,7 +104,10 @@ class GoogleAuth:
             return None
         
         if not self.flow:
-            st.error("❌ OAuth flow not initialized. Check your credentials.")
+            error_msg = "❌ OAuth flow not initialized. Check your credentials."
+            if hasattr(self, 'flow_error') and self.flow_error:
+                error_msg += f" Error: {self.flow_error}"
+            st.error(error_msg)
             return None
         
         # Generate a random state parameter for security
