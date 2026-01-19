@@ -306,12 +306,15 @@ def main():
                             if save_clicked and edited_description and edited_description.strip():
                                 try:
                                     # Regenerate name, description, and character based on new description
+                                    # Get existing agent names to avoid duplicates (excluding current bot)
+                                    existing_names = [b.get('name', '').lower() for b in st.session_state.created_bots if b['id'] != bot['id']]
+                                    
                                     client = openai.OpenAI(api_key=OPENAI_API_KEY)
                                     response = client.chat.completions.create(
                                         model="gpt-4o-mini",
                                         messages=[
-                                            {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. Name should be catchy, adventurous, and playful (2-4 words), description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
-                                            {"role": "user", "content": f"Based on this agent description, create a catchy, adventurous, and playful name, short description, and elaborate character profile:\n\n{edited_description}"}
+                                            {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. The name should be inspired by cartoon characters, superheroes, or famous personalities - it should feel like an actual character name (e.g., 'Flash Writer', 'Captain Code', 'Sparky Bot') rather than an adjective. Make it unique and original, catchy, adventurous, and playful. Description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
+                                            {"role": "user", "content": f"Based on this agent description, create a unique character name (inspired by cartoon characters/superheroes/famous personalities but original), short description, and elaborate character profile. Avoid these existing names: {', '.join(existing_names) if existing_names else 'none'}\n\nAgent description:\n{edited_description}"}
                                         ],
                                         response_format={"type": "json_object"},
                                         temperature=0.9
