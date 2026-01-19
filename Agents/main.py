@@ -13,19 +13,19 @@ def main():
         config['page_icon'] = "🤖"  # Fallback to emoji if image not found
     st.set_page_config(**config)
     
-    # Mobile-responsive CSS with reduced spacing
+    # Mobile-responsive CSS with minimal spacing
     st.markdown("""
     <style>
     .main .block-container {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
     }
     .header-container {
         display: flex;
         align-items: center;
-        gap: 15px;
-        margin-bottom: 5px;
-        margin-top: 0;
+        gap: 12px;
+        margin-bottom: 2px !important;
+        margin-top: 0 !important;
     }
     .logo-container {
         flex-shrink: 0;
@@ -33,12 +33,16 @@ def main():
     .title-version-container {
         flex: 1;
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
     }
+    hr {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
     .main-content {
-        padding: 15px 0 !important;
-        margin-top: 10px !important;
+        padding: 8px 0 !important;
+        margin-top: 5px !important;
     }
     h1 {
         margin-top: 0 !important;
@@ -49,10 +53,16 @@ def main():
         margin-bottom: 0 !important;
     }
     .stMarkdown h2 {
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
+        margin-top: 0.3rem !important;
+        margin-bottom: 0.3rem !important;
+        font-size: 1.5rem !important;
     }
     .stMarkdown p {
+        margin-bottom: 0.3rem !important;
+        margin-top: 0.2rem !important;
+    }
+    .stButton > button {
+        margin-top: 0.5rem !important;
         margin-bottom: 0.5rem !important;
     }
     @media (max-width: 768px) {
@@ -123,7 +133,7 @@ def main():
     
     st.markdown("---")
     
-    # Main content - very compact
+    # Main content - minimal spacing
     st.markdown("""
     <div class="main-content" style='text-align: center;'>
     """, unsafe_allow_html=True)
@@ -131,7 +141,7 @@ def main():
     st.markdown("## Welcome to Denken Labs")
     st.markdown("**Build your own AI agent eco-system with ease**")
     
-    # Build your own agent button
+    # Build your own agent button - compact
     if st.button("🚀 Build Your Own Agent", type="primary", use_container_width=True):
         st.info("🚀 Agent builder coming soon!")
     
