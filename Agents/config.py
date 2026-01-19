@@ -41,6 +41,5 @@ STREAMLIT_CONFIG = {
         "Report a bug": None,
         "About": "Denken Labs - Begin your space adventure"
     }
-    # Note: We force light mode/white background via CSS, not here
-    # Streamlit's theme setting is overridden by custom CSS
+    # Note: Dark mode is allowed. CSS ensures text is light/readable in dark mode
 }
