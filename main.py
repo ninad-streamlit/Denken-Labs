@@ -120,6 +120,10 @@ def main():
         --text-secondary: #475569;
         --background: #ffffff;
         --border-color: #e2e8f0;
+        --purple-button: #6b46c1;
+        --purple-button-dark: #553c9a;
+        --green-button: #059669;
+        --green-button-dark: #047857;
     }
     .main .block-container {
         padding-top: 0.2rem !important;
@@ -193,6 +197,53 @@ def main():
         background-color: #dbeafe !important;
         border-left: 4px solid var(--primary-color) !important;
     }
+    /* Use JavaScript to target buttons by text content for custom colors */
+    </style>
+    <script>
+    function styleButtons() {
+        // Purple for agent buttons
+        var buttons = document.querySelectorAll('button[kind="primary"]');
+        buttons.forEach(function(btn) {
+            var text = btn.textContent || btn.innerText || '';
+            // Purple for Build Your Own Agent and Create (agent creation)
+            if (text.includes('Build Your Own Agent') || (text.includes('Create') && !text.includes('Mission'))) {
+                btn.style.backgroundColor = '#6b46c1';
+                btn.style.borderColor = '#6b46c1';
+                btn.style.color = 'white';
+                btn.onmouseenter = function() {
+                    this.style.backgroundColor = '#553c9a';
+                    this.style.borderColor = '#553c9a';
+                };
+                btn.onmouseleave = function() {
+                    this.style.backgroundColor = '#6b46c1';
+                    this.style.borderColor = '#6b46c1';
+                };
+            }
+            // Dark green for Activate Mission
+            if (text.includes('Activate Mission')) {
+                btn.style.backgroundColor = '#059669';
+                btn.style.borderColor = '#059669';
+                btn.style.color = 'white';
+                btn.onmouseenter = function() {
+                    this.style.backgroundColor = '#047857';
+                    this.style.borderColor = '#047857';
+                };
+                btn.onmouseleave = function() {
+                    this.style.backgroundColor = '#059669';
+                    this.style.borderColor = '#059669';
+                };
+            }
+        });
+    }
+    // Run on page load
+    setTimeout(styleButtons, 100);
+    // Run after Streamlit reruns
+    window.addEventListener('load', styleButtons);
+    // Use MutationObserver to catch dynamically added buttons
+    var observer = new MutationObserver(styleButtons);
+    observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+    <style>
     @media (max-width: 768px) {
         .header-container {
             flex-direction: column !important;
@@ -236,7 +287,7 @@ def main():
         else:
             # Debug: show which paths were checked
             st.info(f"Logo not found. Checked: {logo_paths}")
-    except Exception as e:
+        except Exception as e:
         st.error(f"Error loading logo: {e}")
     
     st.markdown(f"""
@@ -276,8 +327,22 @@ def main():
         st.markdown("## Welcome to Denken Labs")
         st.markdown("**Build your own AI agent eco-system with ease**")
         
-        # Build your own agent button - compact
-        if st.button("🚀 Build Your Own Agent", type="primary", use_container_width=True):
+        # Build your own agent button - compact (purple)
+        st.markdown("""
+        <style>
+        button[kind="primary"]:contains("Build Your Own Agent"),
+        div.stButton:has(> button:contains("Build Your Own Agent")) button {
+            background-color: #6b46c1 !important;
+            border-color: #6b46c1 !important;
+        }
+        button[kind="primary"]:contains("Build Your Own Agent"):hover,
+        div.stButton:has(> button:contains("Build Your Own Agent")) button:hover {
+            background-color: #553c9a !important;
+            border-color: #553c9a !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        if st.button("🚀 Build Your Own Agent", type="primary", use_container_width=True, key="build_agent_btn"):
             st.session_state.show_agent_builder = True
             st.rerun()
     else:
