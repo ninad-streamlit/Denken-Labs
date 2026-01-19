@@ -215,13 +215,13 @@ def main():
         
         # Agent description text input
         st.markdown("### Describe Your Agent")
-        st.markdown("**Create individual AI agents with specific capabilities. When you have 2 or more agents, they form a team and can be assigned missions to work together.**")
+        st.markdown("**Create individual AI agents with specific capabilities and personalities. When you have 2 or more agents, they form a team and can be assigned missions to work together.**")
         
         # Use form to handle submission and clear input
         with st.form("agent_creation_form", clear_on_submit=True):
             agent_description = st.text_area(
                 "Enter a detailed description of the AI agent you want to build:",
-                placeholder="Example: An AI agent that helps users create marketing content for social media posts...\n\nNote: Create at least 2 agents to form a team and assign missions.",
+                placeholder="Example: A calm and thoughtful agent who loves helping with homework, solving puzzles, and answering questions with patience and kindness.",
                 height=150,
                 key="agent_description_input"
             )
