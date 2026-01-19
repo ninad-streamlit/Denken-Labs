@@ -329,6 +329,11 @@ class GoogleAuth:
         try:
             auth_url = self.get_authorization_url()
             if auth_url:
+                # DEBUG: Show the full authorization URL
+                with st.expander("🔍 DEBUG: Full Authorization URL (Click to see what's being sent to Google)", expanded=False):
+                    st.code(auth_url, language=None)
+                    st.write("**Check if redirect_uri parameter matches exactly:** `https://agentbuilder.streamlit.app`")
+                
                 st.markdown(f"""
                 <div style="text-align: center; margin: 20px 0;">
                     <a href="{auth_url}" target="_self" style="text-decoration: none;">
