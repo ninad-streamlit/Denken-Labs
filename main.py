@@ -16,31 +16,36 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
 
 def generate_agent_example():
-    """Generate a short random agent description example (around 10 words) with personalities"""
-    personalities = [
-        "calm", "strong", "fast", "big", "gentle", "smart", "playful", "wise",
-        "creative", "bold", "kind", "clever", "brave", "cheerful", "thoughtful", "energetic"
+    """Generate a short random agent description example (around 10 words) inspired by Star Trek characters"""
+    star_trek_roles = [
+        "Captain", "Science Officer", "Chief Engineer", "Medical Officer", 
+        "Security Officer", "Communications Officer", "Navigator", "Counselor",
+        "Tactical Officer", "Operations Officer", "Helmsman", "First Officer"
     ]
-    activities = [
-        "homework helper", "puzzle solver", "story teller", "picture drawer",
-        "explorer", "protector", "teacher", "game creator", "friend", "helper"
+    star_trek_traits = [
+        "bold and brave", "logical and analytical", "curious and scientific", 
+        "caring and compassionate", "protective and vigilant", "diplomatic and friendly",
+        "precise and focused", "wise and understanding", "strategic and tactical",
+        "efficient and organized", "skilled and experienced", "loyal and trustworthy"
     ]
-    special_traits = [
-        "patient", "imaginative", "courageous", "understanding", "funny", "curious",
-        "caring", "determined", "artistic", "adventurous"
+    star_trek_qualities = [
+        "exploring new worlds", "solving complex problems", "helping others in need",
+        "protecting the crew", "discovering new knowledge", "maintaining peace",
+        "navigating through space", "healing and caring", "communicating with aliens",
+        "analyzing data", "engineering solutions", "leading missions"
     ]
     
-    personality = random.choice(personalities)
-    activity = random.choice(activities)
-    trait = random.choice(special_traits)
+    role = random.choice(star_trek_roles)
+    trait = random.choice(star_trek_traits)
+    quality = random.choice(star_trek_qualities)
     
-    # Generate short examples (around 10 words)
+    # Generate short Star Trek-style examples (around 10 words)
     examples = [
-        f"A {personality} {activity} who is {trait} and loves helping others.",
-        f"An agent who is {personality} and {trait}, specializing in {activity}.",
-        f"A {personality}, {trait} helper that loves {activity} and making friends.",
-        f"An {personality} agent who is {trait} and enjoys {activity} with friends.",
-        f"A {trait} and {personality} {activity} who brings joy to everyone."
+        f"A {role} who is {trait} and loves {quality}.",
+        f"An agent who is a {role}, {trait}, specializing in {quality}.",
+        f"A {trait} {role} that enjoys {quality} and teamwork.",
+        f"An {role} agent who is {trait} and excels at {quality}.",
+        f"A {role} who is {trait} and dedicated to {quality}."
     ]
     
     return random.choice(examples)
