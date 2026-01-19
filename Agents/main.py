@@ -3,6 +3,9 @@ import os
 from config import STREAMLIT_CONFIG
 from utils.auth import check_authentication, get_user_display_info, GoogleAuth
 
+# Version number - increment by 0.1 for each code change
+APP_VERSION = "0.2"
+
 def main():
     # Set page config with bot icon as favicon
     config = STREAMLIT_CONFIG.copy()
@@ -68,9 +71,9 @@ def main():
             return
     
     with col3:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align: right; padding-top: 20px;">
-            <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v0.2</h2>
+            <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v{APP_VERSION}</h2>
         </div>
         """, unsafe_allow_html=True)
     
