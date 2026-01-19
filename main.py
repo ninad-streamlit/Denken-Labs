@@ -1015,6 +1015,53 @@ def main():
                                     story.append(Paragraph(para_html, body_style))
                                     story.append(Spacer(1, 0.2*inch))
                             
+                            # Add Q&A section if there are questions and answers
+                            if st.session_state.story_qa_history:
+                                story.append(Spacer(1, 0.4*inch))
+                                
+                                # Q&A Section Title
+                                qa_title_style = ParagraphStyle(
+                                    'QATitle',
+                                    parent=getSampleStyleSheet()['Heading2'],
+                                    fontSize=14,
+                                    textColor='#6b46c1',
+                                    spaceAfter=15,
+                                    spaceBefore=20
+                                )
+                                story.append(Paragraph("Questions & Answers", qa_title_style))
+                                story.append(Spacer(1, 0.2*inch))
+                                
+                                # Q&A Question style
+                                qa_question_style = ParagraphStyle(
+                                    'QAQuestion',
+                                    parent=getSampleStyleSheet()['Normal'],
+                                    fontSize=11,
+                                    textColor='#553c9a',
+                                    spaceAfter=8,
+                                    leftIndent=0,
+                                    fontName='Helvetica-Bold'
+                                )
+                                
+                                # Q&A Answer style
+                                qa_answer_style = ParagraphStyle(
+                                    'QAAnswer',
+                                    parent=getSampleStyleSheet()['Normal'],
+                                    fontSize=10,
+                                    textColor='#1e293b',
+                                    spaceAfter=15,
+                                    leftIndent=20
+                                )
+                                
+                                # Add each Q&A pair
+                                for idx, qa in enumerate(st.session_state.story_qa_history, 1):
+                                    question_text = f"Q{idx}: {qa['question']}"
+                                    answer_text = f"A{idx}: {qa['answer']}"
+                                    
+                                    story.append(Paragraph(question_text.replace('\n', '<br/>'), qa_question_style))
+                                    story.append(Spacer(1, 0.1*inch))
+                                    story.append(Paragraph(answer_text.replace('\n', '<br/>'), qa_answer_style))
+                                    story.append(Spacer(1, 0.15*inch))
+                            
                             # Build PDF
                             doc.build(story)
                             buffer.seek(0)
