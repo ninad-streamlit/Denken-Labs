@@ -480,38 +480,50 @@ def main():
     }
     </style>
     <style>
-    /* Force light mode / white background as default */
-    .stApp {
-        background-color: #ffffff !important;
-    }
-    .main .block-container {
-        background-color: #ffffff !important;
-    }
-    
-    /* Override Streamlit dark mode if enabled */
-    [data-theme="dark"] {
-        background-color: #ffffff !important;
-    }
-    [data-theme="dark"] .stApp {
-        background-color: #ffffff !important;
-    }
-    [data-theme="dark"] .main .block-container {
-        background-color: #ffffff !important;
-    }
-    
-    /* If dark mode is somehow active, make text lighter/readable */
+    /* Allow dark mode but ensure text is light/readable when dark mode is selected */
     [data-theme="dark"] .stMarkdown,
     [data-theme="dark"] .stMarkdown p,
     [data-theme="dark"] .stMarkdown strong,
     [data-theme="dark"] .stMarkdown h1,
     [data-theme="dark"] .stMarkdown h2,
     [data-theme="dark"] .stMarkdown h3,
+    [data-theme="dark"] .stMarkdown h4,
+    [data-theme="dark"] .stMarkdown li,
+    [data-theme="dark"] .stMarkdown span,
     [data-theme="dark"] .stText,
     [data-theme="dark"] .stTextInput > div > div > input,
     [data-theme="dark"] .stTextArea > div > div > textarea,
     [data-theme="dark"] .stExpander,
-    [data-theme="dark"] .stExpander label {
-        color: #1e293b !important;
+    [data-theme="dark"] .stExpander label,
+    [data-theme="dark"] .stExpander .stMarkdown,
+    [data-theme="dark"] .stInfo,
+    [data-theme="dark"] .stInfo .stMarkdown,
+    [data-theme="dark"] .stSuccess .stMarkdown,
+    [data-theme="dark"] .stWarning .stMarkdown,
+    [data-theme="dark"] .stError .stMarkdown {
+        color: #f8fafc !important; /* Light gray/white text for readability */
+    }
+    
+    /* Ensure headings are also light in dark mode */
+    [data-theme="dark"] h1,
+    [data-theme="dark"] h2,
+    [data-theme="dark"] h3,
+    [data-theme="dark"] h4,
+    [data-theme="dark"] h5,
+    [data-theme="dark"] h6 {
+        color: #f8fafc !important;
+    }
+    
+    /* Make input placeholders readable in dark mode */
+    [data-theme="dark"] input::placeholder,
+    [data-theme="dark"] textarea::placeholder {
+        color: #94a3b8 !important; /* Lighter placeholder text */
+        opacity: 0.8;
+    }
+    
+    /* Ensure buttons have readable text in dark mode */
+    [data-theme="dark"] .stButton > button {
+        color: white !important;
     }
     
     :root {
