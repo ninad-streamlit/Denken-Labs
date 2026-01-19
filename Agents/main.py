@@ -1093,7 +1093,7 @@ def main():
         
         # Agent description text input
         st.markdown("### Describe Your Agent")
-        st.markdown("**Create individual AI agents with specific capabilities and personalities. When you have 2 or more agents, they form a team and can be assigned missions to work together.**")
+        st.markdown('<div class="agent-description-intro">**Create individual AI agents with specific capabilities and personalities. When you have 2 or more agents, they form a team and can be assigned missions to work together.**</div>', unsafe_allow_html=True)
         
         # Use form to handle submission and clear input
         # Generate example if not exists (will be regenerated after agent creation)
