@@ -80,7 +80,7 @@ def main():
     """, unsafe_allow_html=True)
     
     st.markdown("## Welcome to Denken Labs")
-    st.markdown("**Build your own AI agent with ease**")
+    st.markdown("**Build your own AI agent eco-system with ease**")
     
     st.markdown("<br>", unsafe_allow_html=True)
     
