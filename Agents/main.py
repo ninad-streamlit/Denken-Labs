@@ -364,8 +364,8 @@ def main():
             var textarea = formParent ? formParent.querySelector('textarea') : null;
             var placeholder = textarea ? (textarea.getAttribute('placeholder') || '') : '';
             
-            // Purple for Build Your Own Agent button
-            if (text.includes('Build Your Own Agent') || text.includes('🚀 Build Your Own Agent')) {
+            // Purple for Build Your Own Adventure button
+            if (text.includes('Build Your Own Adventure') || text.includes('🚀 Build Your Own Adventure')) {
                 forcePurpleButton(btn);
             }
             
@@ -596,19 +596,19 @@ def main():
         # Build your own agent button - compact (purple)
         st.markdown("""
         <style>
-        button[kind="primary"]:contains("Build Your Own Agent"),
-        div.stButton:has(> button:contains("Build Your Own Agent")) button {
+        button[kind="primary"]:contains("Build Your Own Adventure"),
+        div.stButton:has(> button:contains("Build Your Own Adventure")) button {
             background-color: #6b46c1 !important;
             border-color: #6b46c1 !important;
         }
-        button[kind="primary"]:contains("Build Your Own Agent"):hover,
-        div.stButton:has(> button:contains("Build Your Own Agent")) button:hover {
+        button[kind="primary"]:contains("Build Your Own Adventure"):hover,
+        div.stButton:has(> button:contains("Build Your Own Adventure")) button:hover {
             background-color: #553c9a !important;
             border-color: #553c9a !important;
         }
         </style>
         """, unsafe_allow_html=True)
-        if st.button("🚀 Build Your Own Agent", type="primary", use_container_width=True, key="build_agent_btn"):
+        if st.button("🚀 Build Your Own Adventure", type="primary", use_container_width=True, key="build_agent_btn"):
             st.session_state.show_agent_builder = True
             st.rerun()
     else:
