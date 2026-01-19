@@ -338,7 +338,6 @@ def main():
                             temperature=0.9
                         )
                         
-                        import json
                         bot_data = json.loads(response.choices[0].message.content)
                         bot_name = bot_data.get("name", "AI Agent")
                         bot_desc = bot_data.get("description", agent_description[:100])
@@ -418,7 +417,6 @@ def main():
                                         temperature=0.9
                                     )
                                     
-                                    import json
                                     bot_data = json.loads(response.choices[0].message.content)
                                     new_name = bot_data.get("name", "AI Agent")
                                     new_desc = bot_data.get("description", edited_description[:100])
