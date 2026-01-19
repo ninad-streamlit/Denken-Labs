@@ -394,16 +394,92 @@ def main():
         config['page_icon'] = "🤖"  # Fallback to emoji if image not found
     st.set_page_config(**config)
     
-    # Add meta tags for better sharing (title and description)
-    st.markdown("""
-    <head>
-        <meta property="og:title" content="Denken Labs">
-        <meta property="og:description" content="Begin your space adventure">
-        <meta name="twitter:title" content="Denken Labs">
-        <meta name="twitter:description" content="Begin your space adventure">
-        <meta name="description" content="Begin your space adventure">
-    </head>
-    """, unsafe_allow_html=True)
+    # Get the app URL for Open Graph image (for sharing previews)
+    # For Streamlit Cloud, we need to construct the image URL
+    import base64
+    logo_url = None
+    if logo_path and os.path.exists(logo_path):
+        try:
+            # Encode logo as base64 for embedding in meta tags
+            with open(logo_path, "rb") as img_file:
+                logo_base64 = base64.b64encode(img_file.read()).decode()
+                logo_url = f"data:image/png;base64,{logo_base64}"
+        except Exception:
+            pass
+    
+    # Add meta tags for better sharing (title, description, and image)
+    # Using components.v1.html to properly inject into head
+    try:
+        import streamlit.components.v1 as components
+        meta_html = f"""
+        <head>
+            <title>Denken Labs - Begin your space adventure</title>
+            <meta name="title" content="Denken Labs">
+            <meta name="description" content="Begin your space adventure">
+            <meta property="og:type" content="website">
+            <meta property="og:title" content="Denken Labs">
+            <meta property="og:description" content="Begin your space adventure">
+            <meta property="og:site_name" content="Denken Labs">
+            <meta name="twitter:card" content="summary_large_image">
+            <meta name="twitter:title" content="Denken Labs">
+            <meta name="twitter:description" content="Begin your space adventure">
+        """
+        if logo_url:
+            meta_html += f'<meta property="og:image" content="{logo_url}">'
+            meta_html += f'<meta property="og:image:type" content="image/png">'
+            meta_html += f'<meta property="og:image:width" content="1200">'
+            meta_html += f'<meta property="og:image:height" content="630">'
+            meta_html += f'<meta name="twitter:image" content="{logo_url}">'
+        
+        meta_html += """
+        </head>
+        """
+        components.html(meta_html, height=0)
+    except Exception:
+        # Fallback: use st.markdown with script injection
+        meta_script = f"""
+        <script>
+        (function() {{
+            // Update page title
+            document.title = "Denken Labs - Begin your space adventure";
+            
+            // Create or update meta tags
+            function setMetaTag(property, content) {{
+                let tag = document.querySelector(`meta[property="${{property}}"]`) || 
+                         document.querySelector(`meta[name="${{property}}"]`);
+                if (!tag) {{
+                    tag = document.createElement('meta');
+                    if (property.startsWith('og:') || property.startsWith('twitter:')) {{
+                        tag.setAttribute('property', property);
+                    }} else {{
+                        tag.setAttribute('name', property);
+                    }}
+                    document.head.appendChild(tag);
+                }}
+                tag.setAttribute('content', content);
+            }}
+            
+            // Set all meta tags
+            setMetaTag('og:title', 'Denken Labs');
+            setMetaTag('og:description', 'Begin your space adventure');
+            setMetaTag('og:type', 'website');
+            setMetaTag('og:site_name', 'Denken Labs');
+            setMetaTag('twitter:card', 'summary_large_image');
+            setMetaTag('twitter:title', 'Denken Labs');
+            setMetaTag('twitter:description', 'Begin your space adventure');
+            setMetaTag('description', 'Begin your space adventure');
+        """
+        if logo_url:
+            meta_script += f"""
+            setMetaTag('og:image', '{logo_url}');
+            setMetaTag('og:image:type', 'image/png');
+            setMetaTag('twitter:image', '{logo_url}');
+            """
+        meta_script += """
+        })();
+        </script>
+        """
+        st.markdown(meta_script, unsafe_allow_html=True)
     
     # Add favicon link to HTML head for better control
     if logo_path:
