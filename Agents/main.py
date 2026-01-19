@@ -803,6 +803,10 @@ def main():
                 activate_clicked = st.form_submit_button("🚀 Activate Mission", type="primary", use_container_width=True)
                 
                 if activate_clicked:
+                    # Use example if mission description is blank
+                    if not mission_description or not mission_description.strip():
+                        mission_description = st.session_state.mission_example
+                    
                     if mission_description and mission_description.strip():
                         st.session_state.team_mission = mission_description
                         
