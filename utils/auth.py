@@ -241,6 +241,9 @@ class GoogleAuth:
 
     def create_login_ui(self):
         """Create the login user interface"""
+        # Import version from main
+        from main import APP_VERSION
+        
         # Mobile-responsive CSS
         st.markdown("""
         <style>
@@ -259,7 +262,16 @@ class GoogleAuth:
         </style>
         """, unsafe_allow_html=True)
         
-        st.title("AI Vibe Agents")
+        # Header with title and version
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            st.title("AI Vibe Agents")
+        with col2:
+            st.markdown(f"""
+            <div style="text-align: right; padding-top: 20px;">
+                <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v{APP_VERSION}</h2>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Add custom bot icon with responsive sizing
         # Use relative path for bot icon (works locally and on Streamlit Cloud)
