@@ -1149,8 +1149,10 @@ def main():
             </style>
             """, unsafe_allow_html=True)
             
-            # Create button (should be purple)
-            submitted = st.form_submit_button("Create", type="primary", use_container_width=True)
+            # Create button (should be purple) - change text based on whether agents exist
+            num_agents = len(st.session_state.get('created_bots', []))
+            button_text = "Create Your Agent" if num_agents == 0 else "Keep Creating More Agents"
+            submitted = st.form_submit_button(button_text, type="primary", use_container_width=True)
             
             if submitted:
                 # Use example if description is blank
