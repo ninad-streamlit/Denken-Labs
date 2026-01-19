@@ -55,43 +55,20 @@ class GoogleAuth:
         if configured_redirect_uri:
             self.redirect_uri = configured_redirect_uri.rstrip('/')
         else:
-            # Try to detect the actual port Streamlit is using (for local development)
-            default_port = 8501
+            # For local development, always use port 8501 to match Google Cloud Console
+            # This ensures the redirect URI matches what's registered, regardless of what port Streamlit is actually on
             try:
                 # Check if we're on Streamlit Cloud
                 server_url = os.getenv('STREAMLIT_SERVER_URL', '')
                 if server_url and 'streamlit.app' in server_url:
                     self.redirect_uri = server_url.rstrip('/')
                 else:
-                    # For local development, try to detect port from query params or session state
-                    # This allows us to use whatever port Streamlit is actually running on
-                    detected_port = None
-                    try:
-                        # Check if port was detected and stored in session state
-                        detected_port = st.session_state.get('detected_port', None)
-                        
-                        # Also check query params (set by JavaScript)
-                        port_from_query = st.query_params.get('_port', None)
-                        if port_from_query:
-                            detected_port = port_from_query
-                            st.session_state['detected_port'] = detected_port
-                    except:
-                        pass
-                    
-                    if detected_port:
-                        self.redirect_uri = f'http://localhost:{detected_port}'
-                    else:
-                        # Try to get from Streamlit's internal URL
-                        streamlit_base_url = os.getenv('STREAMLIT_SERVER_BASE_URL', '')
-                        if streamlit_base_url:
-                            self.redirect_uri = streamlit_base_url.rstrip('/')
-                        else:
-                            # For local dev, use default port
-                            # JavaScript will detect actual port and update on next page load
-                            self.redirect_uri = f'http://localhost:{default_port}'
+                    # For local dev, always use port 8501 (must match Google Cloud Console)
+                    # Even if Streamlit is running on a different port, we use 8501 for OAuth
+                    self.redirect_uri = 'http://localhost:8501'
             except:
-                # Default fallback
-                self.redirect_uri = f'http://localhost:8501'
+                # Default fallback to port 8501
+                self.redirect_uri = 'http://localhost:8501'
         
         self.scopes = [
             'https://www.googleapis.com/auth/userinfo.email',
@@ -127,30 +104,10 @@ class GoogleAuth:
             st.error("❌ Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.")
             return None
         
-        # For local development, check if port was detected and update redirect URI
-        redirect_uri_to_use = self.redirect_uri
-        if 'localhost' in redirect_uri_to_use or '127.0.0.1' in redirect_uri_to_use:
-            detected_port = st.session_state.get('detected_port', None)
-            if detected_port:
-                redirect_uri_to_use = f'http://localhost:{detected_port}'
-        
-        # Create flow with the correct redirect URI (may be different from initialized one)
-        try:
-            flow_to_use = Flow.from_client_config(
-                {
-                    "web": {
-                        "client_id": self.client_id,
-                        "client_secret": self.client_secret,
-                        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                        "token_uri": "https://oauth2.googleapis.com/token",
-                        "redirect_uris": [redirect_uri_to_use]
-                    }
-                },
-                scopes=self.scopes,
-                redirect_uri=redirect_uri_to_use
-            )
-        except Exception as e:
-            error_msg = f"❌ OAuth flow not initialized. Check your credentials. Error: {e}"
+        if not self.flow:
+            error_msg = "❌ OAuth flow not initialized. Check your credentials."
+            if hasattr(self, 'flow_error') and self.flow_error:
+                error_msg += f" Error: {self.flow_error}"
             st.error(error_msg)
             return None
         
@@ -165,7 +122,7 @@ class GoogleAuth:
         try:
             # Use a simpler prompt to avoid potential issues
             # 'select_account' shows account picker, 'consent' forces consent screen
-            authorization_url, _ = flow_to_use.authorization_url(
+            authorization_url, _ = self.flow.authorization_url(
                 access_type='offline',
                 state=state,
                 prompt='select_account',  # Show account selection screen first
@@ -372,27 +329,6 @@ class GoogleAuth:
                     st.code(auth_url, language=None)
             
             if auth_url:
-                # Add JavaScript to detect port and trigger a page reload with the port in query params
-                # This allows Python to detect and use the correct port
-                st.markdown("""
-                <script>
-                (function() {
-                    const port = window.location.port;
-                    const hostname = window.location.hostname;
-                    // Only do this for localhost and if port is detected and not already in URL
-                    if ((hostname === 'localhost' || hostname === '127.0.0.1') && port && !window.location.search.includes('_port=')) {
-                        // Add port to URL and reload so Python can detect it
-                        const newUrl = window.location.href + (window.location.search ? '&' : '?') + '_port=' + port;
-                        window.history.replaceState({}, '', newUrl);
-                        // Trigger a Streamlit rerun by setting a query param
-                        if (window.parent !== window) {
-                            window.parent.postMessage({type: 'streamlit:setFrameHeight', height: document.body.scrollHeight}, '*');
-                        }
-                    }
-                })();
-                </script>
-                """, unsafe_allow_html=True)
-                
                 st.markdown(f"""
                 <div style="text-align: center; margin: 20px 0;">
                     <a href="{auth_url}" target="_self" style="text-decoration: none;">

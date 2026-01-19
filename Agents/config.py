@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 # Version number - increment by 0.1 for each code change
-APP_VERSION = "1.4"
+APP_VERSION = "1.5"
 
 # Load environment variables (for local development)
 load_dotenv()
