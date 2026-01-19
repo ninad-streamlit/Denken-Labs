@@ -299,7 +299,7 @@ class GoogleAuth:
         # Header with title and version
         col1, col2 = st.columns([4, 1])
         with col1:
-            st.title("AI Vibe Agents")
+            st.title("Denken Labs")
         with col2:
             st.markdown(f"""
             <div style="text-align: right; padding-top: 20px;">

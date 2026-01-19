@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 # Version number - increment by 0.001 for each code change
-APP_VERSION = "0.012"
+APP_VERSION = "0.013"
 
 # Load environment variables (for local development)
 load_dotenv()
@@ -32,7 +32,7 @@ if not OPENAI_API_KEY:
 
 # Streamlit Configuration
 STREAMLIT_CONFIG = {
-    "page_title": "AI Vibe Agents",
+    "page_title": "Denken Labs",
     "page_icon": "🤖",
     "layout": "wide",  # Keep wide for desktop, but we'll add mobile-specific CSS
     "initial_sidebar_state": "expanded"

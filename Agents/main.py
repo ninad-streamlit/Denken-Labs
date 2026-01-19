@@ -47,7 +47,7 @@ def main():
         st.markdown(f"""
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h1 style="margin: 0;">🤖 AI Vibe Agents</h1>
+                <h1 style="margin: 0;">🤖 Denken Labs</h1>
             </div>
             <div style="text-align: right;">
                 <h2 style="color: #1f77b4; margin: 0; font-size: 1.5rem; font-weight: 400;">v{APP_VERSION}</h2>
@@ -73,7 +73,7 @@ def main():
     <div class="main-content" style='text-align: center; padding: 50px 0;'>
     """, unsafe_allow_html=True)
     
-    st.markdown("## Welcome to AI Vibe Agents")
+    st.markdown("## Welcome to Denken Labs")
     st.markdown("**Build your own AI agent with ease**")
     
     st.markdown("<br>", unsafe_allow_html=True)
