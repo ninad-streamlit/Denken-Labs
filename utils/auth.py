@@ -278,52 +278,14 @@ class GoogleAuth:
         Please log in with your Google account to access the system.
         """)
         
-        # Ask for email first
-        user_email = st.text_input(
-            "Enter your Google email address:",
-            value=st.session_state.get('login_email', ''),
-            placeholder="your-email@gmail.com"
-        )
-        
-        if user_email:
-            st.session_state.login_email = user_email
-        
         # Check if credentials are configured
         if not self.client_id or not self.client_secret:
-            st.error("""
-            ❌ **Google OAuth not configured**
-            
-            To enable Google login, please:
-            1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-            2. Create a new project or select existing one
-            3. Enable Google+ API
-            4. Create OAuth 2.0 credentials
-            5. Add the following to Streamlit Cloud Secrets (Settings → Secrets):
-            
-            ```toml
-            GOOGLE_CLIENT_ID = "your_client_id_here"
-            GOOGLE_CLIENT_SECRET = "your_client_secret_here"
-            GOOGLE_REDIRECT_URI = "https://agentbuilder.streamlit.app"
-            ```
-            
-            **⚠️ IMPORTANT:** Make sure the redirect URI in Google Cloud Console matches exactly!
-            """)
-            # Debug info (remove in production)
-            with st.expander("🔍 Debug Info"):
-                st.write(f"Client ID configured: {bool(self.client_id)}")
-                st.write(f"Client Secret configured: {bool(self.client_secret)}")
-                st.write(f"Redirect URI: {self.redirect_uri}")
+            st.error("❌ Google OAuth not configured. Please contact the administrator.")
             return False
         
-        # Create login button - only show if email is entered
-        if not user_email or '@' not in user_email:
-            st.info("👆 Please enter your Google email address above to continue.")
-            return
-        
+        # Create login button
         try:
-            st.info("🔍 DEBUG: Calling get_authorization_url()...")
-            auth_url = self.get_authorization_url(user_email)
-            st.info(f"🔍 DEBUG: get_authorization_url() returned: {auth_url is not None}")
+            auth_url = self.get_authorization_url()
             
             if auth_url:
                 # DEBUG: Show the full authorization URL - ALWAYS show this

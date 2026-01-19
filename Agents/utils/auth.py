@@ -75,25 +75,35 @@ class GoogleAuth:
             'openid'
         ]
         
-        # Initialize the OAuth flow
-        self.flow = Flow.from_client_config(
-            {
-                "web": {
-                    "client_id": self.client_id,
-                    "client_secret": self.client_secret,
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                    "redirect_uris": [self.redirect_uri]
-                }
-            },
-            scopes=self.scopes,
-            redirect_uri=self.redirect_uri
-        )
+        # Initialize the OAuth flow only if credentials are available
+        self.flow = None
+        if self.client_id and self.client_secret:
+            try:
+                self.flow = Flow.from_client_config(
+                    {
+                        "web": {
+                            "client_id": self.client_id,
+                            "client_secret": self.client_secret,
+                            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                            "token_uri": "https://oauth2.googleapis.com/token",
+                            "redirect_uris": [self.redirect_uri]
+                        }
+                    },
+                    scopes=self.scopes,
+                    redirect_uri=self.redirect_uri
+                )
+            except Exception as e:
+                # Log error but don't fail here - will be caught in get_authorization_url
+                pass
 
     def get_authorization_url(self):
         """Get the Google OAuth authorization URL"""
         if not self.client_id or not self.client_secret:
             st.error("❌ Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.")
+            return None
+        
+        if not self.flow:
+            st.error("❌ OAuth flow not initialized. Check your credentials.")
             return None
         
         # Generate a random state parameter for security
@@ -103,14 +113,17 @@ class GoogleAuth:
         # Also store it in a more persistent way
         st.session_state['oauth_state_backup'] = state
         
-        # Don't pass redirect_uri again since it's already set in the flow
-        authorization_url, _ = self.flow.authorization_url(
-            access_type='offline',
-            include_granted_scopes='true',
-            state=state,
-            prompt='consent select_account'  # Force both consent and account selection screens
-        )
-        return authorization_url
+        # IMPORTANT: Make sure redirect_uri matches EXACTLY what's in Google Cloud Console
+        try:
+            authorization_url, _ = self.flow.authorization_url(
+                access_type='offline',
+                state=state,
+                prompt='consent select_account'  # Show account selection screen
+            )
+            return authorization_url
+        except Exception as e:
+            st.error(f"❌ Error creating authorization URL: {e}")
+            return None
 
     def handle_callback(self, code, state):
         """Handle the OAuth callback and exchange code for tokens"""
@@ -224,25 +237,6 @@ class GoogleAuth:
 
     def create_login_ui(self):
         """Create the login user interface"""
-        # Debug info FIRST - before anything else
-        st.info("🔍 DEBUG: Login UI function called")
-        try:
-            with st.expander("🔍 Debug Info - OAuth Configuration", expanded=True):
-                st.write(f"**Client ID configured:** {bool(self.client_id)}")
-                st.write(f"**Client Secret configured:** {bool(self.client_secret)}")
-                st.write(f"**Redirect URI:** `{self.redirect_uri}`")
-                if self.client_id:
-                    st.write(f"**Client ID (first 20 chars):** `{str(self.client_id)[:20]}...`")
-                if self.redirect_uri:
-                    st.write(f"**Full Redirect URI:** `{self.redirect_uri}`")
-                st.write("")
-                st.write("**⚠️ IMPORTANT:** Make sure this redirect URI matches EXACTLY in Google Cloud Console!")
-                st.write("Go to: APIs & Services → Credentials → Your OAuth Client → Authorized redirect URIs")
-        except Exception as e:
-            st.error(f"Debug error: {e}")
-            import traceback
-            st.code(traceback.format_exc())
-        
         # Mobile-responsive CSS
         st.markdown("""
         <style>
@@ -286,35 +280,53 @@ class GoogleAuth:
         
         # Check if credentials are configured
         if not self.client_id or not self.client_secret:
-            st.error("""
-            ❌ **Google OAuth not configured**
-            
-            To enable Google login, please:
-            1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-            2. Create a new project or select existing one
-            3. Enable Google+ API
-            4. Create OAuth 2.0 credentials
-            5. Add the following to Streamlit Cloud Secrets (Settings → Secrets):
-            
-            ```toml
-            GOOGLE_CLIENT_ID = "your_client_id_here"
-            GOOGLE_CLIENT_SECRET = "your_client_secret_here"
-            GOOGLE_REDIRECT_URI = "https://agentbuilder.streamlit.app"
-            ```
-            
-            **⚠️ IMPORTANT:** Make sure the redirect URI in Google Cloud Console matches exactly!
-            """)
-            # Debug info (remove in production)
-            with st.expander("🔍 Debug Info"):
-                st.write(f"Client ID configured: {bool(self.client_id)}")
-                st.write(f"Client Secret configured: {bool(self.client_secret)}")
-                st.write(f"Redirect URI: {self.redirect_uri}")
+            st.error("❌ Google OAuth not configured. Please contact the administrator.")
             return False
         
         # Create login button
         try:
             auth_url = self.get_authorization_url()
+            
             if auth_url:
+                # DEBUG: Show the full authorization URL - ALWAYS show this
+                with st.expander("🔍 DEBUG: Full Authorization URL (REQUIRED - Click to see what's being sent to Google)", expanded=True):
+                    st.code(auth_url, language=None)
+                    # Parse and show the redirect_uri and scope parameters
+                    try:
+                        from urllib.parse import urlparse, parse_qs, unquote
+                        parsed = urlparse(auth_url)
+                        params = parse_qs(parsed.query)
+                        redirect_uri_param = params.get('redirect_uri', [None])[0]
+                        scope_param = params.get('scope', [None])[0]
+                        
+                        if redirect_uri_param:
+                            st.write(f"**Redirect URI in URL:** `{redirect_uri_param}`")
+                            st.write(f"**Expected:** `https://agentbuilder.streamlit.app`")
+                            if redirect_uri_param != "https://agentbuilder.streamlit.app":
+                                st.error(f"❌ MISMATCH! The redirect_uri in the URL doesn't match!")
+                            else:
+                                st.success("✅ Redirect URI matches!")
+                        else:
+                            st.warning("⚠️ No redirect_uri parameter found in URL")
+                        
+                        if scope_param:
+                            st.write("")
+                            st.write("**Scopes being requested:**")
+                            scopes_list = unquote(scope_param).split()
+                            for scope in scopes_list:
+                                st.write(f"- `{scope}`")
+                            st.write("")
+                            st.write("**Required scopes (should be in the list above):**")
+                            st.write("- `https://www.googleapis.com/auth/userinfo.email`")
+                            st.write("- `https://www.googleapis.com/auth/userinfo.profile`")
+                            st.write("- `openid`")
+                        else:
+                            st.warning("⚠️ No scope parameter found in URL")
+                    except Exception as e:
+                        st.error(f"Error parsing URL: {e}")
+                        import traceback
+                        st.code(traceback.format_exc())
+                
                 st.markdown(f"""
                 <div style="text-align: center; margin: 20px 0;">
                     <a href="{auth_url}" target="_self" style="text-decoration: none;">
@@ -342,39 +354,7 @@ class GoogleAuth:
                 </div>
                 """, unsafe_allow_html=True)
         except Exception as e:
-            error_msg = str(e)
-            st.error(f"❌ Error generating login URL: {error_msg}")
-            
-            # Provide specific guidance based on error type
-            if "redirect_uri" in error_msg.lower() or "redirect" in error_msg.lower():
-                st.error("""
-                **Redirect URI Mismatch Error**
-                
-                This usually means:
-                1. The redirect URI in your `.env` file doesn't match what's in Google Cloud Console
-                2. The redirect URI in Google Cloud Console is missing or incorrect
-                
-                **To fix:**
-                1. Check your current URL (look at the address bar)
-                2. Update `GOOGLE_REDIRECT_URI` in your `.env` file to match your current port
-                3. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
-                4. Click on your OAuth 2.0 Client ID
-                5. Under "Authorized redirect URIs", add: `{self.redirect_uri}`
-                6. Save and try again
-                """.format(self=self))
-            else:
-                st.error("Please check your Google OAuth configuration in your `.env` file.")
-                st.info(f"**Current redirect URI:** `{self.redirect_uri}`")
-        
-        # Add some styling and information
-        st.markdown("---")
-        st.info("""
-        🔒 **Security Note:** 
-        - Your Google account information is only used for authentication
-        - We only access your basic profile information (name, email)
-        - No data is stored permanently on our servers
-        - You can revoke access anytime from your Google account settings
-        """)
+            st.error(f"❌ Error: {str(e)}")
 
 def check_authentication():
     """Check if user is authenticated, redirect to login if not"""
@@ -383,21 +363,25 @@ def check_authentication():
     
     # Check if this is an OAuth callback
     if 'code' in st.query_params and 'state' in st.query_params:
-        auth = GoogleAuth()
-        code = st.query_params['code']
-        state = st.query_params['state']
-        
-        if auth.handle_callback(code, state):
-            st.success("✅ Successfully authenticated!")
-            # Persist authentication state
-            persist_auth_state()
-            # Clear the query parameters to prevent reprocessing
-            st.query_params.clear()
-            st.rerun()
-        else:
-            st.error("❌ Authentication failed. Please try again.")
-            # Clear the query parameters to prevent reprocessing
-            st.query_params.clear()
+        try:
+            auth = GoogleAuth()
+            code = st.query_params['code']
+            state = st.query_params['state']
+            
+            if auth.handle_callback(code, state):
+                st.success("✅ Successfully authenticated!")
+                # Persist authentication state
+                persist_auth_state()
+                # Clear the query parameters to prevent reprocessing
+                st.query_params.clear()
+                st.rerun()
+            else:
+                st.error("❌ Authentication failed. Please try again.")
+                # Clear the query parameters to prevent reprocessing
+                st.query_params.clear()
+                return False
+        except Exception as e:
+            st.error(f"❌ Error in OAuth callback: {e}")
             return False
     
     # Check for persistent authentication first
@@ -412,9 +396,13 @@ def check_authentication():
     )
     
     if not is_authenticated:
-        auth = GoogleAuth()
-        auth.create_login_ui()
-        return False
+        try:
+            auth = GoogleAuth()
+            auth.create_login_ui()
+            return False
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
+            return False
     return True
 
 def get_user_display_info():
