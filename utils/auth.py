@@ -335,12 +335,14 @@ class GoogleAuth:
                 # DEBUG: Show the full authorization URL - ALWAYS show this
                 with st.expander("🔍 DEBUG: Full Authorization URL (REQUIRED - Click to see what's being sent to Google)", expanded=True):
                     st.code(auth_url, language=None)
-                    # Parse and show the redirect_uri parameter
+                    # Parse and show the redirect_uri and scope parameters
                     try:
-                        from urllib.parse import urlparse, parse_qs
+                        from urllib.parse import urlparse, parse_qs, unquote
                         parsed = urlparse(auth_url)
                         params = parse_qs(parsed.query)
                         redirect_uri_param = params.get('redirect_uri', [None])[0]
+                        scope_param = params.get('scope', [None])[0]
+                        
                         if redirect_uri_param:
                             st.write(f"**Redirect URI in URL:** `{redirect_uri_param}`")
                             st.write(f"**Expected:** `https://agentbuilder.streamlit.app`")
@@ -350,8 +352,24 @@ class GoogleAuth:
                                 st.success("✅ Redirect URI matches!")
                         else:
                             st.warning("⚠️ No redirect_uri parameter found in URL")
+                        
+                        if scope_param:
+                            st.write("")
+                            st.write("**Scopes being requested:**")
+                            scopes_list = unquote(scope_param).split()
+                            for scope in scopes_list:
+                                st.write(f"- `{scope}`")
+                            st.write("")
+                            st.write("**Required scopes (should be in the list above):**")
+                            st.write("- `https://www.googleapis.com/auth/userinfo.email`")
+                            st.write("- `https://www.googleapis.com/auth/userinfo.profile`")
+                            st.write("- `openid`")
+                        else:
+                            st.warning("⚠️ No scope parameter found in URL")
                     except Exception as e:
                         st.error(f"Error parsing URL: {e}")
+                        import traceback
+                        st.code(traceback.format_exc())
                 
                 st.markdown(f"""
                 <div style="text-align: center; margin: 20px 0;">
