@@ -2481,10 +2481,13 @@ def main():
                                 mime="application/pdf",
                                 use_container_width=True
                             )
+                            pdf_generated = True
                         except Exception as e:
-                            st.warning(f"PDF generation error: {str(e)}")
-                    else:
-                        # Fallback if reportlab not available - use fpdf2
+                            st.warning(f"PDF generation error (reportlab): {str(e)}")
+                            pdf_generated = False
+                    
+                    # Fallback if reportlab not available or failed - use fpdf2
+                    if not pdf_generated:
                         try:
                             from fpdf2 import FPDF
                             
