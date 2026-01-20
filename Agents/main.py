@@ -656,16 +656,25 @@ def main():
         color: #bfdbfe !important; /* Very light blue - lighter for better visibility */
     }
     
+    /* Agent number and name - make them very light/white in dark mode */
     [data-theme="dark"] .agent-number,
     [data-theme="dark"] .agent-number *,
-    [data-theme="dark"] .agent-number strong {
-        color: #bfdbfe !important; /* Very light blue - lighter for better visibility */
+    [data-theme="dark"] .agent-number strong,
+    [data-theme="dark"] .agent-number div,
+    [data-theme="dark"] div.agent-number,
+    [data-theme="dark"] div.agent-number *,
+    [data-theme="dark"] div.agent-number strong {
+        color: #dbeafe !important; /* Very light blue - even lighter for better visibility */
     }
     
     [data-theme="dark"] .agent-name,
     [data-theme="dark"] .agent-name *,
-    [data-theme="dark"] .agent-name strong {
-        color: #bfdbfe !important; /* Very light blue - lighter for better visibility */
+    [data-theme="dark"] .agent-name strong,
+    [data-theme="dark"] .agent-name div,
+    [data-theme="dark"] div.agent-name,
+    [data-theme="dark"] div.agent-name *,
+    [data-theme="dark"] div.agent-name strong {
+        color: #dbeafe !important; /* Very light blue - even lighter for better visibility */
     }
     
     /* Override any Streamlit default dark mode text colors */
