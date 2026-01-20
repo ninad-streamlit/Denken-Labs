@@ -845,6 +845,12 @@ def main():
                         child.style.removeProperty('opacity');
                         child.style.removeProperty('filter');
                     });
+                    
+                    // Also target the story-text span specifically
+                    var storyTextSpans = div.querySelectorAll('.story-text, span.story-text');
+                    storyTextSpans.forEach(function(span) {
+                        span.style.cssText = 'color: #000000 !important; background-color: transparent !important;';
+                    });
                 }
             });
         }
