@@ -972,36 +972,49 @@ def main():
     # Mobile-responsive CSS with minimal spacing and logo-matching colors
     st.markdown("""
     <style>
-    /* Ensure logo images have transparent backgrounds and remove any white backgrounds */
-    img[alt="Denken Labs Logo"],
-    img[alt="Denken Labs Logo"] ~ *,
-    .stImage img,
-    .stImage > div,
-    .stImage > div > img,
-    div[data-testid="stImage"],
-    div[data-testid="stImage"] > div,
-    div[data-testid="stImage"] > div > img {
+    /* Aggressively remove white backgrounds from logo and all parent containers in dark mode */
+    [data-theme="dark"] img[alt="Denken Labs Logo"],
+    [data-theme="dark"] img[alt="Denken Labs Logo"] ~ *,
+    [data-theme="dark"] .stImage img,
+    [data-theme="dark"] .stImage > div,
+    [data-theme="dark"] .stImage > div > img,
+    [data-theme="dark"] div[data-testid="stImage"],
+    [data-theme="dark"] div[data-testid="stImage"] > div,
+    [data-theme="dark"] div[data-testid="stImage"] > div > img,
+    [data-theme="dark"] .stMarkdown,
+    [data-theme="dark"] .stMarkdown > div,
+    [data-theme="dark"] .logo-container,
+    [data-theme="dark"] .logo-container > div,
+    [data-theme="dark"] .logo-container > div > div,
+    [data-theme="dark"] div:has(img[alt="Denken Labs Logo"]),
+    [data-theme="dark"] div:has(img[alt="Denken Labs Logo"]) > div,
+    [data-theme="dark"] div:has(img[alt="Denken Labs Logo"]) > div > div {
         background: transparent !important;
         background-color: transparent !important;
         mix-blend-mode: normal !important;
     }
     
-    /* Remove any background from logo container and parent elements */
-    .logo-container,
-    .logo-container > div,
-    .logo-container > div > div,
-    div:has(img[alt="Denken Labs Logo"]),
-    div:has(img[alt="Denken Labs Logo"]) > div {
+    /* Remove white backgrounds from Streamlit markdown containers that might wrap the logo */
+    [data-theme="dark"] .element-container:has(img[alt="Denken Labs Logo"]),
+    [data-theme="dark"] .element-container:has(img[alt="Denken Labs Logo"]) > div,
+    [data-theme="dark"] .stMarkdown:has(img[alt="Denken Labs Logo"]),
+    [data-theme="dark"] .stMarkdown:has(img[alt="Denken Labs Logo"]) > div {
         background: transparent !important;
         background-color: transparent !important;
     }
     
-    /* Force transparent background on the logo image itself using CSS filters if needed */
+    /* Force transparent background on the logo image itself */
     img[alt="Denken Labs Logo"] {
         background: transparent !important;
         background-color: transparent !important;
         -webkit-background-clip: padding-box !important;
         background-clip: padding-box !important;
+    }
+    
+    /* Remove any white/light backgrounds that might appear in dark mode */
+    [data-theme="dark"] div:has(img[alt="Denken Labs Logo"]) {
+        background: transparent !important;
+        background-color: transparent !important;
     }
     </style>
     <style>
@@ -1791,22 +1804,83 @@ def main():
                          alt="Denken Labs Logo" />
                 </div>
                 <script>
-                // Aggressively remove any white backgrounds that might be added by Streamlit
+                // Aggressively remove any white backgrounds that might be added by Streamlit, especially in dark mode
                 (function() {{
-                    setTimeout(function() {{
+                    function removeWhiteBackgrounds() {{
                         var logoImg = document.querySelector('img[alt="Denken Labs Logo"]');
                         if (logoImg) {{
+                            // Remove background from image itself
                             logoImg.style.background = 'transparent';
                             logoImg.style.backgroundColor = 'transparent';
-                            // Remove background from all parent elements
+                            
+                            // Remove background from all parent elements up to body
                             var parent = logoImg.parentElement;
-                            while (parent && parent !== document.body) {{
-                                parent.style.background = 'transparent';
-                                parent.style.backgroundColor = 'transparent';
+                            var depth = 0;
+                            while (parent && parent !== document.body && depth < 20) {{
+                                // Check computed style to see if there's a white/light background
+                                var computedStyle = window.getComputedStyle(parent);
+                                var bgColor = computedStyle.backgroundColor;
+                                
+                                // If background is white, light gray, or has opacity, make it transparent
+                                if (bgColor && (
+                                    bgColor.includes('rgb(255') || 
+                                    bgColor.includes('rgb(250') ||
+                                    bgColor.includes('rgb(249') ||
+                                    bgColor.includes('white') ||
+                                    bgColor.includes('rgba(255') ||
+                                    bgColor.includes('rgba(250') ||
+                                    bgColor.includes('rgba(249')
+                                )) {{
+                                    parent.style.background = 'transparent';
+                                    parent.style.backgroundColor = 'transparent';
+                                }} else {{
+                                    // Force transparent anyway in dark mode
+                                    if (document.documentElement.getAttribute('data-theme') === 'dark') {{
+                                        parent.style.background = 'transparent';
+                                        parent.style.backgroundColor = 'transparent';
+                                    }}
+                                }}
+                                
                                 parent = parent.parentElement;
+                                depth++;
                             }}
                         }}
-                    }}, 100);
+                    }}
+                    
+                    // Run immediately
+                    removeWhiteBackgrounds();
+                    
+                    // Run after a short delay
+                    setTimeout(removeWhiteBackgrounds, 100);
+                    
+                    // Run after DOM is fully loaded
+                    if (document.readyState === 'loading') {{
+                        document.addEventListener('DOMContentLoaded', removeWhiteBackgrounds);
+                    }}
+                    
+                    // Use MutationObserver to watch for DOM changes
+                    var observer = new MutationObserver(function(mutations) {{
+                        removeWhiteBackgrounds();
+                    }});
+                    
+                    observer.observe(document.body, {{
+                        childList: true,
+                        subtree: true,
+                        attributes: true,
+                        attributeFilter: ['style', 'class']
+                    }});
+                    
+                    // Also watch for theme changes
+                    var themeObserver = new MutationObserver(function(mutations) {{
+                        removeWhiteBackgrounds();
+                    }});
+                    
+                    if (document.documentElement) {{
+                        themeObserver.observe(document.documentElement, {{
+                            attributes: true,
+                            attributeFilter: ['data-theme']
+                        }});
+                    }}
                 }})();
                 </script>
                 """, unsafe_allow_html=True)
