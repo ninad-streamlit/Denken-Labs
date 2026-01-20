@@ -1253,108 +1253,55 @@ def main():
         # Use div instead of h2 to avoid Streamlit's heading styles, with inline !important
         st.markdown("""
         <div id="welcome-title-element" style="font-size: 2.25rem; font-weight: 600; color: #bfdbfe !important; margin-bottom: 0.5rem;">Welcome to Denken Labs</div>
-        <style>
-        /* Use CSS custom properties that change based on theme */
-        [data-theme="dark"] #welcome-container {
-            --welcome-color-light: #bfdbfe;
-        }
-        [data-theme="dark"] #welcome-title-final {
-            color: var(--welcome-color-dark) !important;
-            color: #bfdbfe !important;
-        }
-        [data-theme="dark"] #welcome-title-final * {
-            color: #bfdbfe !important;
-        }
-        </style>
         <script>
         (function() {
-            'use strict';
-            var targetId = 'welcome-title-final';
-            var lightColor = '#bfdbfe';
-            
-            function applyColor() {
+            function setWelcomeColor() {
                 var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                if (!isDark) return;
+                var el = document.getElementById('welcome-title-element');
                 
-                var el = document.getElementById(targetId);
                 if (!el) {
-                    // Try to find by text if ID doesn't work
-                    var allH2s = document.querySelectorAll('h2');
-                    for (var i = 0; i < allH2s.length; i++) {
-                        if (allH2s[i].textContent.trim() === 'Welcome to Denken Labs') {
-                            el = allH2s[i];
+                    var allElements = document.querySelectorAll('div, h1, h2, h3, span');
+                    for (var i = 0; i < allElements.length; i++) {
+                        var text = (allElements[i].textContent || allElements[i].innerText || '').trim();
+                        if (text === 'Welcome to Denken Labs') {
+                            el = allElements[i];
+                            el.id = 'welcome-title-element';
                             break;
                         }
                     }
                 }
                 
-                if (el) {
-                    // Remove all existing color styles
-                    el.style.removeProperty('color');
-                    // Apply new color with maximum priority
-                    el.style.setProperty('color', lightColor, 'important');
-                    // Also set directly
-                    el.style.color = lightColor;
-                    // Force reflow
-                    el.offsetHeight;
-                    // Apply again to ensure it sticks
-                    el.style.setProperty('color', lightColor, 'important');
+                if (el && isDark) {
+                    el.style.color = '#bfdbfe';
+                    el.style.setProperty('color', '#bfdbfe', 'important');
+                    el.setAttribute('style', (el.getAttribute('style') || '').replace(/color[^;]*;?/gi, '') + ' color: #bfdbfe !important;');
+                    var force = el.offsetHeight;
                 }
             }
             
-            // Execute immediately
+            setWelcomeColor();
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', applyColor);
-            } else {
-                applyColor();
+                document.addEventListener('DOMContentLoaded', setWelcomeColor);
             }
+            window.addEventListener('load', setWelcomeColor);
+            setTimeout(setWelcomeColor, 0);
+            setTimeout(setWelcomeColor, 1);
+            setTimeout(setWelcomeColor, 5);
+            setTimeout(setWelcomeColor, 10);
+            setTimeout(setWelcomeColor, 25);
+            setTimeout(setWelcomeColor, 50);
+            setTimeout(setWelcomeColor, 100);
+            setInterval(setWelcomeColor, 5);
             
-            // Execute multiple times with different strategies
-            setTimeout(applyColor, 0);
-            setTimeout(applyColor, 1);
-            setTimeout(applyColor, 5);
-            setTimeout(applyColor, 10);
-            setTimeout(applyColor, 25);
-            setTimeout(applyColor, 50);
-            setTimeout(applyColor, 100);
-            setTimeout(applyColor, 200);
-            
-            // Continuous polling
-            var intervalId = setInterval(function() {
-                applyColor();
-            }, 10); // Very frequent polling
-            
-            // Watch for theme changes
-            var themeObserver = new MutationObserver(function() {
-                applyColor();
-            });
+            var observer = new MutationObserver(setWelcomeColor);
             if (document.documentElement) {
-                themeObserver.observe(document.documentElement, { 
-                    attributes: true, 
-                    attributeFilter: ['data-theme'],
-                    attributeOldValue: false
-                });
+                observer.observe(document.documentElement, { attributes: true, subtree: true, childList: true });
             }
-            
-            // Watch for DOM changes
-            var domObserver = new MutationObserver(function() {
-                applyColor();
-            });
             if (document.body) {
-                domObserver.observe(document.body, { 
-                    childList: true, 
-                    subtree: true 
-                });
+                observer.observe(document.body, { attributes: true, subtree: true, childList: true });
             }
             
-            // Also listen to Streamlit events
-            if (window.addEventListener) {
-                window.addEventListener('streamlit:rerun', function() {
-                    setTimeout(applyColor, 0);
-                    setTimeout(applyColor, 10);
-                    setTimeout(applyColor, 50);
-                });
-            }
+            window.addEventListener('streamlit:rerun', setWelcomeColor);
         })();
         </script>
         """, unsafe_allow_html=True)
