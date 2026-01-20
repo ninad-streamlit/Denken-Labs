@@ -2529,12 +2529,17 @@ def main():
                     if not pdf_generated:
                         try:
                             # Try importing fpdf2 (package name is fpdf2, but import is 'from fpdf import FPDF')
+                            # First try the standard import
                             try:
                                 from fpdf import FPDF
                             except ImportError:
-                                # Try alternative import method
-                                import fpdf2
-                                FPDF = fpdf2.FPDF
+                                # Try importing the package directly
+                                try:
+                                    import fpdf2
+                                    FPDF = fpdf2.FPDF
+                                except (ImportError, AttributeError):
+                                    # Last resort: try importing from fpdf2 package
+                                    from fpdf2 import FPDF
                             
                             pdf = FPDF()
                             pdf.set_auto_page_break(auto=True, margin=15)
