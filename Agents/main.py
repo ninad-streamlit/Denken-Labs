@@ -2463,14 +2463,15 @@ def main():
                     if para.strip():
                         # Replace single newlines within paragraphs with line breaks
                         para = para.replace('\n', '<br>')
-                        # Wrap each paragraph in a div with EXACT same styling as Q&A answer
-                        story_html_parts.append(f'<div style="color: #e2e8f0; padding-left: 10px; margin-bottom: 8px;">{para}</div>')
-                story_html = ''.join(story_html_parts)
+                        # Wrap each paragraph in a div with EXACT same styling as Q&A answer - use same padding structure
+                        story_html_parts.append(f'{para}<br><br>')
+                story_html = ''.join(story_html_parts).rstrip('<br><br>')
                 
                 # Use EXACT same HTML structure and styling as Q&A answer div (line 2548)
+                # The Q&A answer uses: <div style='color: #e2e8f0; padding-left: 10px;'>
                 st.markdown(f"""
                 <div class="story-content" style='background-color: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;'>
-                    <div style='color: #e2e8f0; padding-left: 10px;'>
+                    <div style='color: #e2e8f0 !important; padding-left: 10px;'>
                         {story_html}
                     </div>
                 </div>
