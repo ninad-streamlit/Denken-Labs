@@ -1427,25 +1427,32 @@ def main():
         welcomeStyleObserver.observe(welcomeElement, { attributes: true, attributeFilter: ['style'] });
     }
     
-    // Force story content to match Q&A section styling - simpler approach
+    // Force story content to match Q&A answer color exactly - aggressive approach
     function forceStoryTransparent() {
-        // Apply Q&A styling to story content (works in both light and dark mode)
+        // Find all story content divs
         var storyDivs = document.querySelectorAll('.story-content, div.story-content');
         storyDivs.forEach(function(div) {
             if (div) {
-                // Only override color, don't replace all styles with cssText
+                // Set background same as Q&A
                 div.style.setProperty('background-color', '#1e293b', 'important');
-                div.style.setProperty('color', '#e2e8f0', 'important');
                 div.style.setProperty('border-left-color', '#6b46c1', 'important');
                 
-                // Ensure all nested elements use dark text color
-                var allChildren = div.querySelectorAll('*');
-                allChildren.forEach(function(child) {
-                    child.style.setProperty('color', '#e2e8f0', 'important');
-                    child.style.setProperty('background-color', 'transparent', 'important');
-                    child.style.removeProperty('opacity');
-                    child.style.removeProperty('filter');
+                // Apply Q&A answer color to ALL elements inside story content
+                // This ensures every text element matches the Q&A answer color exactly
+                var allElements = div.querySelectorAll('*');
+                allElements.forEach(function(el) {
+                    // Use exact same color as Q&A answers: #e2e8f0
+                    el.style.setProperty('color', '#e2e8f0', 'important');
+                    el.style.color = '#e2e8f0';
+                    el.setAttribute('style', (el.getAttribute('style') || '').replace(/color[^;]*;?/gi, '') + ' color: #e2e8f0 !important;');
+                    el.style.setProperty('background-color', 'transparent', 'important');
+                    el.style.removeProperty('opacity');
+                    el.style.removeProperty('filter');
                 });
+                
+                // Also set color directly on the story div itself
+                div.style.setProperty('color', '#e2e8f0', 'important');
+                div.style.color = '#e2e8f0';
             }
         });
     }
@@ -2446,19 +2453,26 @@ def main():
                         except Exception as e:
                             st.warning(f"PDF generation error: {str(e)}")
                 
-                # Display story content - use same styling as Q&A section
+                # Display story content - use exact same HTML structure and styling as Q&A answers
                 # Convert story text to HTML - handle both single and double newlines
                 story_text = st.session_state.mission_story
-                # Replace double newlines with paragraph breaks
-                story_html = story_text.replace('\n\n', '</p><p style="margin-bottom: 10px;">')
-                # Replace single newlines with line breaks
-                story_html = story_html.replace('\n', '<br>')
-                # Wrap in paragraph tags
-                story_html = f'<p style="margin-bottom: 10px; color: #e2e8f0;">{story_html}</p>'
+                # Replace double newlines with paragraph breaks, ensuring each paragraph has the answer color
+                story_paragraphs = story_text.split('\n\n')
+                story_html_parts = []
+                for para in story_paragraphs:
+                    if para.strip():
+                        # Replace single newlines within paragraphs with line breaks
+                        para = para.replace('\n', '<br>')
+                        # Use exact same color style as Q&A answers
+                        story_html_parts.append(f'<div style="color: #e2e8f0; margin-bottom: 10px;">{para}</div>')
+                story_html = ''.join(story_html_parts)
                 
+                # Use exact same structure and styling as Q&A answer div
                 st.markdown(f"""
-                <div class="story-content" style='background-color: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1; color: #e2e8f0;'>
-                    {story_html}
+                <div class="story-content" style='background-color: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;'>
+                    <div style='color: #e2e8f0;'>
+                        {story_html}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
