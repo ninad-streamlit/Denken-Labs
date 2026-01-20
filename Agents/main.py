@@ -992,33 +992,58 @@ def main():
                     favicon_base64 = base64.b64encode(favicon_file.read()).decode()
             
             # Use JavaScript to inject favicon and force browser to reload it
+            # Use a strong cache buster to ensure Logo-DenkenLabs.png is used, not Bot.png
             import time
-            cache_buster = int(time.time())
+            import random
+            cache_buster = f"{int(time.time())}_{random.randint(1000, 9999)}"
             st.markdown(f"""
                 <script>
-                // Remove any existing favicon links (including Streamlit's default)
-                document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => link.remove());
-                
-                // Add new favicon with larger size (96x96)
-                var link1 = document.createElement('link');
-                link1.rel = 'icon';
-                link1.type = 'image/png';
-                link1.sizes = '96x96';
-                link1.href = 'data:image/png;base64,{favicon_base64}?v={cache_buster}';
-                document.head.appendChild(link1);
-                
-                var link2 = document.createElement('link');
-                link2.rel = 'shortcut icon';
-                link2.type = 'image/png';
-                link2.sizes = '96x96';
-                link2.href = 'data:image/png;base64,{favicon_base64}?v={cache_buster}';
-                document.head.appendChild(link2);
-                
-                var link3 = document.createElement('link');
-                link3.rel = 'apple-touch-icon';
-                link3.sizes = '180x180';
-                link3.href = 'data:image/png;base64,{favicon_base64}?v={cache_buster}';
-                document.head.appendChild(link3);
+                (function() {{
+                    // Remove ALL existing favicon links (including Streamlit's default and any cached ones)
+                    var existingLinks = document.querySelectorAll('link[rel*="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]');
+                    existingLinks.forEach(function(link) {{
+                        link.remove();
+                    }});
+                    
+                    // Also try to remove by href if it contains bot.png (case insensitive)
+                    var allLinks = document.querySelectorAll('link');
+                    allLinks.forEach(function(link) {{
+                        var href = link.getAttribute('href') || '';
+                        if (href.toLowerCase().includes('bot.png') || href.toLowerCase().includes('bot')) {{
+                            link.remove();
+                        }}
+                    }});
+                    
+                    // Wait a moment to ensure removal is complete
+                    setTimeout(function() {{
+                        // Add new favicon with Logo-DenkenLabs.png (larger size 96x96)
+                        var link1 = document.createElement('link');
+                        link1.rel = 'icon';
+                        link1.type = 'image/png';
+                        link1.sizes = '96x96';
+                        link1.href = 'data:image/png;base64,{favicon_base64}?denkenlabs={cache_buster}';
+                        document.head.appendChild(link1);
+                        
+                        var link2 = document.createElement('link');
+                        link2.rel = 'shortcut icon';
+                        link2.type = 'image/png';
+                        link2.sizes = '96x96';
+                        link2.href = 'data:image/png;base64,{favicon_base64}?denkenlabs={cache_buster}';
+                        document.head.appendChild(link2);
+                        
+                        var link3 = document.createElement('link');
+                        link3.rel = 'apple-touch-icon';
+                        link3.sizes = '180x180';
+                        link3.href = 'data:image/png;base64,{favicon_base64}?denkenlabs={cache_buster}';
+                        document.head.appendChild(link3);
+                        
+                        // Force favicon reload by creating a temporary link
+                        var tempLink = document.createElement('link');
+                        tempLink.rel = 'icon';
+                        tempLink.href = 'data:image/png;base64,{favicon_base64}?force={cache_buster}';
+                        document.head.appendChild(tempLink);
+                    }}, 100);
+                }})();
                 </script>
                 """, unsafe_allow_html=True)
         except Exception:
