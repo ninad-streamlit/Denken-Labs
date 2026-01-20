@@ -827,6 +827,57 @@ def main():
     }
     </style>
     <script>
+    // Force "Welcome to Denken Labs" to be light in dark mode using JavaScript
+    function forceWelcomeTitleLight() {
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            // Find the welcome title by text content or class
+            var allElements = document.querySelectorAll('h2, .welcome-title, [class*="welcome"]');
+            allElements.forEach(function(el) {
+                var text = (el.textContent || el.innerText || '').trim();
+                if (text.includes('Welcome to Denken Labs')) {
+                    // Directly set the color using multiple methods
+                    el.style.color = '#bfdbfe';
+                    el.style.setProperty('color', '#bfdbfe', 'important');
+                    el.setAttribute('style', el.getAttribute('style') + ' color: #bfdbfe !important;');
+                    
+                    // Also target all children
+                    var children = el.querySelectorAll('*');
+                    children.forEach(function(child) {
+                        child.style.color = '#bfdbfe';
+                        child.style.setProperty('color', '#bfdbfe', 'important');
+                    });
+                }
+            });
+            
+            // Also try finding by class
+            var welcomeTitles = document.querySelectorAll('.welcome-title, h2.welcome-title');
+            welcomeTitles.forEach(function(el) {
+                el.style.color = '#bfdbfe';
+                el.style.setProperty('color', '#bfdbfe', 'important');
+                el.setAttribute('style', (el.getAttribute('style') || '') + ' color: #bfdbfe !important;');
+                var children = el.querySelectorAll('*');
+                children.forEach(function(child) {
+                    child.style.color = '#bfdbfe';
+                    child.style.setProperty('color', '#bfdbfe', 'important');
+                });
+            });
+        }
+    }
+    
+    // Run immediately and continuously for welcome title
+    forceWelcomeTitleLight();
+    setInterval(forceWelcomeTitleLight, 100);
+    
+    // Watch for theme changes
+    var welcomeThemeObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                forceWelcomeTitleLight();
+            }
+        });
+    });
+    welcomeThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    
     // Force story content to match Q&A section styling - simpler approach
     function forceStoryTransparent() {
         // Apply Q&A styling to story content (works in both light and dark mode)
@@ -1061,6 +1112,7 @@ def main():
         setTimeout(function() {
             styleButtons();
             forceStoryTransparent();
+            forceWelcomeTitleLight();
             document.querySelectorAll('button').forEach(function(btn) {
                 styleObserver.observe(btn, { attributes: true, attributeFilter: ['style', 'class'] });
             });
