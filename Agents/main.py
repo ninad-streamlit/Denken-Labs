@@ -1250,11 +1250,9 @@ def main():
         st.session_state.mission_example = generate_mission_example()
     
     if not st.session_state.show_agent_builder:
-        # Try using CSS custom properties and direct DOM manipulation with highest priority
+        # Final attempt: Use inline !important style directly in the element
         st.markdown("""
-        <div id="welcome-container" style="--welcome-color-light: #1e293b; --welcome-color-dark: #bfdbfe;">
-            <h2 id="welcome-title-final" style="color: var(--welcome-color-light);">Welcome to Denken Labs</h2>
-        </div>
+        <h2 id="welcome-title-element" style="color: #bfdbfe !important;">Welcome to Denken Labs</h2>
         <style>
         /* Use CSS custom properties that change based on theme */
         [data-theme="dark"] #welcome-container {
