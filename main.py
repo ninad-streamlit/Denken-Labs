@@ -829,13 +829,18 @@ def main():
             var storyDivs = document.querySelectorAll('.story-content, div.story-content');
             storyDivs.forEach(function(div) {
                 if (div) {
-                    div.style.setProperty('background-color', '#ffffff', 'important');
-                    div.style.setProperty('color', '#000000', 'important');
-                    // Also ensure all nested elements are black
+                    // Force white background and black text on the main div using cssText for maximum override
+                    div.style.cssText = 'background-color: #ffffff !important; color: #000000 !important; padding: 20px !important; border-radius: 10px !important; border-left: 5px solid var(--primary-color) !important;';
+                    div.setAttribute('style', 'background-color: #ffffff !important; color: #000000 !important; padding: 20px !important; border-radius: 10px !important; border-left: 5px solid var(--primary-color) !important;');
+                    
+                    // Also ensure all nested elements are pure black
                     var allChildren = div.querySelectorAll('*');
                     allChildren.forEach(function(child) {
                         child.style.setProperty('color', '#000000', 'important');
-                        child.style.setProperty('background-color', '#ffffff', 'important');
+                        child.style.setProperty('background-color', 'transparent', 'important');
+                        // Remove any opacity or other color properties that might make text faint
+                        child.style.removeProperty('opacity');
+                        child.style.removeProperty('filter');
                     });
                 }
             });
