@@ -1061,8 +1061,8 @@ def main():
     [data-theme="dark"] div.story-content[style],
     [data-theme="dark"] .story-content[style*="background"],
     [data-theme="dark"] div.story-content[style*="background"] {
-        background-color: #f9fafb !important; /* Light gray background like Q&A - works in dark mode */
-        color: #1e293b !important; /* Dark text for visibility on light background */
+        background-color: #1e293b !important; /* Dark background that blends with black background */
+        color: #e2e8f0 !important; /* Light gray text for readability on dark background */
         border-left-color: #6b46c1 !important; /* Purple border like Q&A */
     }
     
@@ -1083,7 +1083,7 @@ def main():
     [data-theme="dark"] .story-text,
     [data-theme="dark"] .story-text *,
     [data-theme="dark"] .story-content .story-text {
-        color: #1e293b !important; /* Dark text for all nested elements - matches Q&A answer text */
+        color: #e2e8f0 !important; /* Light gray text for all nested elements */
         background-color: transparent !important; /* Transparent background for nested elements */
     }
     
