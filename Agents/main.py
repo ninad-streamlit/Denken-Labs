@@ -631,8 +631,12 @@ def main():
     }
     
     /* Story content in dark mode - make background transparent and text white for visibility */
-    [data-theme="dark"] .story-content {
-        background-color: transparent !important; /* Transparent background in dark mode */
+    /* Need to override inline style with maximum specificity */
+    [data-theme="dark"] .story-content,
+    [data-theme="dark"] div.story-content,
+    [data-theme="dark"] .story-content[style],
+    [data-theme="dark"] div.story-content[style] {
+        background-color: transparent !important; /* Transparent background in dark mode - override inline style */
         color: #ffffff !important; /* Pure white text for maximum visibility */
     }
     
@@ -640,7 +644,12 @@ def main():
     [data-theme="dark"] .story-content p,
     [data-theme="dark"] .story-content span,
     [data-theme="dark"] .story-content div,
-    [data-theme="dark"] .story-content br {
+    [data-theme="dark"] .story-content br,
+    [data-theme="dark"] div.story-content *,
+    [data-theme="dark"] div.story-content p,
+    [data-theme="dark"] div.story-content span,
+    [data-theme="dark"] div.story-content div,
+    [data-theme="dark"] div.story-content br {
         color: #ffffff !important; /* Pure white for all nested elements */
         background-color: transparent !important; /* Ensure nested elements are transparent too */
     }
@@ -808,6 +817,39 @@ def main():
     }
     </style>
     <script>
+    // Force story content background to be transparent in dark mode
+    function forceStoryTransparent() {
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            var storyDivs = document.querySelectorAll('.story-content, div.story-content');
+            storyDivs.forEach(function(div) {
+                if (div) {
+                    div.style.setProperty('background-color', 'transparent', 'important');
+                    div.style.setProperty('color', '#ffffff', 'important');
+                    // Also ensure all nested elements are white
+                    var allChildren = div.querySelectorAll('*');
+                    allChildren.forEach(function(child) {
+                        child.style.setProperty('color', '#ffffff', 'important');
+                        child.style.setProperty('background-color', 'transparent', 'important');
+                    });
+                }
+            });
+        }
+    }
+    
+    // Run immediately and continuously
+    forceStoryTransparent();
+    setInterval(forceStoryTransparent, 100);
+    
+    // Also watch for theme changes
+    var themeObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                forceStoryTransparent();
+            }
+        });
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    
     // ULTRA AGGRESSIVE button styling - intercept ALL style changes
     function forcePurpleButton(btn) {
         // Remove all existing styles and set our own
