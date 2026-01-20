@@ -1094,16 +1094,26 @@ def main():
                         if (storyDivs.length > 0 || node.classList && node.classList.contains('story-content')) {
                             forceStoryTransparent();
                         }
+                        // Check for welcome title
+                        var welcomeTitles = node.querySelectorAll('.welcome-title, h2');
+                        if (welcomeTitles.length > 0) {
+                            forceWelcomeTitleLight();
+                        }
                     }
                     // Check if the node itself is story content
                     if (node.classList && node.classList.contains('story-content')) {
                         forceStoryTransparent();
+                    }
+                    // Check if the node itself is welcome title
+                    if (node.classList && node.classList.contains('welcome-title') || (node.tagName === 'H2' && node.textContent && node.textContent.includes('Welcome'))) {
+                        forceWelcomeTitleLight();
                     }
                 }
             });
         });
         styleButtons();
         forceStoryTransparent();
+        forceWelcomeTitleLight();
     });
     observer.observe(document.body, { childList: true, subtree: true });
     
