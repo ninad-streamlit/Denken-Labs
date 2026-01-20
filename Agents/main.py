@@ -2441,160 +2441,203 @@ def main():
                             st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
                 with col_pdf:
                     st.markdown("<br>", unsafe_allow_html=True)  # Spacing
-                    # Generate downloadable HTML file (can be printed as PDF by browser)
-                    # This approach doesn't require any external libraries
-                    try:
-                        # Generate HTML file with print-friendly styling
-                        html_content = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{st.session_state.mission_story_title}</title>
-    <style>
-        @media print {{
-            @page {{
-                margin: 1in;
-                size: letter;
-            }}
-            body {{
-                margin: 0;
-                padding: 20px;
-            }}
-        }}
-        body {{
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-            color: #333;
-        }}
-        .title {{
-            font-size: 24px;
-            font-weight: bold;
-            color: #2563eb;
-            text-align: center;
-            margin-bottom: 10px;
-        }}
-        .author {{
-            text-align: center;
-            font-style: italic;
-            color: #666;
-            margin-bottom: 30px;
-        }}
-        .section-title {{
-            font-size: 18px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-top: 30px;
-            margin-bottom: 15px;
-        }}
-        .agent-name {{
-            font-size: 14px;
-            font-weight: bold;
-            color: #1e40af;
-            margin-top: 15px;
-        }}
-        .agent-desc {{
-            font-size: 12px;
-            color: #475569;
-            margin-left: 15px;
-            margin-bottom: 10px;
-        }}
-        .story-content {{
-            font-size: 14px;
-            line-height: 1.8;
-            margin: 20px 0;
-        }}
-        .qa-section {{
-            margin-top: 30px;
-        }}
-        .qa-title {{
-            font-size: 18px;
-            font-weight: bold;
-            color: #6b46c1;
-            margin-bottom: 15px;
-        }}
-        .question {{
-            font-size: 13px;
-            font-weight: bold;
-            color: #553c9a;
-            margin-top: 15px;
-        }}
-        .answer {{
-            font-size: 12px;
-            color: #1e293b;
-            margin-left: 20px;
-            margin-bottom: 15px;
-        }}
-    </style>
-</head>
-<body>
-    <div class="title">{st.session_state.mission_story_title}</div>
-"""
-                        
-                        if st.session_state.get('user_creative_name'):
-                            html_content += f'    <div class="author">by {st.session_state.user_creative_name}</div>\n'
-                        
-                        # Add mission if available
-                        if st.session_state.team_mission:
-                            html_content += f'    <div class="section-title">🎯 The Mission</div>\n'
-                            html_content += f'    <div class="story-content">{st.session_state.team_mission}</div>\n'
-                        
-                        # Add agent descriptions
-                        if st.session_state.created_bots:
-                            html_content += '    <div class="section-title">🤖 The Team</div>\n'
-                            for bot in st.session_state.created_bots:
-                                agent_name = bot.get('name', 'Agent')
-                                agent_number = bot.get('number', '')
-                                agent_desc = clean_agent_description(bot.get('description', ''))
-                                agent_character = clean_agent_description(bot.get('character', ''))
+                    # Generate PDF using reportlab
+                    if REPORTLAB_AVAILABLE:
+                        try:
+                            buffer = BytesIO()
+                            doc = SimpleDocTemplate(buffer, pagesize=letter)
+                            story = []
+                            
+                            # Title style
+                            title_style = ParagraphStyle(
+                                'CustomTitle',
+                                parent=getSampleStyleSheet()['Heading1'],
+                                fontSize=18,
+                                textColor='#2563eb',
+                                spaceAfter=30,
+                                alignment=TA_CENTER
+                            )
+                            
+                            # Body style
+                            body_style = ParagraphStyle(
+                                'CustomBody',
+                                parent=getSampleStyleSheet()['Normal'],
+                                fontSize=12,
+                                leading=18,
+                                spaceAfter=12,
+                                leftIndent=0,
+                                rightIndent=0
+                            )
+                            
+                            # Add title
+                            if st.session_state.mission_story_title:
+                                story.append(Paragraph(st.session_state.mission_story_title, title_style))
+                                story.append(Spacer(1, 0.2*inch))
                                 
-                                name_text = f"Agent #{agent_number}: {agent_name}" if agent_number else agent_name
-                                html_content += f'    <div class="agent-name">{name_text}</div>\n'
+                                # Add author if available
+                                if st.session_state.get('user_creative_name'):
+                                    author_style = ParagraphStyle(
+                                        'Author',
+                                        parent=getSampleStyleSheet()['Normal'],
+                                        fontSize=12,
+                                        textColor='#475569',
+                                        spaceAfter=20,
+                                        alignment=TA_CENTER,
+                                        fontName='Helvetica-Oblique'
+                                    )
+                                    story.append(Paragraph(f"by {st.session_state.user_creative_name}", author_style))
+                                    story.append(Spacer(1, 0.2*inch))
+                                else:
+                                    story.append(Spacer(1, 0.2*inch))
+                            
+                            # Add mission if available
+                            if st.session_state.team_mission:
+                                mission_style = ParagraphStyle(
+                                    'Mission',
+                                    parent=getSampleStyleSheet()['Heading2'],
+                                    fontSize=14,
+                                    textColor='#2563eb',
+                                    spaceAfter=15,
+                                    spaceBefore=10
+                                )
+                                story.append(Paragraph("🎯 The Mission", mission_style))
+                                story.append(Paragraph(st.session_state.team_mission.replace('\n', '<br/>'), body_style))
+                                story.append(Spacer(1, 0.3*inch))
+                            
+                            # Add agent descriptions section before story
+                            if st.session_state.created_bots:
+                                story.append(Spacer(1, 0.3*inch))
                                 
-                                if agent_desc:
-                                    html_content += f'    <div class="agent-desc">{agent_desc.replace(chr(10), "<br>")}</div>\n'
+                                # Agent descriptions section title
+                                agents_title_style = ParagraphStyle(
+                                    'AgentsTitle',
+                                    parent=getSampleStyleSheet()['Heading2'],
+                                    fontSize=14,
+                                    textColor='#2563eb',
+                                    spaceAfter=15,
+                                    spaceBefore=10
+                                )
+                                story.append(Paragraph("🤖 The Team", agents_title_style))
+                                story.append(Spacer(1, 0.15*inch))
                                 
-                                if agent_character:
-                                    html_content += f'    <div class="agent-desc"><em>{agent_character.replace(chr(10), "<br>")}</em></div>\n'
-                        
-                        # Add story content
-                        html_content += '    <div class="section-title">📚 The Story</div>\n'
-                        story_paragraphs = st.session_state.mission_story.split('\n\n')
-                        for para in story_paragraphs:
-                            if para.strip():
-                                para_html = para.replace('\n', '<br>')
-                                html_content += f'    <div class="story-content">{para_html}</div>\n'
-                        
-                        # Add Q&A section
-                        if st.session_state.story_qa_history:
-                            html_content += '    <div class="qa-section">\n'
-                            html_content += '        <div class="qa-title">Questions & Answers</div>\n'
-                            for idx, qa in enumerate(st.session_state.story_qa_history, 1):
-                                question = qa['question'].replace('\n', '<br>')
-                                answer = qa['answer'].replace('\n', '<br>')
-                                html_content += f'        <div class="question">Q{idx}: {question}</div>\n'
-                                html_content += f'        <div class="answer">A{idx}: {answer}</div>\n'
-                            html_content += '    </div>\n'
-                        
-                        html_content += """
-</body>
-</html>
-"""
-                        
-                        # Download button for HTML file
-                        st.download_button(
-                            label="📄 Download Story (HTML)",
-                            data=html_content.encode('utf-8'),
-                            file_name=f"{st.session_state.mission_story_title.replace(' ', '_')}.html",
-                            mime="text/html",
-                            use_container_width=True,
-                            help="Download as HTML file. Open it in your browser and use Print > Save as PDF to create a PDF."
-                        )
-                        st.info("💡 **Tip:** After downloading, open the HTML file in your browser and use **Print > Save as PDF** to create a PDF file.")
-                    except Exception as e:
-                        st.error(f"📄 Error generating downloadable file: {str(e)}")
+                                # Agent description style
+                                agent_name_style = ParagraphStyle(
+                                    'AgentName',
+                                    parent=getSampleStyleSheet()['Normal'],
+                                    fontSize=11,
+                                    textColor='#1e40af',
+                                    spaceAfter=5,
+                                    leftIndent=0,
+                                    fontName='Helvetica-Bold'
+                                )
+                                
+                                agent_desc_style = ParagraphStyle(
+                                    'AgentDesc',
+                                    parent=getSampleStyleSheet()['Normal'],
+                                    fontSize=10,
+                                    textColor='#475569',
+                                    spaceAfter=10,
+                                    leftIndent=15
+                                )
+                                
+                                # Add each agent's description
+                                for bot in st.session_state.created_bots:
+                                    agent_name = bot.get('name', 'Agent')
+                                    agent_number = bot.get('number', '')
+                                    agent_desc = clean_agent_description(bot.get('description', ''))
+                                    agent_character = clean_agent_description(bot.get('character', ''))
+                                    
+                                    # Agent name with number
+                                    name_text = f"Agent #{agent_number}: {agent_name}" if agent_number else agent_name
+                                    story.append(Paragraph(name_text.replace('\n', '<br/>'), agent_name_style))
+                                    
+                                    # Agent description
+                                    if agent_desc:
+                                        story.append(Paragraph(agent_desc.replace('\n', '<br/>'), agent_desc_style))
+                                    
+                                    # Agent character profile
+                                    if agent_character:
+                                        character_text = f"<i>{agent_character}</i>"
+                                        story.append(Paragraph(character_text.replace('\n', '<br/>'), agent_desc_style))
+                                    
+                                    story.append(Spacer(1, 0.1*inch))
+                                
+                                story.append(Spacer(1, 0.3*inch))
+                            
+                            # Add story content (split by paragraphs)
+                            story_paragraphs = st.session_state.mission_story.split('\n\n')
+                            for para in story_paragraphs:
+                                if para.strip():
+                                    # Replace newlines within paragraphs with <br/>
+                                    para_html = para.replace('\n', '<br/>')
+                                    story.append(Paragraph(para_html, body_style))
+                                    story.append(Spacer(1, 0.2*inch))
+                            
+                            # Add Q&A section if there are questions and answers
+                            if st.session_state.story_qa_history:
+                                story.append(Spacer(1, 0.4*inch))
+                                
+                                # Q&A Section Title
+                                qa_title_style = ParagraphStyle(
+                                    'QATitle',
+                                    parent=getSampleStyleSheet()['Heading2'],
+                                    fontSize=14,
+                                    textColor='#6b46c1',
+                                    spaceAfter=15,
+                                    spaceBefore=20
+                                )
+                                story.append(Paragraph("Questions & Answers", qa_title_style))
+                                story.append(Spacer(1, 0.2*inch))
+                                
+                                # Q&A Question style
+                                qa_question_style = ParagraphStyle(
+                                    'QAQuestion',
+                                    parent=getSampleStyleSheet()['Normal'],
+                                    fontSize=11,
+                                    textColor='#553c9a',
+                                    spaceAfter=8,
+                                    leftIndent=0,
+                                    fontName='Helvetica-Bold'
+                                )
+                                
+                                # Q&A Answer style
+                                qa_answer_style = ParagraphStyle(
+                                    'QAAnswer',
+                                    parent=getSampleStyleSheet()['Normal'],
+                                    fontSize=10,
+                                    textColor='#1e293b',
+                                    spaceAfter=15,
+                                    leftIndent=20
+                                )
+                                
+                                # Add each Q&A pair
+                                for idx, qa in enumerate(st.session_state.story_qa_history, 1):
+                                    question_text = f"Q{idx}: {qa['question']}"
+                                    answer_text = f"A{idx}: {qa['answer']}"
+                                    
+                                    story.append(Paragraph(question_text.replace('\n', '<br/>'), qa_question_style))
+                                    story.append(Spacer(1, 0.1*inch))
+                                    story.append(Paragraph(answer_text.replace('\n', '<br/>'), qa_answer_style))
+                                    story.append(Spacer(1, 0.15*inch))
+                            
+                            # Build PDF
+                            doc.build(story)
+                            buffer.seek(0)
+                            
+                            # Download button
+                            st.download_button(
+                                label="📄 Download PDF",
+                                data=buffer.getvalue(),
+                                file_name=f"{st.session_state.mission_story_title.replace(' ', '_')}.pdf",
+                                mime="application/pdf",
+                                use_container_width=True
+                            )
+                        except Exception as e:
+                            st.error(f"📄 PDF generation error: {str(e)}")
+                            st.info("📄 PDF generation requires the 'reportlab' library. Please ensure 'reportlab>=4.0.0' is in requirements.txt and the app has been redeployed on Streamlit Cloud.")
+                    else:
+                        st.error("📄 PDF generation is not available.")
+                        st.info("📄 The 'reportlab' library is not installed. Please ensure 'reportlab>=4.0.0' is in requirements.txt and the app has been redeployed on Streamlit Cloud.")
                 
                 # Display mission elaboration above the story
                 if st.session_state.team_mission:
