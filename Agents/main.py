@@ -991,15 +991,35 @@ def main():
                 with open(logo_path, "rb") as favicon_file:
                     favicon_base64 = base64.b64encode(favicon_file.read()).decode()
             
+            # Use JavaScript to inject favicon and force browser to reload it
+            import time
+            cache_buster = int(time.time())
             st.markdown(f"""
-                <link rel="icon" type="image/png" sizes="96x96" href="data:image/png;base64,{favicon_base64}">
-                <link rel="shortcut icon" type="image/png" sizes="96x96" href="data:image/png;base64,{favicon_base64}">
-                <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,{favicon_base64}">
-                <style>
-                link[rel="icon"], link[rel="shortcut icon"] {{
-                    size: 96px !important;
-                }}
-                </style>
+                <script>
+                // Remove any existing favicon links (including Streamlit's default)
+                document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(link => link.remove());
+                
+                // Add new favicon with larger size (96x96)
+                var link1 = document.createElement('link');
+                link1.rel = 'icon';
+                link1.type = 'image/png';
+                link1.sizes = '96x96';
+                link1.href = 'data:image/png;base64,{favicon_base64}?v={cache_buster}';
+                document.head.appendChild(link1);
+                
+                var link2 = document.createElement('link');
+                link2.rel = 'shortcut icon';
+                link2.type = 'image/png';
+                link2.sizes = '96x96';
+                link2.href = 'data:image/png;base64,{favicon_base64}?v={cache_buster}';
+                document.head.appendChild(link2);
+                
+                var link3 = document.createElement('link');
+                link3.rel = 'apple-touch-icon';
+                link3.sizes = '180x180';
+                link3.href = 'data:image/png;base64,{favicon_base64}?v={cache_buster}';
+                document.head.appendChild(link3);
+                </script>
                 """, unsafe_allow_html=True)
         except Exception:
             # Fallback to file path if base64 encoding fails
