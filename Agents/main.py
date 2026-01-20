@@ -2565,6 +2565,18 @@ def main():
                                 
                                 story.append(Spacer(1, 0.3*inch))
                             
+                            # Add story section title
+                            story_title_style = ParagraphStyle(
+                                'StoryTitle',
+                                parent=getSampleStyleSheet()['Heading2'],
+                                fontSize=14,
+                                textColor='#2563eb',
+                                spaceAfter=15,
+                                spaceBefore=10
+                            )
+                            story.append(Paragraph("📚 The Story", story_title_style))
+                            story.append(Spacer(1, 0.15*inch))
+                            
                             # Add story content (split by paragraphs)
                             story_paragraphs = st.session_state.mission_story.split('\n\n')
                             for para in story_paragraphs:
