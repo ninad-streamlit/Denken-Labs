@@ -26,7 +26,8 @@ def play_sound(sound_type):
             window.denkenAudioSystem = {
                 context: null,
                 initialized: false,
-                userInteracted: false
+                userInteracted: false,
+                enabled: false
             };
             
             // Function to initialize audio context
@@ -51,8 +52,32 @@ def play_sound(sound_type):
                 }
             }
             
+            // Function to enable audio (called by user interaction)
+            window.enableDenkenAudio = async function() {
+                window.denkenAudioSystem.enabled = true;
+                window.denkenAudioSystem.userInteracted = true;
+                const context = initAudioContext();
+                if (context && context.state === 'suspended') {
+                    try {
+                        await context.resume();
+                        console.log('Audio enabled and context resumed');
+                        // Hide enable button if it exists
+                        const btn = document.getElementById('enable-audio-btn');
+                        if (btn) btn.style.display = 'none';
+                    } catch(e) {
+                        console.log('Failed to resume audio context:', e);
+                    }
+                }
+            };
+            
             // Function to ensure audio context is running
             async function ensureAudioReady() {
+                // Check if audio is enabled
+                if (!window.denkenAudioSystem.enabled) {
+                    console.log('Audio not enabled yet');
+                    return null;
+                }
+                
                 let context = window.denkenAudioSystem.context || initAudioContext();
                 if (!context) return null;
                 
@@ -70,16 +95,14 @@ def play_sound(sound_type):
                 return context;
             }
             
-            // Store functions globally
+            // Store function globally
             window.initDenkenAudio = initAudioContext;
             window.ensureDenkenAudioReady = ensureAudioReady;
             
-            // Initialize on any user interaction
+            // Auto-enable on any user interaction (click, type, etc.)
             function enableAudio() {
                 if (!window.denkenAudioSystem.userInteracted) {
-                    window.denkenAudioSystem.userInteracted = true;
-                    initAudioContext();
-                    ensureAudioReady();
+                    window.enableDenkenAudio();
                 }
             }
             
@@ -87,12 +110,6 @@ def play_sound(sound_type):
             ['click', 'touchstart', 'keydown', 'mousedown'].forEach(eventType => {
                 document.addEventListener(eventType, enableAudio, { once: false, passive: true });
             });
-            
-            // Also try to initialize immediately (might work if user already interacted)
-            setTimeout(() => {
-                initAudioContext();
-                ensureAudioReady();
-            }, 100);
         }
     })();
     </script>
@@ -2595,6 +2612,24 @@ def main():
         # Use div instead of h2 to avoid Streamlit's heading styles, with inline !important
         st.markdown('<div id="welcome-title-element" style="font-size: 2.25rem; font-weight: 600; color: #bfdbfe !important; margin-bottom: 0.5rem;">Welcome to Denken Labs</div>', unsafe_allow_html=True)
         st.markdown('<div class="tagline-text">**Get ready for an exiting mission**</div>', unsafe_allow_html=True)
+        
+        # Add enable sounds button if audio not enabled
+        st.markdown("""
+        <div id="enable-audio-btn" style="text-align: center; margin: 10px 0;">
+            <button onclick="window.enableDenkenAudio && window.enableDenkenAudio(); this.style.display='none';" 
+                    style="background-color: #4CAF50; color: white; border: none; padding: 8px 16px; 
+                           border-radius: 5px; cursor: pointer; font-size: 14px;">
+                🔊 Enable Sounds
+            </button>
+        </div>
+        <script>
+        // Hide button if audio is already enabled
+        if (window.denkenAudioSystem && window.denkenAudioSystem.enabled) {
+            const btn = document.getElementById('enable-audio-btn');
+            if (btn) btn.style.display = 'none';
+        }
+        </script>
+        """, unsafe_allow_html=True)
         
         # Build your own agent button - compact (purple)
         st.markdown("""
