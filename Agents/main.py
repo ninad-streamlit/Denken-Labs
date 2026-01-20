@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 import openai
-from config import STREAMLIT_CONFIG, APP_VERSION, OPENAI_API_KEY
+from config import STREAMLIT_CONFIG, APP_VERSION, get_openai_api_key
 import random # Added for unique bot numbers
 import json # Added for OpenAI response parsing
 from io import BytesIO
@@ -124,7 +124,7 @@ def generate_story_question_example(story_title, story_content, existing_questio
     
     # Generate a question example using OpenAI with emphasis on variety
     try:
-        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        client = openai.OpenAI(api_key=get_openai_api_key())
         
         # Build more comprehensive context including all previously generated questions
         all_previous = list(set(asked_questions + st.session_state.all_generated_questions[-20:]))
@@ -1922,7 +1922,7 @@ def main():
                 if agent_description and agent_description.strip():
                     try:
                         # Generate bot name, description, and elaborate character using OpenAI
-                        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                        client = openai.OpenAI(api_key=get_openai_api_key())
                         # Get existing agent names to avoid duplicates
                         existing_names = [bot.get('name', '').lower() for bot in st.session_state.created_bots]
                         
@@ -2004,7 +2004,7 @@ def main():
                                     # Get existing agent names to avoid duplicates (excluding current bot)
                                     existing_names = [b.get('name', '').lower() for b in st.session_state.created_bots if b['id'] != bot['id']]
                                     
-                                    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                                    client = openai.OpenAI(api_key=get_openai_api_key())
                                     response = client.chat.completions.create(
                                         model="gpt-4o-mini",
                                         messages=[
@@ -2149,7 +2149,7 @@ def main():
                             
                             agent_info = "\n".join(agent_list)
                             
-                            client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                            client = openai.OpenAI(api_key=get_openai_api_key())
                             story_response = client.chat.completions.create(
                                 model="gpt-4o-mini",
                                 messages=[
@@ -2519,7 +2519,7 @@ def main():
                         if user_question and user_question.strip():
                             try:
                                 # Generate answer using OpenAI
-                                client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                                client = openai.OpenAI(api_key=get_openai_api_key())
                                 # Get user's name for personalization
                                 user_name = st.session_state.get('user_creative_name', 'friend')
                                 

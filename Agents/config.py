@@ -8,27 +8,38 @@ APP_VERSION = "0.147"
 load_dotenv()
 
 # OpenAI Configuration
-# Try Streamlit secrets first (for Streamlit Cloud), then fall back to environment variables (for local)
+# Lazy function to get API key (secrets only available after Streamlit initializes)
+def get_openai_api_key():
+    """Get OpenAI API key from Streamlit secrets or environment variables."""
+    # Try Streamlit secrets first (for Streamlit Cloud)
+    try:
+        import streamlit as st
+        if hasattr(st, 'secrets') and st.secrets:
+            try:
+                api_key = st.secrets.get("OPENAI_API_KEY")
+                if api_key:
+                    return api_key
+            except (AttributeError, KeyError, TypeError):
+                pass
+    except (ImportError, AttributeError):
+        pass
+    
+    # Fall back to environment variables (for local development)
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY environment variable is not set. Please add it to your .env file or Streamlit Cloud secrets.")
+    return api_key
+
+# For backward compatibility, try to get it at import time if possible
+# But don't raise error if Streamlit isn't initialized yet
 OPENAI_API_KEY = None
 try:
-    import streamlit as st
-    from streamlit.runtime.secrets import StreamlitSecretNotFoundError
-    try:
-        # Try to access secrets (works on Streamlit Cloud)
-        OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY")
-    except (StreamlitSecretNotFoundError, AttributeError, KeyError, TypeError):
-        # Secrets file not found (local development) or not accessible
-        pass
-except (ImportError, AttributeError):
-    # Streamlit not available or StreamlitSecretNotFoundError not found
+    # Try environment variable first (works before Streamlit initializes)
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+except:
     pass
 
-# Fall back to environment variables if secrets not found
-if not OPENAI_API_KEY:
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY environment variable is not set. Please add it to your .env file or Streamlit Cloud secrets.")
+# If not found, it will be None and will need to be retrieved via get_openai_api_key() after Streamlit initializes
 
 # Streamlit Configuration
 STREAMLIT_CONFIG = {
