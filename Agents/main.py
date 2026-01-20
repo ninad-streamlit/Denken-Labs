@@ -1407,7 +1407,7 @@ def main():
                             child.style.setProperty('--agent-name-color', '#ffffff', 'important');
                             child.style.color = '#ffffff';
                             var childStyle = child.getAttribute('style') || '';
-                            childStyle = childStyle.replace(/color\s*:[^;]*;?/gi, '');
+                            childStyle = childStyle.replace(/color\\s*:[^;]*;?/gi, '');
                             childStyle += ' color: #ffffff !important;';
                             child.setAttribute('style', childStyle);
                         });
