@@ -1264,6 +1264,46 @@ def main():
     }
     </style>
     <script>
+    // Force agent names to be light in dark mode - use JavaScript with aggressive DOM manipulation
+    function forceAgentNamesLight() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (!isDark) return;
+        
+        // Target all agent names by ID pattern or class
+        var agentNames = document.querySelectorAll('[id^="agent-name-"], .agent-name, div.agent-name');
+        agentNames.forEach(function(el) {
+            // Apply light blue color with maximum priority
+            el.style.color = '#bfdbfe';
+            el.style.setProperty('color', '#bfdbfe', 'important');
+            
+            // Also ensure the style attribute includes it
+            var currentStyle = el.getAttribute('style') || '';
+            currentStyle = currentStyle.replace(/color[^;]*;?/gi, '');
+            el.setAttribute('style', currentStyle + ' color: #bfdbfe !important;');
+            
+            // Apply to all children (especially strong tags)
+            var children = el.querySelectorAll('*');
+            children.forEach(function(child) {
+                child.style.color = '#bfdbfe';
+                child.style.setProperty('color', '#bfdbfe', 'important');
+            });
+        });
+    }
+    
+    // Run immediately and continuously for agent names
+    forceAgentNamesLight();
+    setInterval(forceAgentNamesLight, 50); // Check every 50ms
+    
+    // Watch for theme changes
+    var agentNameThemeObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                setTimeout(forceAgentNamesLight, 10);
+            }
+        });
+    });
+    agentNameThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    
     // Force "Welcome to Denken Labs" to be light in dark mode - target div with ID welcome-title-element
     function forceWelcomeTitleLight() {
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1546,6 +1586,11 @@ def main():
                         if (node.querySelectorAll('#welcome-title-element, .welcome-title, h2, div[id*="welcome"]').length > 0) {
                             forceWelcomeTitleLight();
                         }
+                        // Check for agent names
+                        var agentNames = node.querySelectorAll('[id^="agent-name-"], .agent-name');
+                        if (agentNames.length > 0) {
+                            forceAgentNamesLight();
+                        }
                     }
                     // Check if the node itself is story content
                     if (node.classList && node.classList.contains('story-content')) {
@@ -1556,6 +1601,11 @@ def main():
                         (node.classList && node.classList.contains('welcome-title')) || 
                         ((node.tagName === 'DIV' || node.tagName === 'H2') && node.textContent && node.textContent.includes('Welcome'))) {
                         forceWelcomeTitleLight();
+                    }
+                    // Check if the node itself is an agent name
+                    if (node.id && node.id.startsWith('agent-name-') || 
+                        (node.classList && node.classList.contains('agent-name'))) {
+                        forceAgentNamesLight();
                     }
                 }
             });
@@ -1572,6 +1622,7 @@ def main():
             styleButtons();
             forceStoryTransparent();
             forceWelcomeTitleLight();
+            forceAgentNamesLight();
             document.querySelectorAll('button').forEach(function(btn) {
                 styleObserver.observe(btn, { attributes: true, attributeFilter: ['style', 'class'] });
             });
