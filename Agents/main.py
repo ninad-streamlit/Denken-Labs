@@ -730,34 +730,70 @@ def generate_mission_example():
         st.session_state.used_mission_examples = []
     
     # Try multiple combinations to find one not recently used
-    max_attempts = 15
+    max_attempts = 20
     for _ in range(max_attempts):
         mission = random.choice(star_trek_missions)
         objective = random.choice(mission_objectives)
         
-        # Generate different example formats for variety
+        # Expanded format variations for even more variety (20 formats)
         example_formats = [
-            f"Mission: {mission}, {objective}.",
-            f"Your mission is to {mission}, {objective}.",
-            f"The team's mission: {mission}, all while {objective}.",
-            f"Embark on a mission to {mission}, {objective}.",
-            f"Assigned mission: {mission}, {objective}.",
-            f"Your team must {mission}, always {objective}.",
-            f"The mission requires you to {mission}, while {objective}.",
-            f"Prepare for a mission where you will {mission}, {objective}."
+            "Mission: {}, {}.",
+            "Your mission is to {}, {}.",
+            "The team's mission: {}, all while {}.",
+            "Embark on a mission to {}, {}.",
+            "Assigned mission: {}, {}.",
+            "Your team must {}, always {}.",
+            "The mission requires you to {}, while {}.",
+            "Prepare for a mission where you will {}, {}.",
+            "Your mission: {}, {}.",
+            "The crew's mission is to {}, {}.",
+            "Mission objective: {}, {}.",
+            "You are assigned to {}, {}.",
+            "The team needs to {}, {}.",
+            "Your task: {}, {}.",
+            "Mission brief: {}, {}.",
+            "The assignment: {}, {}.",
+            "Your goal is to {}, {}.",
+            "Mission directive: {}, {}.",
+            "The challenge: {}, {}.",
+            "Your assignment: {}, {}."
         ]
-        example = random.choice(example_formats)
+        example = random.choice(example_formats).format(mission, objective)
         
-        # Check if this combination was recently used
-        if example not in st.session_state.used_mission_examples[-30:]:
+        # Check if this combination was recently used (check last 100 instead of 30)
+        if example not in st.session_state.used_mission_examples[-100:]:
             st.session_state.used_mission_examples.append(example)
-            # Keep only last 100 examples
-            if len(st.session_state.used_mission_examples) > 100:
-                st.session_state.used_mission_examples = st.session_state.used_mission_examples[-50:]
+            # Keep only last 500 examples (increased from 100)
+            if len(st.session_state.used_mission_examples) > 500:
+                st.session_state.used_mission_examples = st.session_state.used_mission_examples[-250:]
             return example
     
-    # If all attempts failed, return anyway
-    return example
+    # If all attempts failed, return a random one anyway
+    mission = random.choice(star_trek_missions)
+    objective = random.choice(mission_objectives)
+    example_formats = [
+        "Mission: {}, {}.",
+        "Your mission is to {}, {}.",
+        "The team's mission: {}, all while {}.",
+        "Embark on a mission to {}, {}.",
+        "Assigned mission: {}, {}.",
+        "Your team must {}, always {}.",
+        "The mission requires you to {}, while {}.",
+        "Prepare for a mission where you will {}, {}.",
+        "Your mission: {}, {}.",
+        "The crew's mission is to {}, {}.",
+        "Mission objective: {}, {}.",
+        "You are assigned to {}, {}.",
+        "The team needs to {}, {}.",
+        "Your task: {}, {}.",
+        "Mission brief: {}, {}.",
+        "The assignment: {}, {}.",
+        "Your goal is to {}, {}.",
+        "Mission directive: {}, {}.",
+        "The challenge: {}, {}.",
+        "Your assignment: {}, {}."
+    ]
+    return random.choice(example_formats).format(mission, objective)
 
 def main():
     # Set page config with logo as favicon
