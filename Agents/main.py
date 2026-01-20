@@ -967,6 +967,26 @@ def main():
     }
     </style>
     <style>
+    /* Ensure logo images have transparent backgrounds */
+    img[alt="Denken Labs Logo"],
+    .stImage img,
+    .stImage > div,
+    .stImage > div > img,
+    div[data-testid="stImage"],
+    div[data-testid="stImage"] > div,
+    div[data-testid="stImage"] > div > img {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Remove any background from logo container */
+    .logo-container,
+    .logo-container > div {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    </style>
+    <style>
     /* Allow dark mode but ensure text is very light/bright for readability */
     /* Use comprehensive selectors to catch all text elements */
     [data-theme="dark"] * {
