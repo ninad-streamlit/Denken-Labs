@@ -2191,7 +2191,7 @@ def main():
                     img = img.convert('RGBA')
                 
                 # Get image data
-                data = img.getdata()
+                data = img.get_flattened_data()
                 
                 # Create new image data with transparent background
                 # Remove gray/white backgrounds (RGB values close to gray/white)
