@@ -11,57 +11,37 @@ load_dotenv()
 # Lazy function to get API key (secrets only available after Streamlit initializes)
 def get_openai_api_key():
     """Get OpenAI API key from Streamlit secrets or environment variables."""
+    api_key = None
+    
     # Try Streamlit secrets first (for Streamlit Cloud)
     try:
         import streamlit as st
-        # Check if secrets are available without triggering errors
-        try:
-            # Try multiple ways to access secrets
-            if hasattr(st, 'secrets'):
-                secrets_obj = st.secrets
-                if secrets_obj:
-                    # Try dictionary-style access
-                    try:
-                        api_key = secrets_obj.get("OPENAI_API_KEY")
-                        if api_key:
-                            return str(api_key).strip()
-                    except (KeyError, AttributeError, TypeError):
-                        pass
-                    
-                    # Try attribute-style access
-                    try:
-                        if hasattr(secrets_obj, 'OPENAI_API_KEY'):
-                            api_key = getattr(secrets_obj, 'OPENAI_API_KEY')
-                            if api_key:
-                                return str(api_key).strip()
-                    except (AttributeError, TypeError):
-                        pass
-                    
-                    # Try direct dictionary access
-                    try:
-                        if isinstance(secrets_obj, dict) or hasattr(secrets_obj, '__getitem__'):
-                            api_key = secrets_obj["OPENAI_API_KEY"]
-                            if api_key:
-                                return str(api_key).strip()
-                    except (KeyError, TypeError):
-                        pass
-        except RuntimeError as e:
-            # Streamlit raises RuntimeError when secrets file is not found
-            # This is expected for local development - fall through to env vars
-            if "No secrets found" not in str(e) and "secrets" not in str(e).lower():
-                # Re-raise if it's a different RuntimeError
-                raise
-        except (AttributeError, KeyError, TypeError):
-            # Other errors accessing secrets - fall back to env vars
-            pass
-    except (ImportError, AttributeError):
-        # Streamlit not available - fall back to env vars
+        from streamlit.runtime.secrets import StreamlitSecretNotFoundError
+        
+        # Try to get from Streamlit secrets (for Streamlit Cloud)
+        if hasattr(st, 'secrets') and st.secrets:
+            try:
+                # Try direct access first (Streamlit Cloud format) - same pattern as auth.py
+                api_key = st.secrets['OPENAI_API_KEY']
+            except (StreamlitSecretNotFoundError, KeyError, AttributeError, RuntimeError):
+                # Secrets file not found (local dev) or key missing - try .get() method
+                try:
+                    api_key = st.secrets.get('OPENAI_API_KEY', None)
+                except (StreamlitSecretNotFoundError, AttributeError, TypeError, RuntimeError):
+                    # Secrets not available at all
+                    pass
+    except (AttributeError, KeyError, TypeError, ImportError, RuntimeError):
+        # Streamlit secrets not available or not initialized
         pass
     
-    # Fall back to environment variables (for local development)
-    api_key = os.getenv("OPENAI_API_KEY")
+    # Fall back to environment variables if secrets not found (for local development)
+    if not api_key:
+        api_key = os.getenv('OPENAI_API_KEY')
+    
+    # Validate and return
     if not api_key:
         raise ValueError("OPENAI_API_KEY environment variable is not set. Please add it to your .env file or Streamlit Cloud secrets.")
+    
     return str(api_key).strip()
 
 # For backward compatibility, try to get it at import time if possible
