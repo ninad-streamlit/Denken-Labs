@@ -841,45 +841,37 @@ def main():
     }
     </style>
     <script>
-    // Force "Welcome to Denken Labs" to be light in dark mode - use ID and data attribute
+    // Force "Welcome to Denken Labs" to be light in dark mode - target div with ID welcome-title-element
     function forceWelcomeTitleLight() {
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         
-        // Target by ID first (most specific)
-        var welcomeTitle = document.getElementById('welcome-title-header');
-        if (welcomeTitle) {
-            if (isDark) {
-                // Remove the inline color style and apply light color
-                var currentStyle = welcomeTitle.getAttribute('style') || '';
-                // Remove any color declarations from inline style
-                currentStyle = currentStyle.replace(/color\s*:[^;]*;?/gi, '');
-                currentStyle = currentStyle.replace(/!important/gi, '');
-                // Add the light color
-                welcomeTitle.setAttribute('style', currentStyle + ' color: #bfdbfe !important;');
-                welcomeTitle.style.color = '#bfdbfe';
-                welcomeTitle.style.setProperty('color', '#bfdbfe', 'important');
-            } else {
-                // Light mode - use default color
-                var lightColor = welcomeTitle.getAttribute('data-light-color') || '#1e293b';
-                welcomeTitle.style.setProperty('color', lightColor, 'important');
+        // Target by ID first (most specific) - now using welcome-title-element div
+        var welcomeTitle = document.getElementById('welcome-title-element');
+        if (!welcomeTitle) {
+            // Fallback: find by text content
+            var allElements = document.querySelectorAll('div, h1, h2, h3, span');
+            for (var i = 0; i < allElements.length; i++) {
+                var text = (allElements[i].textContent || allElements[i].innerText || '').trim();
+                if (text === 'Welcome to Denken Labs') {
+                    welcomeTitle = allElements[i];
+                    welcomeTitle.id = 'welcome-title-element';
+                    break;
+                }
             }
+        }
+        
+        if (welcomeTitle && isDark) {
+            // Apply light blue color with maximum priority
+            welcomeTitle.style.color = '#bfdbfe';
+            welcomeTitle.style.setProperty('color', '#bfdbfe', 'important');
+            var currentStyle = welcomeTitle.getAttribute('style') || '';
+            currentStyle = currentStyle.replace(/color[^;]*;?/gi, '');
+            welcomeTitle.setAttribute('style', currentStyle + ' color: #bfdbfe !important;');
             
             // Apply to children
             var children = welcomeTitle.querySelectorAll('*');
             children.forEach(function(child) {
-                child.style.setProperty('color', isDark ? '#bfdbfe' : '#1e293b', 'important');
-            });
-        }
-        
-        // Also try by text content as fallback
-        if (isDark) {
-            var allH2s = document.querySelectorAll('h2');
-            allH2s.forEach(function(el) {
-                var text = (el.textContent || el.innerText || '').trim();
-                if (text === 'Welcome to Denken Labs' || text.includes('Welcome to Denken Labs')) {
-                    el.style.removeProperty('color');
-                    el.style.setProperty('color', '#bfdbfe', 'important');
-                }
+                child.style.setProperty('color', '#bfdbfe', 'important');
             });
         }
     }
@@ -899,7 +891,8 @@ def main():
     welcomeThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     
     // Also watch for style attribute changes on the welcome title
-    if (document.getElementById('welcome-title-header')) {
+    var welcomeElement = document.getElementById('welcome-title-element');
+    if (welcomeElement) {
         var welcomeStyleObserver = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
@@ -907,7 +900,7 @@ def main():
                 }
             });
         });
-        welcomeStyleObserver.observe(document.getElementById('welcome-title-header'), { attributes: true, attributeFilter: ['style'] });
+        welcomeStyleObserver.observe(welcomeElement, { attributes: true, attributeFilter: ['style'] });
     }
     
     // Force story content to match Q&A section styling - simpler approach
@@ -1126,9 +1119,8 @@ def main():
                         if (storyDivs.length > 0 || node.classList && node.classList.contains('story-content')) {
                             forceStoryTransparent();
                         }
-                        // Check for welcome title
-                        var welcomeTitles = node.querySelectorAll('.welcome-title, h2');
-                        if (welcomeTitles.length > 0) {
+                        // Check for welcome title by ID or text
+                        if (node.querySelectorAll('#welcome-title-element, .welcome-title, h2, div[id*="welcome"]').length > 0) {
                             forceWelcomeTitleLight();
                         }
                     }
@@ -1136,8 +1128,10 @@ def main():
                     if (node.classList && node.classList.contains('story-content')) {
                         forceStoryTransparent();
                     }
-                    // Check if the node itself is welcome title
-                    if (node.classList && node.classList.contains('welcome-title') || (node.tagName === 'H2' && node.textContent && node.textContent.includes('Welcome'))) {
+                    // Check if the node itself is welcome title (by ID or text)
+                    if ((node.id === 'welcome-title-element') || 
+                        (node.classList && node.classList.contains('welcome-title')) || 
+                        ((node.tagName === 'DIV' || node.tagName === 'H2') && node.textContent && node.textContent.includes('Welcome'))) {
                         forceWelcomeTitleLight();
                     }
                 }
@@ -1251,60 +1245,7 @@ def main():
     
     if not st.session_state.show_agent_builder:
         # Use div instead of h2 to avoid Streamlit's heading styles, with inline !important
-        st.markdown("""
-        <div id="welcome-title-element" style="font-size: 2.25rem; font-weight: 600; color: #bfdbfe !important; margin-bottom: 0.5rem;">Welcome to Denken Labs</div>
-        <script>
-        (function() {
-            function setWelcomeColor() {
-                var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                var el = document.getElementById('welcome-title-element');
-                
-                if (!el) {
-                    var allElements = document.querySelectorAll('div, h1, h2, h3, span');
-                    for (var i = 0; i < allElements.length; i++) {
-                        var text = (allElements[i].textContent || allElements[i].innerText || '').trim();
-                        if (text === 'Welcome to Denken Labs') {
-                            el = allElements[i];
-                            el.id = 'welcome-title-element';
-                            break;
-                        }
-                    }
-                }
-                
-                if (el && isDark) {
-                    el.style.color = '#bfdbfe';
-                    el.style.setProperty('color', '#bfdbfe', 'important');
-                    el.setAttribute('style', (el.getAttribute('style') || '').replace(/color[^;]*;?/gi, '') + ' color: #bfdbfe !important;');
-                    var force = el.offsetHeight;
-                }
-            }
-            
-            setWelcomeColor();
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', setWelcomeColor);
-            }
-            window.addEventListener('load', setWelcomeColor);
-            setTimeout(setWelcomeColor, 0);
-            setTimeout(setWelcomeColor, 1);
-            setTimeout(setWelcomeColor, 5);
-            setTimeout(setWelcomeColor, 10);
-            setTimeout(setWelcomeColor, 25);
-            setTimeout(setWelcomeColor, 50);
-            setTimeout(setWelcomeColor, 100);
-            setInterval(setWelcomeColor, 5);
-            
-            var observer = new MutationObserver(setWelcomeColor);
-            if (document.documentElement) {
-                observer.observe(document.documentElement, { attributes: true, subtree: true, childList: true });
-            }
-            if (document.body) {
-                observer.observe(document.body, { attributes: true, subtree: true, childList: true });
-            }
-            
-            window.addEventListener('streamlit:rerun', setWelcomeColor);
-        })();
-        </script>
-        """, unsafe_allow_html=True)
+        st.markdown('<div id="welcome-title-element" style="font-size: 2.25rem; font-weight: 600; color: #bfdbfe !important; margin-bottom: 0.5rem;">Welcome to Denken Labs</div>', unsafe_allow_html=True)
         st.markdown('<div class="tagline-text">**Get ready for an exiting mission**</div>', unsafe_allow_html=True)
         
         # Build your own agent button - compact (purple)
