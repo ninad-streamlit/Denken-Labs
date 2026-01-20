@@ -20,7 +20,9 @@ def play_sound(sound_type):
     # Comprehensive audio initialization that works across page reloads
     init_audio_script = """
     <script>
+    console.log('🧪 AUDIO INIT SCRIPT STARTING...');
     (function() {
+        console.log('🧪 Inside audio init IIFE');
         // Initialize audio system
         if (!window.denkenAudioSystem) {
             window.denkenAudioSystem = {
@@ -2652,6 +2654,14 @@ def main():
         # Use div instead of h2 to avoid Streamlit's heading styles, with inline !important
         st.markdown('<div id="welcome-title-element" style="font-size: 2.25rem; font-weight: 600; color: #bfdbfe !important; margin-bottom: 0.5rem;">Welcome to Denken Labs</div>', unsafe_allow_html=True)
         st.markdown('<div class="tagline-text">**Get ready for an exiting mission**</div>', unsafe_allow_html=True)
+        
+        # Test if JavaScript is working at all
+        st.markdown("""
+        <script>
+        console.log('🧪 TEST: JavaScript is working!');
+        alert('JavaScript test - if you see this, JS is working!');
+        </script>
+        """, unsafe_allow_html=True)
         
         # Inject audio initialization script FIRST (before button) so button can use it
         play_sound('')  # This injects the audio init script without playing a sound
