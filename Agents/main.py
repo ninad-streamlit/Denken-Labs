@@ -1250,59 +1250,83 @@ def main():
         st.session_state.mission_example = generate_mission_example()
     
     if not st.session_state.show_agent_builder:
-        # Use a wrapper div with inline style that changes based on theme via JavaScript
+        # Use Streamlit's native title with custom CSS wrapper
         st.markdown("""
-        <div id="welcome-wrapper" style="position: relative;">
-            <h2 id="welcome-title-header" class="welcome-title" style="color: #1e293b; transition: color 0.2s;">Welcome to Denken Labs</h2>
-        </div>
+        <style>
+        /* Target Streamlit's h1 element that st.title() creates */
+        [data-theme="dark"] h1:has-text("Welcome to Denken Labs"),
+        [data-theme="dark"] h1.stTitle,
+        [data-theme="dark"] .stTitle h1,
+        [data-theme="dark"] h1[id*="welcome"],
+        [data-theme="dark"] h1[class*="welcome"] {
+            color: #bfdbfe !important;
+        }
+        /* Also target by text content using attribute selector */
+        [data-theme="dark"] h1 {
+            color: #bfdbfe !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Use st.title() which creates an h1 element that we can target
+        st.markdown('<h1 id="welcome-title-streamlit" class="welcome-title-streamlit" style="color: #1e293b;">Welcome to Denken Labs</h1>', unsafe_allow_html=True)
+        
+        # Add JavaScript that runs after Streamlit renders
+        st.markdown("""
         <script>
         (function() {
-            function updateWelcomeColor() {
-                var welcomeEl = document.getElementById('welcome-title-header');
-                if (!welcomeEl) return;
-                
+            function forceWelcomeLight() {
                 var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                if (isDark) {
-                    // Force light blue color using multiple methods
-                    welcomeEl.style.cssText = welcomeEl.style.cssText.replace(/color[^;]*;?/gi, '') + ' color: #bfdbfe !important;';
-                    welcomeEl.setAttribute('data-dark-color', '#bfdbfe');
-                    
-                    // Also try direct manipulation
-                    var computedStyle = window.getComputedStyle(welcomeEl);
-                    if (computedStyle.color !== 'rgb(191, 219, 254)') {
-                        welcomeEl.style.removeProperty('color');
-                        welcomeEl.style.setProperty('color', '#bfdbfe', 'important');
+                if (!isDark) return;
+                
+                // Find all h1 elements
+                var allH1s = document.querySelectorAll('h1');
+                allH1s.forEach(function(h1) {
+                    var text = (h1.textContent || h1.innerText || '').trim();
+                    if (text === 'Welcome to Denken Labs') {
+                        // Use requestAnimationFrame for smoother updates
+                        requestAnimationFrame(function() {
+                            h1.style.cssText = (h1.style.cssText || '').replace(/color[^;]*;?/gi, '') + ' color: #bfdbfe !important;';
+                            h1.style.setProperty('color', '#bfdbfe', 'important');
+                            h1.setAttribute('data-forced-color', '#bfdbfe');
+                        });
                     }
+                });
+                
+                // Also target by ID
+                var welcomeById = document.getElementById('welcome-title-streamlit');
+                if (welcomeById) {
+                    requestAnimationFrame(function() {
+                        welcomeById.style.cssText = (welcomeById.style.cssText || '').replace(/color[^;]*;?/gi, '') + ' color: #bfdbfe !important;';
+                        welcomeById.style.setProperty('color', '#bfdbfe', 'important');
+                    });
                 }
             }
             
-            // Run immediately
-            updateWelcomeColor();
+            // Multiple execution strategies
+            forceWelcomeLight();
+            setTimeout(forceWelcomeLight, 0);
+            setTimeout(forceWelcomeLight, 10);
+            setTimeout(forceWelcomeLight, 50);
+            setTimeout(forceWelcomeLight, 100);
+            setInterval(forceWelcomeLight, 20);
             
-            // Run on interval
-            setInterval(updateWelcomeColor, 25);
-            
-            // Watch for theme changes
-            var observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'data-theme') {
-                        setTimeout(updateWelcomeColor, 5);
-                    }
-                });
+            // Watch for theme and DOM changes
+            var themeObserver = new MutationObserver(function() {
+                setTimeout(forceWelcomeLight, 0);
             });
-            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+            themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
             
-            // Watch for the element being added
-            var elementObserver = new MutationObserver(function(mutations) {
+            var domObserver = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     mutation.addedNodes.forEach(function(node) {
-                        if (node.id === 'welcome-title-header' || (node.querySelector && node.querySelector('#welcome-title-header'))) {
-                            setTimeout(updateWelcomeColor, 5);
+                        if (node.nodeType === 1 && (node.tagName === 'H1' || node.querySelector && node.querySelector('h1'))) {
+                            setTimeout(forceWelcomeLight, 0);
                         }
                     });
                 });
             });
-            elementObserver.observe(document.body, { childList: true, subtree: true });
+            domObserver.observe(document.body, { childList: true, subtree: true });
         })();
         </script>
         """, unsafe_allow_html=True)
