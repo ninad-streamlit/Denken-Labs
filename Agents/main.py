@@ -885,9 +885,12 @@ def main():
         if os.path.exists(denken_labs_logo):
             logo_path = denken_labs_logo
     
-    # Don't set page_icon here - we'll use HTML favicon links instead for better control
-    if not logo_path:
-        config['page_icon'] = "🤖"  # Fallback to emoji if image not found
+    # Set page_icon to None to prevent Streamlit from using the emoji default
+    # We'll inject the favicon via JavaScript instead for better control
+    if logo_path:
+        config['page_icon'] = None  # Don't use Streamlit's default emoji
+    else:
+        config['page_icon'] = "🤖"  # Fallback to emoji only if no logo found
     st.set_page_config(**config)
     
     # Get the app URL for Open Graph image (for sharing previews)
