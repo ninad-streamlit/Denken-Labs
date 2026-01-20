@@ -876,9 +876,8 @@ def main():
             logo_path = path
             break
     
-    if logo_path:
-        config['page_icon'] = logo_path
-    else:
+    # Don't set page_icon here - we'll use HTML favicon links instead for better control
+    if not logo_path:
         config['page_icon'] = "🤖"  # Fallback to emoji if image not found
     st.set_page_config(**config)
     
