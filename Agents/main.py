@@ -52,6 +52,32 @@ def play_sound(sound_type):
                 }
             }
             
+            // Function to play a test sound
+            function playTestSound(context) {
+                try {
+                    const oscillator = context.createOscillator();
+                    const gainNode = context.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(context.destination);
+                    
+                    // Play a pleasant test tone
+                    oscillator.frequency.value = 523.25; // C5 note
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.6, context.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+                    
+                    oscillator.start(context.currentTime);
+                    oscillator.stop(context.currentTime + 0.5);
+                    console.log('Test sound played successfully');
+                    return true;
+                } catch(e) {
+                    console.error('Error playing test sound:', e);
+                    return false;
+                }
+            }
+            
             // Function to enable audio (called by user interaction)
             window.enableDenkenAudio = async function() {
                 try {
@@ -70,6 +96,12 @@ def play_sound(sound_type):
                     } else {
                         console.log('Audio context already running');
                     }
+                    
+                    // Play a test sound to confirm it's working
+                    setTimeout(() => {
+                        playTestSound(context);
+                    }, 100);
+                    
                     return context;
                 } catch(e) {
                     console.error('Error in enableDenkenAudio:', e);
@@ -2651,18 +2683,17 @@ def main():
                     btn.disabled = true;
                     btn.style.opacity = '0.6';
                     
+                    let context = null;
+                    
                     // Call enable function
                     if (window.enableDenkenAudio) {
-                        await window.enableDenkenAudio();
-                        status.textContent = '✅ Sounds enabled!';
-                        btn.textContent = '✅ Sounds Enabled';
-                        setTimeout(() => {
-                            btn.style.display = 'none';
-                        }, 2000);
+                        context = await window.enableDenkenAudio();
                     } else {
                         // Fallback: try to initialize directly
                         if (!window.denkenAudioSystem) {
                             status.textContent = '❌ Audio system not initialized. Please refresh the page.';
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
                             return;
                         }
                         
@@ -2670,22 +2701,53 @@ def main():
                         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                         if (!AudioContextClass) {
                             status.textContent = '❌ Web Audio API not supported in this browser.';
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
                             return;
                         }
                         
-                        window.denkenAudioSystem.context = new AudioContextClass();
-                        if (window.denkenAudioSystem.context.state === 'suspended') {
-                            await window.denkenAudioSystem.context.resume();
+                        context = new AudioContextClass();
+                        if (context.state === 'suspended') {
+                            await context.resume();
                         }
                         
+                        window.denkenAudioSystem.context = context;
                         window.denkenAudioSystem.enabled = true;
                         window.denkenAudioSystem.userInteracted = true;
                         
-                        status.textContent = '✅ Sounds enabled!';
+                        // Play test sound
+                        setTimeout(() => {
+                            try {
+                                const oscillator = context.createOscillator();
+                                const gainNode = context.createGain();
+                                oscillator.connect(gainNode);
+                                gainNode.connect(context.destination);
+                                oscillator.frequency.value = 523.25;
+                                oscillator.type = 'sine';
+                                gainNode.gain.setValueAtTime(0.6, context.currentTime);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+                                oscillator.start(context.currentTime);
+                                oscillator.stop(context.currentTime + 0.5);
+                            } catch(e) {
+                                console.error('Test sound error:', e);
+                            }
+                        }, 100);
+                    }
+                    
+                    if (context && context.state === 'running') {
+                        status.textContent = '✅ Sounds enabled! You should hear a test sound.';
                         btn.textContent = '✅ Sounds Enabled';
                         setTimeout(() => {
-                            btn.style.display = 'none';
-                        }, 2000);
+                            status.textContent = '✅ Sounds are now enabled for all actions!';
+                            setTimeout(() => {
+                                btn.style.display = 'none';
+                                status.style.display = 'none';
+                            }, 2000);
+                        }, 1000);
+                    } else {
+                        status.textContent = '⚠️ Audio enabled but context state: ' + (context ? context.state : 'null');
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
                     }
                 } catch(e) {
                     console.error('Error enabling audio:', e);
