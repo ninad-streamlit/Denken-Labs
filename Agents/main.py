@@ -2625,7 +2625,22 @@ def main():
                         st.error("📄 PDF generation is not available.")
                         st.info("📄 The 'reportlab' library is not installed. Please ensure 'reportlab>=4.0.0' is in requirements.txt and the app has been redeployed on Streamlit Cloud.")
                 
+                # Display mission elaboration above the story
+                if st.session_state.team_mission:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown("### 🎯 The Mission")
+                    with st.container():
+                        st.markdown(f"""
+                        <div class="mission-elaboration" style='padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2563eb; background-color: var(--background-color);'>
+                            <div style='padding-left: 10px; font-size: 1.05rem; line-height: 1.6; color: var(--text-color);'>
+                                {st.session_state.team_mission}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
                 # Display story content - use Streamlit container styling like agent descriptions
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("### 📚 The Story")
                 # Convert story text to HTML - handle both single and double newlines
                 story_text = st.session_state.mission_story
                 # Replace double newlines with paragraph breaks
