@@ -2486,7 +2486,7 @@ def main():
                     else:
                         # Fallback if reportlab not available - use fpdf2
                         try:
-                            from fpdf import FPDF
+                            from fpdf2 import FPDF
                             
                             pdf = FPDF()
                             pdf.set_auto_page_break(auto=True, margin=15)
@@ -2605,10 +2605,16 @@ def main():
                                 mime="application/pdf",
                                 use_container_width=True
                             )
-                        except ImportError:
-                            st.info("📄 PDF generation will be available after libraries are installed. The app needs to redeploy with updated requirements.txt.")
+                            pdf_generated = True
+                        except ImportError as import_err:
+                            # If both libraries fail, show helpful message
+                            if not pdf_generated:
+                                st.info("📄 PDF generation requires either 'reportlab' or 'fpdf2' library. Please ensure one is installed in requirements.txt and the app has been redeployed.")
+                                st.error(f"Import error: {str(import_err)}")
                         except Exception as e:
-                            st.warning(f"PDF generation error: {str(e)}")
+                            st.warning(f"PDF generation error (fpdf2): {str(e)}")
+                            if not pdf_generated:
+                                st.info("💡 Tip: Try refreshing the page or check if the PDF libraries are properly installed.")
                 
                 # Display story content - use Streamlit container styling like agent descriptions
                 # Convert story text to HTML - handle both single and double newlines
