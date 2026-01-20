@@ -2453,24 +2453,24 @@ def main():
                         except Exception as e:
                             st.warning(f"PDF generation error: {str(e)}")
                 
-                # Display story content - use exact same HTML structure and styling as Q&A answers
+                # Display story content - use EXACT same HTML structure as Q&A answer div
                 # Convert story text to HTML - handle both single and double newlines
                 story_text = st.session_state.mission_story
-                # Replace double newlines with paragraph breaks, ensuring each paragraph has the answer color
+                # Replace double newlines with paragraph breaks
                 story_paragraphs = story_text.split('\n\n')
                 story_html_parts = []
                 for para in story_paragraphs:
                     if para.strip():
                         # Replace single newlines within paragraphs with line breaks
                         para = para.replace('\n', '<br>')
-                        # Use exact same color style as Q&A answers
-                        story_html_parts.append(f'<div style="color: #e2e8f0; margin-bottom: 10px;">{para}</div>')
+                        # Wrap each paragraph in a div with EXACT same styling as Q&A answer
+                        story_html_parts.append(f'<div style="color: #e2e8f0; padding-left: 10px; margin-bottom: 8px;">{para}</div>')
                 story_html = ''.join(story_html_parts)
                 
-                # Use exact same structure and styling as Q&A answer div
+                # Use EXACT same HTML structure and styling as Q&A answer div (line 2548)
                 st.markdown(f"""
                 <div class="story-content" style='background-color: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;'>
-                    <div style='color: #e2e8f0;'>
+                    <div style='color: #e2e8f0; padding-left: 10px;'>
                         {story_html}
                     </div>
                 </div>
