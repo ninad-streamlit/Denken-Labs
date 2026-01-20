@@ -655,7 +655,10 @@ def main():
     [data-theme="dark"] div.story-content div,
     [data-theme="dark"] div.story-content br,
     [data-theme="dark"] div.story-content strong,
-    [data-theme="dark"] div.story-content em {
+    [data-theme="dark"] div.story-content em,
+    [data-theme="dark"] .story-text,
+    [data-theme="dark"] .story-text *,
+    [data-theme="dark"] .story-content .story-text {
         color: #000000 !important; /* Pure black text for all nested elements - maximum contrast */
         background-color: transparent !important; /* Transparent background for nested elements */
     }
@@ -1816,10 +1819,11 @@ def main():
                         except Exception as e:
                             st.warning(f"PDF generation error: {str(e)}")
                 
-                # Display story content
+                # Display story content - wrap text in span to ensure black color in dark mode
+                story_html = st.session_state.mission_story.replace(chr(10), '<br>')
                 st.markdown(f"""
                 <div class="story-content" style='background-color: #f0f8ff; padding: 20px; border-radius: 10px; border-left: 5px solid var(--primary-color);'>
-                    {st.session_state.mission_story.replace(chr(10), '<br>')}
+                    <span class="story-text" style='color: #000000 !important;'>{story_html}</span>
                 </div>
                 """, unsafe_allow_html=True)
                 
