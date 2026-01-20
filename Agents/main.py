@@ -854,17 +854,18 @@ def main():
     # Set page config with logo as favicon
     config = STREAMLIT_CONFIG.copy()
     # Use relative path for logo (works locally and on Streamlit Cloud)
-    # Try multiple possible paths for the logo (prioritize transparent background versions)
+    # Prioritize Logo-DenkenLabs.png from Agents folder
     logo_paths = [
-        # First, try transparent background versions with common naming patterns
+        # First, try Logo-DenkenLabs.png from Agents folder (primary)
+        os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs.png"),
+        # Then try transparent background versions with common naming patterns
         os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs-transparent.png"),
         os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs-trans.png"),
         os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs-bg-transparent.png"),
+        # Fallback to other possible locations
+        os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png"),
         os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs-transparent.png"),
         os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs-trans.png"),
-        # Then try the original logo files (same logo, may have transparent background)
-        os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png"),
-        os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs.png"),
         os.path.join(os.path.dirname(__file__), "logo_DenkenLabs.png"),
         os.path.join(os.path.dirname(__file__), "Agents", "Logo-DenkenLabs.png"),
         os.path.join(os.path.dirname(__file__), "Agents", "agents", "Logo-DenkenLabs.png"),
