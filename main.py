@@ -1010,7 +1010,7 @@ def main():
         setInterval(styleButtons, 100);
     });
     
-    // Use MutationObserver to catch dynamically added buttons
+    // Use MutationObserver to catch dynamically added buttons and story content
     var observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             mutation.addedNodes.forEach(function(node) {
@@ -1024,11 +1024,21 @@ def main():
                             styleButtons();
                             styleObserver.observe(btn, { attributes: true, attributeFilter: ['style', 'class'] });
                         });
+                        // Also check for story content
+                        var storyDivs = node.querySelectorAll('.story-content, div.story-content');
+                        if (storyDivs.length > 0 || node.classList && node.classList.contains('story-content')) {
+                            forceStoryTransparent();
+                        }
+                    }
+                    // Check if the node itself is story content
+                    if (node.classList && node.classList.contains('story-content')) {
+                        forceStoryTransparent();
                     }
                 }
             });
         });
         styleButtons();
+        forceStoryTransparent();
     });
     observer.observe(document.body, { childList: true, subtree: true });
     
@@ -1036,6 +1046,7 @@ def main():
     window.addEventListener('streamlit:rerun', function() {
         setTimeout(function() {
             styleButtons();
+            forceStoryTransparent();
             document.querySelectorAll('button').forEach(function(btn) {
                 styleObserver.observe(btn, { attributes: true, attributeFilter: ['style', 'class'] });
             });
