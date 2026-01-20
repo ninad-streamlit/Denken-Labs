@@ -2442,7 +2442,18 @@ def main():
                 with col_pdf:
                     st.markdown("<br>", unsafe_allow_html=True)  # Spacing
                     # Generate PDF using reportlab
-                    if REPORTLAB_AVAILABLE:
+                    # Try importing reportlab at runtime (in case it was installed after app start)
+                    try:
+                        from reportlab.lib.pagesizes import letter
+                        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                        from reportlab.lib.units import inch
+                        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+                        from reportlab.lib.enums import TA_CENTER
+                        reportlab_available = True
+                    except ImportError:
+                        reportlab_available = REPORTLAB_AVAILABLE
+                    
+                    if reportlab_available:
                         try:
                             buffer = BytesIO()
                             doc = SimpleDocTemplate(buffer, pagesize=letter)
