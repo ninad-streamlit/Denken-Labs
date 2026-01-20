@@ -15,6 +15,144 @@ try:
 except ImportError:
     REPORTLAB_AVAILABLE = False
 
+def play_sound(sound_type):
+    """Play a sound effect based on the event type using Web Audio API"""
+    sound_scripts = {
+        'user_name': """
+        <script>
+        (function() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 523.25; // C5 note
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch(e) {
+                console.log('Audio playback not supported');
+            }
+        })();
+        </script>
+        """,
+        'agent_created': """
+        <script>
+        (function() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Play a pleasant ascending chord
+                const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                notes.forEach((freq, index) => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = freq;
+                        osc.type = 'sine';
+                        gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                        osc.start(audioContext.currentTime);
+                        osc.stop(audioContext.currentTime + 0.4);
+                    }, index * 100);
+                });
+            } catch(e) {
+                console.log('Audio playback not supported');
+            }
+        })();
+        </script>
+        """,
+        'story_rendered': """
+        <script>
+        (function() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                // Play a magical ascending melody
+                const melody = [
+                    {freq: 392.00, time: 0},    // G4
+                    {freq: 440.00, time: 0.1},  // A4
+                    {freq: 493.88, time: 0.2},  // B4
+                    {freq: 523.25, time: 0.3},  // C5
+                    {freq: 587.33, time: 0.4},  // D5
+                    {freq: 659.25, time: 0.5}   // E5
+                ];
+                
+                melody.forEach(note => {
+                    setTimeout(() => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        oscillator.frequency.value = note.freq;
+                        oscillator.type = 'sine';
+                        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.2);
+                    }, note.time * 1000);
+                });
+            } catch(e) {
+                console.log('Audio playback not supported');
+            }
+        })();
+        </script>
+        """,
+        'answer_generated': """
+        <script>
+        (function() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Play a cheerful two-tone chime
+                oscillator.frequency.value = 659.25; // E5
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.15);
+                
+                setTimeout(() => {
+                    const osc2 = audioContext.createOscillator();
+                    const gain2 = audioContext.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioContext.destination);
+                    osc2.frequency.value = 783.99; // G5
+                    osc2.type = 'sine';
+                    gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                    osc2.start(audioContext.currentTime);
+                    osc2.stop(audioContext.currentTime + 0.15);
+                }, 150);
+            } catch(e) {
+                console.log('Audio playback not supported');
+            }
+        })();
+        </script>
+        """
+    }
+    
+    if sound_type in sound_scripts:
+        st.markdown(sound_scripts[sound_type], unsafe_allow_html=True)
+
 def generate_agent_example():
     """Generate a short random agent description example (around 10 words) inspired by Star Trek characters with extensive variety"""
     star_trek_roles = [
@@ -2412,6 +2550,8 @@ def main():
                         st.session_state.user_creative_name = name_examples[0]
                     else:
                         st.session_state.user_creative_name = user_creative_name.strip()
+                    # Play sound for user name logged
+                    play_sound('user_name')
                     st.rerun()
             return  # Stop here until user enters their name
         
@@ -2549,6 +2689,9 @@ def main():
                         
                         # Regenerate example for next agent creation
                         st.session_state.agent_example = generate_agent_example()
+                        
+                        # Play sound for agent created
+                        play_sound('agent_created')
                         
                         st.rerun()
                     except Exception as e:
@@ -2799,6 +2942,9 @@ def main():
                                 # Clear Q&A history for the new mission
                                 st.session_state.story_qa_history = []
                                 st.session_state.story_question_example = ""
+                                
+                                # Play sound for story rendered
+                                play_sound('story_rendered')
                             else:
                                 # If story is too short or empty, try again with a simpler prompt
                                 raise ValueError("Generated story is too short or empty")
@@ -3182,6 +3328,9 @@ def main():
                                     "question": user_question,
                                     "answer": answer
                                 })
+                                
+                                # Play sound for answer generated
+                                play_sound('answer_generated')
                                 
                                 # Regenerate example question after answer is generated
                                 # Get updated list of asked questions (including the one just asked)
