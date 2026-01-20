@@ -1270,7 +1270,7 @@ def main():
                     if is_editing:
                         # Edit mode
                         bot_number = bot.get('number', 'N/A')
-                        st.markdown(f"**Editing Agent #{bot_number}**")
+                        st.markdown(f'<div class="agent-number"><strong>Editing Agent #{bot_number}</strong></div>', unsafe_allow_html=True)
                         
                         with st.form(f"edit_form_{bot['id']}", clear_on_submit=False):
                             edited_description = st.text_area(
