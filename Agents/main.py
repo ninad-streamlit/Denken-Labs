@@ -2653,6 +2653,9 @@ def main():
         st.markdown('<div id="welcome-title-element" style="font-size: 2.25rem; font-weight: 600; color: #bfdbfe !important; margin-bottom: 0.5rem;">Welcome to Denken Labs</div>', unsafe_allow_html=True)
         st.markdown('<div class="tagline-text">**Get ready for an exiting mission**</div>', unsafe_allow_html=True)
         
+        # Inject audio initialization script FIRST (before button) so button can use it
+        play_sound('')  # This injects the audio init script without playing a sound
+        
         # Add enable sounds button if audio not enabled - using separate markdown calls
         st.markdown("""
         <div id="enable-audio-container" style="text-align: center; margin: 10px 0;">
