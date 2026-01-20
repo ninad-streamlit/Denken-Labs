@@ -817,19 +817,19 @@ def main():
     }
     </style>
     <script>
-    // Force story content background to be transparent in dark mode
+    // Force story content background to be white and text black in dark mode
     function forceStoryTransparent() {
         if (document.documentElement.getAttribute('data-theme') === 'dark') {
             var storyDivs = document.querySelectorAll('.story-content, div.story-content');
             storyDivs.forEach(function(div) {
                 if (div) {
-                    div.style.setProperty('background-color', 'transparent', 'important');
-                    div.style.setProperty('color', '#ffffff', 'important');
-                    // Also ensure all nested elements are white
+                    div.style.setProperty('background-color', '#ffffff', 'important');
+                    div.style.setProperty('color', '#000000', 'important');
+                    // Also ensure all nested elements are black
                     var allChildren = div.querySelectorAll('*');
                     allChildren.forEach(function(child) {
-                        child.style.setProperty('color', '#ffffff', 'important');
-                        child.style.setProperty('background-color', 'transparent', 'important');
+                        child.style.setProperty('color', '#000000', 'important');
+                        child.style.setProperty('background-color', '#ffffff', 'important');
                     });
                 }
             });
