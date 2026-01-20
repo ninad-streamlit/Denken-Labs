@@ -827,30 +827,24 @@ def main():
     }
     </style>
     <script>
-    // Force story content to match Q&A section styling in dark mode
+    // Force story content to match Q&A section styling - simpler approach
     function forceStoryTransparent() {
         // Apply Q&A styling to story content (works in both light and dark mode)
         var storyDivs = document.querySelectorAll('.story-content, div.story-content');
         storyDivs.forEach(function(div) {
             if (div) {
-                // Match Q&A section styling: #f9fafb background, #1e293b text, #6b46c1 border
-                div.style.cssText = 'background-color: #f9fafb !important; color: #1e293b !important; padding: 15px !important; border-radius: 8px !important; margin-bottom: 15px !important; border-left: 4px solid #6b46c1 !important;';
-                div.setAttribute('style', 'background-color: #f9fafb !important; color: #1e293b !important; padding: 15px !important; border-radius: 8px !important; margin-bottom: 15px !important; border-left: 4px solid #6b46c1 !important;');
+                // Only override color, don't replace all styles with cssText
+                div.style.setProperty('background-color', '#f9fafb', 'important');
+                div.style.setProperty('color', '#1e293b', 'important');
+                div.style.setProperty('border-left-color', '#6b46c1', 'important');
                 
-                // Also ensure all nested elements use dark text color
+                // Ensure all nested elements use dark text color
                 var allChildren = div.querySelectorAll('*');
                 allChildren.forEach(function(child) {
                     child.style.setProperty('color', '#1e293b', 'important');
                     child.style.setProperty('background-color', 'transparent', 'important');
-                    // Remove any opacity or other color properties that might make text faint
                     child.style.removeProperty('opacity');
                     child.style.removeProperty('filter');
-                });
-                
-                // Also target the story-text span specifically
-                var storyTextSpans = div.querySelectorAll('.story-text, span.story-text');
-                storyTextSpans.forEach(function(span) {
-                    span.style.cssText = 'color: #1e293b !important; background-color: transparent !important;';
                 });
             }
         });
@@ -1826,10 +1820,18 @@ def main():
                             st.warning(f"PDF generation error: {str(e)}")
                 
                 # Display story content - use same styling as Q&A section
-                story_html = st.session_state.mission_story.replace(chr(10), '<br>')
+                # Convert story text to HTML - handle both single and double newlines
+                story_text = st.session_state.mission_story
+                # Replace double newlines with paragraph breaks
+                story_html = story_text.replace('\n\n', '</p><p style="margin-bottom: 10px;">')
+                # Replace single newlines with line breaks
+                story_html = story_html.replace('\n', '<br>')
+                # Wrap in paragraph tags
+                story_html = f'<p style="margin-bottom: 10px; color: #1e293b;">{story_html}</p>'
+                
                 st.markdown(f"""
-                <div class="story-content" style='background-color: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;'>
-                    <span class="story-text" style='color: #1e293b !important;'>{story_html}</span>
+                <div class="story-content" style='background-color: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1; color: #1e293b;'>
+                    {story_html}
                 </div>
                 """, unsafe_allow_html=True)
                 
