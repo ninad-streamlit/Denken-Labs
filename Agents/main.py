@@ -856,10 +856,13 @@ def main():
     # Use relative path for logo (works locally and on Streamlit Cloud)
     # Try multiple possible paths for the logo (prioritize transparent background versions)
     logo_paths = [
-        # Try transparent background logo first (favicon_bot.png likely has transparent background)
-        os.path.join(os.path.dirname(__file__), "favicon_bot.png"),
-        os.path.join(os.path.dirname(__file__), "bot.png"),
-        # Then try logo files (check if any have transparent background)
+        # First, try transparent background versions with common naming patterns
+        os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs-transparent.png"),
+        os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs-trans.png"),
+        os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs-bg-transparent.png"),
+        os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs-transparent.png"),
+        os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs-trans.png"),
+        # Then try the original logo files (same logo, may have transparent background)
         os.path.join(os.path.dirname(__file__), "agents", "Logo-DenkenLabs.png"),
         os.path.join(os.path.dirname(__file__), "Logo-DenkenLabs.png"),
         os.path.join(os.path.dirname(__file__), "logo_DenkenLabs.png"),
