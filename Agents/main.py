@@ -1264,97 +1264,106 @@ def main():
     }
     </style>
     <script>
-    // Inject dynamic CSS style tag for agent names with maximum specificity
-    function injectAgentNameStyles() {
-        var styleId = 'agent-name-dark-mode-styles';
-        var existingStyle = document.getElementById(styleId);
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-        
-        var style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = `
-            [data-theme="dark"] [id^="agent-name-"],
-            [data-theme="dark"] [id^="agent-name-"] *,
-            [data-theme="dark"] [data-agent-name="true"],
-            [data-theme="dark"] [data-agent-name="true"] *,
-            [data-theme="dark"] [id^="agent-name-"] strong,
-            [data-theme="dark"] [data-agent-name="true"] strong,
-            [data-theme="dark"] div.agent-name,
-            [data-theme="dark"] div.agent-name *,
-            [data-theme="dark"] div.agent-name strong,
-            [data-theme="dark"] .agent-name,
-            [data-theme="dark"] .agent-name *,
-            [data-theme="dark"] .agent-name strong {
-                color: #ffffff !important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    // Force agent names to be bright white in dark mode - completely new approach
-    function forceAgentNamesLight() {
+    // Completely different approach: Use computed style override and requestAnimationFrame
+    function brightenAgentNames() {
         var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        
-        // Inject CSS styles first
-        injectAgentNameStyles();
-        
         if (!isDark) return;
         
-        // Target all agent names by ID pattern, data attribute, or class
-        var selectors = [
-            '[id^="agent-name-"]',
-            '[data-agent-name="true"]',
-            '.agent-name',
+        // Target all agent names using multiple selector strategies
+        var allSelectors = document.querySelectorAll(
+            '[id^="agent-name-"], ' +
+            '[data-agent-name="true"], ' +
+            '.agent-name-bright, ' +
+            '.agent-name, ' +
+            'div.agent-name-bright, ' +
             'div.agent-name'
-        ];
+        );
         
-        selectors.forEach(function(selector) {
-            var agentNames = document.querySelectorAll(selector);
-            agentNames.forEach(function(el) {
-                // Apply pure white color with maximum priority using multiple methods
-                el.style.cssText = (el.style.cssText || '').replace(/color[^;]*;?/gi, '') + ' color: #ffffff !important;';
-                el.style.setProperty('color', '#ffffff', 'important');
-                el.style.color = '#ffffff';
-                el.setAttribute('style', (el.getAttribute('style') || '').replace(/color[^;]*;?/gi, '') + ' color: #ffffff !important;');
+        allSelectors.forEach(function(el) {
+            // Use requestAnimationFrame for smooth updates
+            requestAnimationFrame(function() {
+                // Get computed style to see what's actually applied
+                var computed = window.getComputedStyle(el);
+                var currentColor = computed.color;
                 
-                // Force reflow
-                var force = el.offsetHeight;
-                
-                // Apply to all children (especially strong tags) with pure white
-                var children = el.querySelectorAll('*');
-                children.forEach(function(child) {
-                    child.style.cssText = (child.style.cssText || '').replace(/color[^;]*;?/gi, '') + ' color: #ffffff !important;';
-                    child.style.setProperty('color', '#ffffff', 'important');
-                    child.style.color = '#ffffff';
-                });
+                // If not already white or very light, force it
+                if (currentColor !== 'rgb(255, 255, 255)' && 
+                    currentColor !== 'rgb(255, 255, 254)' &&
+                    currentColor !== 'rgb(255, 255, 253)') {
+                    
+                    // Method 1: Direct style property with important
+                    el.style.setProperty('color', '#ffffff', 'important');
+                    
+                    // Method 2: CSS variable override
+                    el.style.setProperty('--agent-name-color', '#ffffff', 'important');
+                    el.style.setProperty('color', 'var(--agent-name-color)', 'important');
+                    
+                    // Method 3: Direct color assignment
+                    el.style.color = '#ffffff';
+                    
+                    // Method 4: Inline style manipulation
+                    var inlineStyle = el.getAttribute('style') || '';
+                    // Remove any color declarations
+                    inlineStyle = inlineStyle.replace(/color\s*:[^;]*;?/gi, '');
+                    inlineStyle = inlineStyle.replace(/--agent-name-color\s*:[^;]*;?/gi, '');
+                    // Add our bright white color
+                    inlineStyle += ' --agent-name-color: #ffffff !important;';
+                    inlineStyle += ' color: #ffffff !important;';
+                    el.setAttribute('style', inlineStyle);
+                    
+                    // Apply to all children with same intensity
+                    var children = el.querySelectorAll('*');
+                    children.forEach(function(child) {
+                        requestAnimationFrame(function() {
+                            child.style.setProperty('color', '#ffffff', 'important');
+                            child.style.setProperty('--agent-name-color', '#ffffff', 'important');
+                            child.style.color = '#ffffff';
+                            var childStyle = child.getAttribute('style') || '';
+                            childStyle = childStyle.replace(/color\s*:[^;]*;?/gi, '');
+                            childStyle += ' color: #ffffff !important;';
+                            child.setAttribute('style', childStyle);
+                        });
+                    });
+                }
             });
         });
     }
     
-    // Inject styles immediately
-    injectAgentNameStyles();
+    // Run with multiple strategies
+    brightenAgentNames();
+    requestAnimationFrame(brightenAgentNames);
+    setTimeout(brightenAgentNames, 0);
+    setTimeout(brightenAgentNames, 5);
+    setTimeout(brightenAgentNames, 10);
+    setTimeout(brightenAgentNames, 25);
     
-    // Run immediately and continuously for agent names
-    forceAgentNamesLight();
-    setTimeout(forceAgentNamesLight, 0);
-    setTimeout(forceAgentNamesLight, 10);
-    setTimeout(forceAgentNamesLight, 25);
-    setTimeout(forceAgentNamesLight, 50);
-    setInterval(forceAgentNamesLight, 25); // Check every 25ms (faster than before)
+    // Continuous polling with requestAnimationFrame
+    function pollAgentNames() {
+        brightenAgentNames();
+        requestAnimationFrame(pollAgentNames);
+    }
+    requestAnimationFrame(pollAgentNames);
+    
+    // Also use setInterval as backup
+    setInterval(brightenAgentNames, 10); // Very frequent checking
     
     // Watch for theme changes
-    var agentNameThemeObserver = new MutationObserver(function(mutations) {
+    var themeObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-                injectAgentNameStyles();
-                setTimeout(forceAgentNamesLight, 0);
-                setTimeout(forceAgentNamesLight, 10);
+                requestAnimationFrame(brightenAgentNames);
+                setTimeout(brightenAgentNames, 0);
+                setTimeout(brightenAgentNames, 10);
             }
         });
     });
-    agentNameThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    
+    // Watch for DOM additions
+    var domObserver = new MutationObserver(function() {
+        requestAnimationFrame(brightenAgentNames);
+    });
+    domObserver.observe(document.body, { childList: true, subtree: true });
     
     // Force "Welcome to Denken Labs" to be light in dark mode - target div with ID welcome-title-element
     function forceWelcomeTitleLight() {
@@ -2044,8 +2053,9 @@ def main():
                         
                         with col2:
                             # Use inline style with ID and data attribute for maximum targeting
+                            # Use CSS variable and direct computed style override approach
                             agent_name_id = f"agent-name-{bot['id']}"
-                            st.markdown(f'<div id="{agent_name_id}" class="agent-name" data-agent-name="true" style="color: #ffffff !important;"><strong style="color: #ffffff !important;">{bot["name"]}</strong></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div id="{agent_name_id}" class="agent-name-bright" data-agent-name="true" style="--agent-name-color: #ffffff; color: var(--agent-name-color) !important;"><strong style="color: var(--agent-name-color) !important;">{bot["name"]}</strong></div>', unsafe_allow_html=True)
                             st.markdown(f"{bot['description']}")
                             # Display character profile if available
                             if bot.get('character'):
