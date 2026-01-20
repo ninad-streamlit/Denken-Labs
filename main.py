@@ -1434,8 +1434,8 @@ def main():
         storyDivs.forEach(function(div) {
             if (div) {
                 // Only override color, don't replace all styles with cssText
-                div.style.setProperty('background-color', '#f9fafb', 'important');
-                div.style.setProperty('color', '#1e293b', 'important');
+                div.style.setProperty('background-color', '#374151', 'important');
+                div.style.setProperty('color', '#e5e7eb', 'important');
                 div.style.setProperty('border-left-color', '#6b46c1', 'important');
                 
                 // Ensure all nested elements use dark text color
@@ -2457,7 +2457,7 @@ def main():
                 story_html = f'<p style="margin-bottom: 10px; color: #1e293b;">{story_html}</p>'
                 
                 st.markdown(f"""
-                <div class="story-content" style='background-color: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1; color: #1e293b;'>
+                <div class="story-content" style='background-color: #374151; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1; color: #e5e7eb;'>
                     {story_html}
                 </div>
                 """, unsafe_allow_html=True)
@@ -2541,7 +2541,7 @@ def main():
                     st.markdown("<br>", unsafe_allow_html=True)
                     for idx, qa in enumerate(st.session_state.story_qa_history):
                         st.markdown(f"""
-                        <div style='background-color: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;'>
+                        <div style='background-color: #374151; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;'>
                             <div style='font-weight: bold; color: #553c9a; margin-bottom: 8px;'>
                                 ❓ Question: {qa['question']}
                             </div>
