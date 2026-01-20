@@ -630,7 +630,7 @@ def main():
         color: #e2e8f0 !important;
     }
     
-    /* Story content in dark mode - make background light and text black for visibility */
+    /* Story content - match Q&A section styling */
     /* Need to override inline style with maximum specificity */
     [data-theme="dark"] .story-content,
     [data-theme="dark"] div.story-content,
@@ -638,8 +638,9 @@ def main():
     [data-theme="dark"] div.story-content[style],
     [data-theme="dark"] .story-content[style*="background"],
     [data-theme="dark"] div.story-content[style*="background"] {
-        background-color: #ffffff !important; /* White background in dark mode - override inline style */
-        color: #000000 !important; /* Black text for visibility on white background */
+        background-color: #f9fafb !important; /* Light gray background like Q&A - works in dark mode */
+        color: #1e293b !important; /* Dark text for visibility on light background */
+        border-left-color: #6b46c1 !important; /* Purple border like Q&A */
     }
     
     [data-theme="dark"] .story-content *,
@@ -659,7 +660,7 @@ def main():
     [data-theme="dark"] .story-text,
     [data-theme="dark"] .story-text *,
     [data-theme="dark"] .story-content .story-text {
-        color: #000000 !important; /* Pure black text for all nested elements - maximum contrast */
+        color: #1e293b !important; /* Dark text for all nested elements - matches Q&A answer text */
         background-color: transparent !important; /* Transparent background for nested elements */
     }
     
