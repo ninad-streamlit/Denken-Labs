@@ -2441,11 +2441,9 @@ def main():
                             st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
                 with col_pdf:
                     st.markdown("<br>", unsafe_allow_html=True)  # Spacing
-                    # Try reportlab first, then fpdf2 as fallback
-                    pdf_generated = False
+                    # Generate PDF using reportlab only
                     if REPORTLAB_AVAILABLE:
                         try:
-                            # Generate PDF using reportlab
                             buffer = BytesIO()
                             doc = SimpleDocTemplate(buffer, pagesize=letter)
                             story = []
@@ -2620,153 +2618,12 @@ def main():
                                 mime="application/pdf",
                                 use_container_width=True
                             )
-                            pdf_generated = True
                         except Exception as e:
-                            st.warning(f"PDF generation error (reportlab): {str(e)}")
-                            pdf_generated = False
-                    
-                    # Fallback if reportlab not available or failed - use fpdf2
-                    if not pdf_generated:
-                        try:
-                            # Try importing fpdf2 (package name is fpdf2, but import is 'from fpdf import FPDF')
-                            # First try the standard import (this is the correct way when fpdf2 is installed)
-                            try:
-                                from fpdf import FPDF
-                            except ImportError:
-                                # If that fails, the package might not be installed
-                                raise ImportError("fpdf2 package is not installed. Please install it via: pip install fpdf2")
-                            
-                            pdf = FPDF()
-                            pdf.set_auto_page_break(auto=True, margin=15)
-                            pdf.add_page()
-                            
-                            # Title
-                            pdf.set_font("Arial", "B", 16)
-                            if st.session_state.mission_story_title:
-                                title = st.session_state.mission_story_title[:50]  # Limit title length
-                                pdf.cell(0, 10, title, ln=True, align='C')
-                                pdf.ln(5)
-                                
-                                # Add author if available
-                                if st.session_state.get('user_creative_name'):
-                                    pdf.set_font("Arial", "I", 12)
-                                    pdf.set_text_color(71, 85, 105)  # Gray color #475569
-                                    author_text = f"by {st.session_state.user_creative_name}"
-                                    author_clean = author_text.encode('latin-1', 'replace').decode('latin-1')
-                                    pdf.cell(0, 8, author_clean, ln=True, align='C')
-                                    pdf.ln(8)
-                                    pdf.set_text_color(0, 0, 0)  # Reset to black
-                                else:
-                                    pdf.ln(5)
-                            
-                            # Add agent descriptions section before story
-                            if st.session_state.created_bots:
-                                pdf.ln(8)
-                                
-                                # Agent descriptions section title
-                                pdf.set_font("Arial", "B", 14)
-                                pdf.set_text_color(37, 99, 235)  # Blue color #2563eb
-                                pdf.cell(0, 10, "🤖 The Team", ln=True, align='L')
-                                pdf.ln(5)
-                                
-                                # Add each agent's description
-                                pdf.set_text_color(0, 0, 0)  # Reset to black
-                                for bot in st.session_state.created_bots:
-                                    agent_name = bot.get('name', 'Agent')
-                                    agent_number = bot.get('number', '')
-                                    agent_desc = clean_agent_description(bot.get('description', ''))
-                                    agent_character = clean_agent_description(bot.get('character', ''))
-                                    
-                                    # Agent name with number
-                                    pdf.set_font("Arial", "B", 11)
-                                    pdf.set_text_color(30, 64, 175)  # Dark blue #1e40af
-                                    name_text = f"Agent #{agent_number}: {agent_name}" if agent_number else agent_name
-                                    name_clean = name_text.encode('latin-1', 'replace').decode('latin-1')
-                                    pdf.cell(0, 8, name_clean, ln=True, align='L')
-                                    
-                                    # Agent description
-                                    pdf.set_font("Arial", size=10)
-                                    pdf.set_text_color(71, 85, 105)  # Gray #475569
-                                    if agent_desc:
-                                        desc_clean = agent_desc.encode('latin-1', 'replace').decode('latin-1')
-                                        pdf.multi_cell(0, 7, desc_clean, align='L')
-                                    
-                                    # Agent character profile
-                                    if agent_character:
-                                        pdf.set_font("Arial", "I", 10)
-                                        char_clean = agent_character.encode('latin-1', 'replace').decode('latin-1')
-                                        pdf.multi_cell(0, 7, char_clean, align='L')
-                                    
-                                    pdf.ln(3)
-                                
-                                pdf.ln(5)
-                                pdf.set_text_color(0, 0, 0)  # Reset to black
-                            
-                            # Story content
-                            pdf.set_font("Arial", size=12)
-                            story_text = st.session_state.mission_story.replace('\n\n', '\n')
-                            for line in story_text.split('\n'):
-                                if line.strip():
-                                    # Handle special characters
-                                    line_clean = line.strip().encode('latin-1', 'replace').decode('latin-1')
-                                    pdf.multi_cell(0, 8, line_clean, align='L')
-                                    pdf.ln(3)
-                            
-                            # Add Q&A section if there are questions and answers
-                            if st.session_state.story_qa_history:
-                                pdf.ln(10)
-                                
-                                # Q&A Section Title
-                                pdf.set_font("Arial", "B", 14)
-                                pdf.set_text_color(107, 70, 193)  # Purple color #6b46c1
-                                pdf.cell(0, 10, "Questions & Answers", ln=True, align='L')
-                                pdf.ln(5)
-                                
-                                # Add each Q&A pair
-                                pdf.set_text_color(0, 0, 0)  # Black for content
-                                for idx, qa in enumerate(st.session_state.story_qa_history, 1):
-                                    # Question
-                                    pdf.set_font("Arial", "B", 11)
-                                    pdf.set_text_color(85, 60, 154)  # Dark purple #553c9a
-                                    question_text = f"Q{idx}: {qa['question']}"
-                                    question_clean = question_text.encode('latin-1', 'replace').decode('latin-1')
-                                    pdf.multi_cell(0, 8, question_clean, align='L')
-                                    pdf.ln(2)
-                                    
-                                    # Answer
-                                    pdf.set_font("Arial", size=10)
-                                    pdf.set_text_color(30, 41, 59)  # Dark gray #1e293b
-                                    answer_text = f"A{idx}: {qa['answer']}"
-                                    answer_clean = answer_text.encode('latin-1', 'replace').decode('latin-1')
-                                    pdf.multi_cell(0, 7, answer_clean, align='L')
-                                    pdf.ln(5)
-                            
-                            buffer = BytesIO()
-                            pdf_bytes = pdf.output(dest='S')
-                            buffer.write(pdf_bytes.encode('latin-1'))
-                            buffer.seek(0)
-                            
-                            st.download_button(
-                                label="📄 Download PDF",
-                                data=buffer.getvalue(),
-                                file_name=f"{st.session_state.mission_story_title.replace(' ', '_')[:30]}.pdf",
-                                mime="application/pdf",
-                                use_container_width=True
-                            )
-                            pdf_generated = True
-                        except (ImportError, ModuleNotFoundError) as import_err:
-                            # If both libraries fail, show helpful message
-                            if not pdf_generated:
-                                error_msg = str(import_err)
-                                st.error(f"📄 PDF generation error: {error_msg}")
-                                if "fpdf" in error_msg.lower() or "fpdf2" in error_msg.lower():
-                                    st.info("📄 The 'fpdf2' library is not installed. Please ensure 'fpdf2>=2.7.0' is in requirements.txt and the app has been redeployed on Streamlit Cloud.")
-                                else:
-                                    st.info("📄 PDF generation requires either 'reportlab' or 'fpdf2' library. Please ensure one is installed in requirements.txt and the app has been redeployed.")
-                        except Exception as e:
-                            st.warning(f"PDF generation error (fpdf2): {str(e)}")
-                            if not pdf_generated:
-                                st.info("💡 Tip: Try refreshing the page or check if the PDF libraries are properly installed.")
+                            st.error(f"📄 PDF generation error: {str(e)}")
+                            st.info("📄 PDF generation requires the 'reportlab' library. Please ensure 'reportlab>=4.0.0' is in requirements.txt and the app has been redeployed on Streamlit Cloud.")
+                    else:
+                        st.error("📄 PDF generation is not available.")
+                        st.info("📄 The 'reportlab' library is not installed. Please ensure 'reportlab>=4.0.0' is in requirements.txt and the app has been redeployed on Streamlit Cloud.")
                 
                 # Display story content - use Streamlit container styling like agent descriptions
                 # Convert story text to HTML - handle both single and double newlines
