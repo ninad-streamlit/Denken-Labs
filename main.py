@@ -990,7 +990,7 @@ def main():
         else:
             # Debug: show which paths were checked
             st.info(f"Logo not found. Checked: {logo_paths}")
-    except Exception as e:
+        except Exception as e:
         st.error(f"Error loading logo: {e}")
     
     st.markdown(f"""
@@ -1476,14 +1476,14 @@ def main():
                     # Display story title and author
                     if st.session_state.mission_story_title:
                         st.markdown(f"""
-                        <div style='text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--primary-color); margin-bottom: 10px;'>
+                        <div class="story-title" style='text-align: center; font-size: 1.5rem; font-weight: bold; color: var(--primary-color); margin-bottom: 10px;'>
                             {st.session_state.mission_story_title}
                         </div>
                         """, unsafe_allow_html=True)
                         # Display author name if available
                         if st.session_state.get('user_creative_name'):
                             st.markdown(f"""
-                            <div style='text-align: center; font-size: 1rem; color: var(--text-secondary); margin-bottom: 15px; font-style: italic;'>
+                            <div class="story-author" style='text-align: center; font-size: 1rem; color: var(--text-secondary); margin-bottom: 15px; font-style: italic;'>
                                 by {st.session_state.user_creative_name}
                             </div>
                             """, unsafe_allow_html=True)
@@ -1696,13 +1696,13 @@ def main():
                 
                 # Display story content
                 st.markdown(f"""
-                <div style='background-color: #f0f8ff; padding: 20px; border-radius: 10px; border-left: 5px solid var(--primary-color);'>
+                <div class="story-content" style='background-color: #f0f8ff; padding: 20px; border-radius: 10px; border-left: 5px solid var(--primary-color);'>
                     {st.session_state.mission_story.replace(chr(10), '<br>')}
                 </div>
                 """, unsafe_allow_html=True)
                 
                 # Q&A Section
-                st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("---")
                 st.markdown("### 💬 Ask Questions About the Story")
                 
