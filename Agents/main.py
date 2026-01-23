@@ -1907,6 +1907,26 @@ def main():
         color: #dbeafe !important; /* Very light blue - even lighter for better visibility */
     }
     
+    /* Agent name - make them dark/visible in light mode */
+    .agent-name,
+    .agent-name *,
+    .agent-name strong,
+    .agent-name div,
+    div.agent-name,
+    div.agent-name *,
+    div.agent-name strong,
+    .agent-name-bright,
+    .agent-name-bright *,
+    .agent-name-bright strong,
+    div.agent-name-bright,
+    div.agent-name-bright *,
+    div.agent-name-bright strong,
+    [data-agent-name="true"],
+    [data-agent-name="true"] *,
+    [data-agent-name="true"] strong {
+        color: #1e293b !important; /* Dark color for light mode visibility */
+    }
+    
     /* Override any Streamlit default dark mode text colors */
     [data-theme="dark"] p,
     [data-theme="dark"] span,
@@ -2138,6 +2158,50 @@ def main():
         requestAnimationFrame(brightenAgentNames);
     });
     domObserver.observe(document.body, { childList: true, subtree: true });
+    
+    // Force agent names to be visible - dark in light mode, light in dark mode
+    function forceAgentNamesLight() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        var targetColor = isDark ? '#dbeafe' : '#1e293b'; // Light blue in dark mode, dark in light mode
+        
+        // Target all agent names using multiple selector strategies
+        var allSelectors = document.querySelectorAll(
+            '[id^="agent-name-"], ' +
+            '[data-agent-name="true"], ' +
+            '.agent-name-bright, ' +
+            '.agent-name, ' +
+            'div.agent-name-bright, ' +
+            'div.agent-name'
+        );
+        
+        allSelectors.forEach(function(el) {
+            requestAnimationFrame(function() {
+                el.style.setProperty('color', targetColor, 'important');
+                el.style.setProperty('--agent-name-color', targetColor, 'important');
+                
+                // Apply to all children
+                var children = el.querySelectorAll('*');
+                children.forEach(function(child) {
+                    child.style.setProperty('color', targetColor, 'important');
+                    child.style.setProperty('--agent-name-color', targetColor, 'important');
+                });
+            });
+        });
+    }
+    
+    // Run immediately and continuously for agent names
+    forceAgentNamesLight();
+    setInterval(forceAgentNamesLight, 50);
+    
+    // Watch for theme changes
+    var agentNameThemeObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                setTimeout(forceAgentNamesLight, 10);
+            }
+        });
+    });
+    agentNameThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     
     // Force "Welcome to Denken Labs" to be light in dark mode - target div with ID welcome-title-element
     function forceWelcomeTitleLight() {
@@ -3021,7 +3085,7 @@ def main():
                             # Use inline style with ID and data attribute for maximum targeting
                             # Use CSS variable and direct computed style override approach
                             agent_name_id = f"agent-name-{bot['id']}"
-                            st.markdown(f'<div id="{agent_name_id}" class="agent-name-bright" data-agent-name="true" style="--agent-name-color: #ffffff; color: var(--agent-name-color) !important;"><strong style="color: var(--agent-name-color) !important;">{bot["name"]}</strong></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div id="{agent_name_id}" class="agent-name-bright" data-agent-name="true" style="--agent-name-color: #1e293b; color: var(--agent-name-color) !important;"><strong style="color: var(--agent-name-color) !important;">{bot["name"]}</strong></div>', unsafe_allow_html=True)
                             st.markdown(f"{bot['description']}")
                             # Display character profile if available
                             if bot.get('character'):
