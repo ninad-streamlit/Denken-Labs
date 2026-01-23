@@ -1949,37 +1949,6 @@ def main():
         color: #bfdbfe !important; /* Very light blue - lighter for better visibility */
     }
     
-    /* Agent number and name - make them light/readable in dark mode */
-    [data-theme="dark"] .agent-number,
-    [data-theme="dark"] .agent-number *,
-    [data-theme="dark"] .agent-number strong,
-    [data-theme="dark"] div.agent-number,
-    [data-theme="dark"] div.agent-number *,
-    [data-theme="dark"] div.agent-number strong {
-        color: #ffffff !important; /* White for good contrast in dark mode */
-    }
-    
-    [data-theme="dark"] .agent-name,
-    [data-theme="dark"] .agent-name *,
-    [data-theme="dark"] .agent-name strong,
-    [data-theme="dark"] div.agent-name,
-    [data-theme="dark"] div.agent-name *,
-    [data-theme="dark"] div.agent-name strong,
-    [data-theme="dark"] .agent-name-bright,
-    [data-theme="dark"] .agent-name-bright *,
-    [data-theme="dark"] .agent-name-bright strong,
-    [data-theme="dark"] div.agent-name-bright,
-    [data-theme="dark"] div.agent-name-bright *,
-    [data-theme="dark"] div.agent-name-bright strong,
-    [data-theme="dark"] [data-agent-name="true"],
-    [data-theme="dark"] [data-agent-name="true"] *,
-    [data-theme="dark"] [data-agent-name="true"] strong,
-    [data-theme="dark"] [id^="agent-name-"],
-    [data-theme="dark"] [id^="agent-name-"] *,
-    [data-theme="dark"] [id^="agent-name-"] strong {
-        color: #ffffff !important; /* White for good contrast in dark mode */
-    }
-    
     /* Agent name - make them dark/visible in light mode */
     .agent-name,
     .agent-name *,
@@ -1998,6 +1967,47 @@ def main():
     [data-agent-name="true"] *,
     [data-agent-name="true"] strong {
         color: #1e293b !important; /* Dark color for light mode visibility */
+    }
+    
+    /* Agent number and name - make them light/readable in dark mode - MUST come after light mode rules */
+    /* Use maximum specificity to override light mode rules */
+    html[data-theme="dark"] .agent-number,
+    html[data-theme="dark"] .agent-number *,
+    html[data-theme="dark"] .agent-number strong,
+    html[data-theme="dark"] div.agent-number,
+    html[data-theme="dark"] div.agent-number *,
+    html[data-theme="dark"] div.agent-number strong,
+    html[data-theme="dark"] body .agent-number,
+    html[data-theme="dark"] body .agent-number *,
+    html[data-theme="dark"] body .agent-number strong {
+        color: #ffffff !important; /* White for good contrast in dark mode */
+    }
+    
+    html[data-theme="dark"] .agent-name,
+    html[data-theme="dark"] .agent-name *,
+    html[data-theme="dark"] .agent-name strong,
+    html[data-theme="dark"] div.agent-name,
+    html[data-theme="dark"] div.agent-name *,
+    html[data-theme="dark"] div.agent-name strong,
+    html[data-theme="dark"] .agent-name-bright,
+    html[data-theme="dark"] .agent-name-bright *,
+    html[data-theme="dark"] .agent-name-bright strong,
+    html[data-theme="dark"] div.agent-name-bright,
+    html[data-theme="dark"] div.agent-name-bright *,
+    html[data-theme="dark"] div.agent-name-bright strong,
+    html[data-theme="dark"] [data-agent-name="true"],
+    html[data-theme="dark"] [data-agent-name="true"] *,
+    html[data-theme="dark"] [data-agent-name="true"] strong,
+    html[data-theme="dark"] [id^="agent-name-"],
+    html[data-theme="dark"] [id^="agent-name-"] *,
+    html[data-theme="dark"] [id^="agent-name-"] strong,
+    html[data-theme="dark"] body .agent-name,
+    html[data-theme="dark"] body .agent-name *,
+    html[data-theme="dark"] body .agent-name strong,
+    html[data-theme="dark"] body .agent-name-bright,
+    html[data-theme="dark"] body .agent-name-bright *,
+    html[data-theme="dark"] body .agent-name-bright strong {
+        color: #ffffff !important; /* White for good contrast in dark mode */
     }
     
     /* Override any Streamlit default dark mode text colors */
@@ -2131,7 +2141,38 @@ def main():
     }
     </style>
     <script>
-    // Removed all agent name/number color manipulation - let them inherit same styling as Character Profile
+    // Simple script to ensure agent names/numbers are white in dark mode
+    (function() {
+        function setAgentColors() {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (!isDark) return;
+            
+            // Target agent names and numbers
+            var elements = document.querySelectorAll(
+                '.agent-number, .agent-number *, .agent-number strong, ' +
+                'div.agent-number, div.agent-number *, div.agent-number strong, ' +
+                '.agent-name, .agent-name *, .agent-name strong, ' +
+                'div.agent-name, div.agent-name *, div.agent-name strong, ' +
+                '.agent-name-bright, .agent-name-bright *, .agent-name-bright strong, ' +
+                'div.agent-name-bright, div.agent-name-bright *, div.agent-name-bright strong, ' +
+                '[data-agent-name="true"], [data-agent-name="true"] *, [data-agent-name="true"] strong, ' +
+                '[id^="agent-name-"], [id^="agent-name-"] *, [id^="agent-name-"] strong'
+            );
+            
+            elements.forEach(function(el) {
+                el.style.color = '#ffffff';
+                el.style.setProperty('color', '#ffffff', 'important');
+            });
+        }
+        
+        // Run immediately and on theme changes
+        setAgentColors();
+        var observer = new MutationObserver(function() {
+            setAgentColors();
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        setInterval(setAgentColors, 100);
+    })();
     
     // Force "Welcome to Denken Labs" to be light in dark mode - target div with ID welcome-title-element
     function forceWelcomeTitleLight() {
