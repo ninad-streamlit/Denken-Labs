@@ -2155,70 +2155,78 @@ def main():
     }
     </style>
     <script>
-    // Force agent names/numbers to be white in dark mode - very aggressive approach
+    // Inject CSS dynamically AND use JavaScript to force white color in dark mode
     (function() {
+        // Inject CSS style element to ensure it loads after Streamlit's CSS
+        var styleId = 'agent-name-number-dark-mode-fix';
+        if (!document.getElementById(styleId)) {
+            var style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                [data-theme="dark"] .agent-number,
+                [data-theme="dark"] .agent-number *,
+                [data-theme="dark"] .agent-number strong,
+                [data-theme="dark"] div.agent-number,
+                [data-theme="dark"] div.agent-number *,
+                [data-theme="dark"] div.agent-number strong,
+                [data-theme="dark"] .agent-name,
+                [data-theme="dark"] .agent-name *,
+                [data-theme="dark"] .agent-name strong,
+                [data-theme="dark"] div.agent-name,
+                [data-theme="dark"] div.agent-name *,
+                [data-theme="dark"] div.agent-name strong,
+                [data-theme="dark"] .agent-name-bright,
+                [data-theme="dark"] .agent-name-bright *,
+                [data-theme="dark"] .agent-name-bright strong,
+                [data-theme="dark"] div.agent-name-bright,
+                [data-theme="dark"] div.agent-name-bright *,
+                [data-theme="dark"] div.agent-name-bright strong,
+                [data-theme="dark"] [data-agent-name="true"],
+                [data-theme="dark"] [data-agent-name="true"] *,
+                [data-theme="dark"] [data-agent-name="true"] strong,
+                [data-theme="dark"] [id^="agent-name-"],
+                [data-theme="dark"] [id^="agent-name-"] *,
+                [data-theme="dark"] [id^="agent-name-"] strong {
+                    color: #ffffff !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Also use JavaScript to directly set colors as backup
         function setAgentColors() {
-            var isDark = document.documentElement.getAttribute('data-theme') === 'dark' || 
-                        document.documentElement.hasAttribute('data-theme') && 
-                        document.documentElement.getAttribute('data-theme') === 'dark';
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             if (!isDark) return;
             
-            // Use multiple selector strategies to find all agent names and numbers
             var selectors = [
-                '.agent-number',
-                'div.agent-number',
-                '.agent-name',
-                'div.agent-name',
-                '.agent-name-bright',
-                'div.agent-name-bright',
-                '[data-agent-name="true"]',
-                '[id^="agent-name-"]'
+                '.agent-number', 'div.agent-number',
+                '.agent-name', 'div.agent-name',
+                '.agent-name-bright', 'div.agent-name-bright',
+                '[data-agent-name="true"]', '[id^="agent-name-"]'
             ];
             
             selectors.forEach(function(selector) {
-                var elements = document.querySelectorAll(selector);
-                elements.forEach(function(el) {
-                    // Set on element itself
+                document.querySelectorAll(selector).forEach(function(el) {
                     el.style.setProperty('color', '#ffffff', 'important');
-                    el.style.color = '#ffffff';
-                    
-                    // Set on all children including strong tags
-                    var children = el.querySelectorAll('*');
-                    children.forEach(function(child) {
+                    el.querySelectorAll('*').forEach(function(child) {
                         child.style.setProperty('color', '#ffffff', 'important');
-                        child.style.color = '#ffffff';
                     });
                 });
             });
         }
         
-        // Run immediately
+        // Run immediately and continuously
+        setAgentColors();
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', setAgentColors);
-        } else {
-            setAgentColors();
         }
-        
-        // Run on theme changes
-        var themeObserver = new MutationObserver(function() {
-            setTimeout(setAgentColors, 10);
-        });
-        themeObserver.observe(document.documentElement, { 
-            attributes: true, 
-            attributeFilter: ['data-theme'] 
-        });
-        
-        // Run continuously to catch dynamically added elements
         setInterval(setAgentColors, 200);
         
-        // Also watch for DOM changes
-        var domObserver = new MutationObserver(function() {
-            setTimeout(setAgentColors, 10);
-        });
-        domObserver.observe(document.body, { 
-            childList: true, 
-            subtree: true 
-        });
+        // Watch for theme and DOM changes
+        new MutationObserver(function() { setTimeout(setAgentColors, 10); })
+            .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        new MutationObserver(function() { setTimeout(setAgentColors, 10); })
+            .observe(document.body, { childList: true, subtree: true });
     })();
     
     // Force "Welcome to Denken Labs" to be light in dark mode - target div with ID welcome-title-element
