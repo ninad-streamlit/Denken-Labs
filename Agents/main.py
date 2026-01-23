@@ -1949,7 +1949,36 @@ def main():
         color: #bfdbfe !important; /* Very light blue - lighter for better visibility */
     }
     
-    /* Agent number and name - removed custom CSS to let them inherit same styling as Character Profile */
+    /* Agent number and name - make them light/readable in dark mode */
+    [data-theme="dark"] .agent-number,
+    [data-theme="dark"] .agent-number *,
+    [data-theme="dark"] .agent-number strong,
+    [data-theme="dark"] div.agent-number,
+    [data-theme="dark"] div.agent-number *,
+    [data-theme="dark"] div.agent-number strong {
+        color: #ffffff !important; /* White for good contrast in dark mode */
+    }
+    
+    [data-theme="dark"] .agent-name,
+    [data-theme="dark"] .agent-name *,
+    [data-theme="dark"] .agent-name strong,
+    [data-theme="dark"] div.agent-name,
+    [data-theme="dark"] div.agent-name *,
+    [data-theme="dark"] div.agent-name strong,
+    [data-theme="dark"] .agent-name-bright,
+    [data-theme="dark"] .agent-name-bright *,
+    [data-theme="dark"] .agent-name-bright strong,
+    [data-theme="dark"] div.agent-name-bright,
+    [data-theme="dark"] div.agent-name-bright *,
+    [data-theme="dark"] div.agent-name-bright strong,
+    [data-theme="dark"] [data-agent-name="true"],
+    [data-theme="dark"] [data-agent-name="true"] *,
+    [data-theme="dark"] [data-agent-name="true"] strong,
+    [data-theme="dark"] [id^="agent-name-"],
+    [data-theme="dark"] [id^="agent-name-"] *,
+    [data-theme="dark"] [id^="agent-name-"] strong {
+        color: #ffffff !important; /* White for good contrast in dark mode */
+    }
     
     /* Agent name - make them dark/visible in light mode */
     .agent-name,
