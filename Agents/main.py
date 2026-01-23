@@ -3637,6 +3637,7 @@ def main():
                         unique_paragraphs.append(para_clean)
                 
                 # Build HTML from unique paragraphs
+                import html
                 story_html_parts = []
                 for para in unique_paragraphs:
                     if para.strip():
@@ -3650,160 +3651,13 @@ def main():
                 
                 # Use Streamlit container styling (same as agent descriptions) - adapts to light/dark mode
                 with st.container():
-                    # Store story text in data attribute for text-to-speech (escape for HTML attribute)
-                    story_text_for_attr = story_text.replace('"', '&quot;').replace("'", "&#39;").replace('<', '&lt;').replace('>', '&gt;')
                     st.markdown(f"""
-                    <div class="story-content" id="story-content-div" data-story-text="{story_text_for_attr}" style="padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;">
+                    <div class="story-content" style="padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #6b46c1;">
                         <div style="padding-left: 10px;">
                             {story_html}
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
-                
-                # Speaker button for text-to-speech
-                col1, col2, col3 = st.columns([1, 1, 1])
-                with col2:
-                    # Use Streamlit button and session state to trigger TTS
-                    if 'tts_speaking' not in st.session_state:
-                        st.session_state.tts_speaking = False
-                    
-                    button_label = "⏸️ Stop Reading" if st.session_state.tts_speaking else "🔊 Read Story Aloud"
-                    button_type = "secondary" if st.session_state.tts_speaking else "primary"
-                    
-                    if st.button(button_label, key="read_story_button", use_container_width=True, type=button_type):
-                        # Toggle speaking state
-                        st.session_state.tts_speaking = not st.session_state.tts_speaking
-                        st.session_state.tts_trigger = True
-                        st.rerun()
-                
-                # Text-to-speech JavaScript - runs when button is clicked
-                if st.session_state.get('tts_trigger', False):
-                    should_speak = st.session_state.tts_speaking
-                    st.session_state.tts_trigger = False
-                    
-                    if should_speak:
-                        # Start speaking
-                        st.markdown(f"""
-                        <script>
-                        (function() {{
-                            // Wait for DOM to be ready
-                            function initTTS() {{
-                                var storyDiv = document.querySelector('#story-content-div');
-                                if (!storyDiv) {{
-                                    // Fallback: find by class
-                                    storyDiv = document.querySelector('.story-content');
-                                }}
-                                
-                                if (!storyDiv) {{
-                                    console.error('Story content not found.');
-                                    return;
-                                }}
-                                
-                                // Get story text from data attribute or extract from div
-                                var storyText = storyDiv.getAttribute('data-story-text');
-                                if (!storyText) {{
-                                    // Fallback: extract text from div content
-                                    storyText = storyDiv.innerText || storyDiv.textContent || '';
-                                }}
-                                
-                                // Clean up HTML entities
-                                var textarea = document.createElement('textarea');
-                                textarea.innerHTML = storyText;
-                                storyText = textarea.value;
-                                
-                                if (!storyText || storyText.trim() === '') {{
-                                    console.error('No story text found.');
-                                    return;
-                                }}
-                                
-                                // Use Web Speech API to read the story
-                                if ('speechSynthesis' in window) {{
-                                    // Cancel any ongoing speech first
-                                    window.speechSynthesis.cancel();
-                                    
-                                    // Load voices
-                                    function loadVoicesAndSpeak() {{
-                                        var voices = window.speechSynthesis.getVoices();
-                                        
-                                        // Create speech utterance
-                                        var utterance = new SpeechSynthesisUtterance(storyText);
-                                        utterance.rate = 1.0; // Normal speed
-                                        utterance.pitch = 1.0; // Normal pitch
-                                        utterance.volume = 1.0; // Full volume
-                                        
-                                        // Try to use a good voice if available
-                                        var preferredVoice = voices.find(function(voice) {{
-                                            return voice.lang.startsWith('en') && 
-                                                   (voice.name.includes('Google') || 
-                                                    voice.name.includes('Microsoft') ||
-                                                    voice.name.includes('Samantha') ||
-                                                    voice.name.includes('Alex') ||
-                                                    voice.name.includes('Karen'));
-                                        }});
-                                        if (preferredVoice) {{
-                                            utterance.voice = preferredVoice;
-                                        }} else if (voices.length > 0) {{
-                                            // Use first English voice
-                                            var englishVoice = voices.find(function(voice) {{
-                                                return voice.lang.startsWith('en');
-                                            }});
-                                            if (englishVoice) {{
-                                                utterance.voice = englishVoice;
-                                            }}
-                                        }}
-                                        
-                                        // Update state when speaking ends
-                                        utterance.onend = function() {{
-                                            console.log('Finished reading story');
-                                        }};
-                                        
-                                        // Handle errors
-                                        utterance.onerror = function(event) {{
-                                            console.error('Speech synthesis error:', event);
-                                            alert('Error reading story: ' + (event.error || 'Unknown error'));
-                                        }};
-                                        
-                                        // Speak the story
-                                        window.speechSynthesis.speak(utterance);
-                                        console.log('Started reading story');
-                                    }}
-                                    
-                                    // Load voices and speak
-                                    var voices = window.speechSynthesis.getVoices();
-                                    if (voices.length === 0) {{
-                                        window.speechSynthesis.onvoiceschanged = function() {{
-                                            loadVoicesAndSpeak();
-                                        }};
-                                    }} else {{
-                                        loadVoicesAndSpeak();
-                                    }}
-                                }} else {{
-                                    alert('Text-to-speech is not supported in your browser. Please use Chrome, Edge, or Safari.');
-                                }}
-                            }}
-                            
-                            // Run when DOM is ready
-                            if (document.readyState === 'loading') {{
-                                document.addEventListener('DOMContentLoaded', initTTS);
-                            }} else {{
-                                // DOM already ready, but wait a bit for Streamlit to render
-                                setTimeout(initTTS, 200);
-                            }}
-                        }})();
-                        </script>
-                        """, unsafe_allow_html=True)
-                    else:
-                        # Stop speaking
-                        st.markdown("""
-                        <script>
-                        (function() {
-                            if ('speechSynthesis' in window) {
-                                window.speechSynthesis.cancel();
-                                console.log('Stopped reading story');
-                            }
-                        })();
-                        </script>
-                        """, unsafe_allow_html=True)
                 
                 # Q&A Section
                 st.markdown("<br>", unsafe_allow_html=True)
