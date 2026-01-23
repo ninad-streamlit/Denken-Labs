@@ -1949,45 +1949,7 @@ def main():
         color: #bfdbfe !important; /* Very light blue - lighter for better visibility */
     }
     
-    /* Agent number and name - make them bright white in dark mode for better visibility */
-    /* Use maximum specificity to override any inline styles */
-    [data-theme="dark"] .agent-number,
-    [data-theme="dark"] .agent-number *,
-    [data-theme="dark"] .agent-number strong,
-    [data-theme="dark"] .agent-number div,
-    [data-theme="dark"] div.agent-number,
-    [data-theme="dark"] div.agent-number *,
-    [data-theme="dark"] div.agent-number strong,
-    [data-theme="dark"] .agent-number[style],
-    [data-theme="dark"] .agent-number[style] *,
-    [data-theme="dark"] .agent-number[style] strong {
-        color: #ffffff !important; /* Pure white for maximum visibility */
-    }
-    
-    [data-theme="dark"] .agent-name,
-    [data-theme="dark"] .agent-name *,
-    [data-theme="dark"] .agent-name strong,
-    [data-theme="dark"] .agent-name div,
-    [data-theme="dark"] div.agent-name,
-    [data-theme="dark"] div.agent-name *,
-    [data-theme="dark"] div.agent-name strong,
-    [data-theme="dark"] .agent-name-bright,
-    [data-theme="dark"] .agent-name-bright *,
-    [data-theme="dark"] .agent-name-bright strong,
-    [data-theme="dark"] div.agent-name-bright,
-    [data-theme="dark"] div.agent-name-bright *,
-    [data-theme="dark"] div.agent-name-bright strong,
-    [data-theme="dark"] [data-agent-name="true"],
-    [data-theme="dark"] [data-agent-name="true"] *,
-    [data-theme="dark"] [data-agent-name="true"] strong,
-    [data-theme="dark"] [id^="agent-name-"],
-    [data-theme="dark"] [id^="agent-name-"] *,
-    [data-theme="dark"] [id^="agent-name-"] strong,
-    [data-theme="dark"] [id^="agent-name-"][style],
-    [data-theme="dark"] [id^="agent-name-"][style] *,
-    [data-theme="dark"] [id^="agent-name-"][style] strong {
-        color: #ffffff !important; /* Pure white for maximum visibility */
-    }
+    /* Agent number and name - removed custom CSS to let them inherit same styling as Character Profile */
     
     /* Agent name - make them dark/visible in light mode */
     .agent-name,
@@ -2140,173 +2102,7 @@ def main():
     }
     </style>
     <script>
-    // Completely different approach: Use computed style override and requestAnimationFrame
-    function brightenAgentNames() {
-        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (!isDark) return;
-        
-        // Target all agent names and numbers using multiple selector strategies
-        var allSelectors = document.querySelectorAll(
-            '[id^="agent-name-"], ' +
-            '[data-agent-name="true"], ' +
-            '.agent-name-bright, ' +
-            '.agent-name, ' +
-            'div.agent-name-bright, ' +
-            'div.agent-name, ' +
-            '.agent-number, ' +
-            'div.agent-number'
-        );
-        
-        allSelectors.forEach(function(el) {
-            // Use requestAnimationFrame for smooth updates
-            requestAnimationFrame(function() {
-                // CRITICAL: Remove ALL inline color styles first, then set white
-                var inlineStyle = el.getAttribute('style') || '';
-                // Remove ALL color-related declarations (be very aggressive)
-                inlineStyle = inlineStyle.replace(/color\s*:\s*[^;!]*[!important]*;?/gi, '');
-                inlineStyle = inlineStyle.replace(/--agent-name-color\s*:\s*[^;!]*[!important]*;?/gi, '');
-                // Remove any CSS variable references
-                inlineStyle = inlineStyle.replace(/var\([^)]*\)/gi, '');
-                // Clean up extra semicolons and spaces
-                inlineStyle = inlineStyle.replace(/;\s*;/g, ';').replace(/^\s*;\s*|\s*;\s*$/g, '').trim();
-                // Now set white color directly (not using CSS variables)
-                if (inlineStyle && !inlineStyle.endsWith(';')) {
-                    inlineStyle += ';';
-                }
-                inlineStyle += ' color: #ffffff !important;';
-                el.setAttribute('style', inlineStyle);
-                
-                // Also use setProperty as backup
-                el.style.setProperty('color', '#ffffff', 'important');
-                el.style.removeProperty('--agent-name-color'); // Remove CSS variable entirely
-                
-                // Apply to all children with same intensity
-                var children = el.querySelectorAll('*');
-                children.forEach(function(child) {
-                    requestAnimationFrame(function() {
-                        var childStyle = child.getAttribute('style') || '';
-                        // Remove ALL color-related declarations
-                        childStyle = childStyle.replace(/color\s*:\s*[^;!]*[!important]*;?/gi, '');
-                        childStyle = childStyle.replace(/--agent-name-color\s*:\s*[^;!]*[!important]*;?/gi, '');
-                        childStyle = childStyle.replace(/var\([^)]*\)/gi, '');
-                        childStyle = childStyle.replace(/;\s*;/g, ';').replace(/^\s*;\s*|\s*;\s*$/g, '').trim();
-                        if (childStyle && !childStyle.endsWith(';')) {
-                            childStyle += ';';
-                        }
-                        childStyle += ' color: #ffffff !important;';
-                        child.setAttribute('style', childStyle);
-                        child.style.setProperty('color', '#ffffff', 'important');
-                        child.style.removeProperty('--agent-name-color');
-                    });
-                });
-            });
-        });
-    }
-    
-    // Run with multiple strategies
-    brightenAgentNames();
-    requestAnimationFrame(brightenAgentNames);
-    setTimeout(brightenAgentNames, 0);
-    setTimeout(brightenAgentNames, 5);
-    setTimeout(brightenAgentNames, 10);
-    setTimeout(brightenAgentNames, 25);
-    
-    // Continuous polling with requestAnimationFrame
-    function pollAgentNames() {
-        brightenAgentNames();
-        requestAnimationFrame(pollAgentNames);
-    }
-    requestAnimationFrame(pollAgentNames);
-    
-    // Also use setInterval as backup
-    setInterval(brightenAgentNames, 10); // Very frequent checking
-    
-    // Watch for theme changes
-    var themeObserver = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-                requestAnimationFrame(brightenAgentNames);
-                setTimeout(brightenAgentNames, 0);
-                setTimeout(brightenAgentNames, 10);
-            }
-        });
-    });
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    
-    // Watch for DOM additions
-    var domObserver = new MutationObserver(function() {
-        requestAnimationFrame(brightenAgentNames);
-    });
-    domObserver.observe(document.body, { childList: true, subtree: true });
-    
-    // Force agent names and numbers to be visible - dark in light mode, bright white in dark mode
-    function forceAgentNamesLight() {
-        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        var targetColor = isDark ? '#ffffff' : '#1e293b'; // Pure white in dark mode, dark in light mode
-        
-        // Target all agent names and numbers using multiple selector strategies
-        var allSelectors = document.querySelectorAll(
-            '[id^="agent-name-"], ' +
-            '[data-agent-name="true"], ' +
-            '.agent-name-bright, ' +
-            '.agent-name, ' +
-            'div.agent-name-bright, ' +
-            'div.agent-name, ' +
-            '.agent-number, ' +
-            'div.agent-number'
-        );
-        
-        allSelectors.forEach(function(el) {
-            requestAnimationFrame(function() {
-                // Remove ALL inline color styles first
-                var inlineStyle = el.getAttribute('style') || '';
-                inlineStyle = inlineStyle.replace(/color\s*:\s*[^;!]*[!important]*;?/gi, '');
-                inlineStyle = inlineStyle.replace(/--agent-name-color\s*:\s*[^;!]*[!important]*;?/gi, '');
-                inlineStyle = inlineStyle.replace(/var\([^)]*\)/gi, '');
-                inlineStyle = inlineStyle.replace(/;\s*;/g, ';').replace(/^\s*;\s*|\s*;\s*$/g, '').trim();
-                if (inlineStyle && !inlineStyle.endsWith(';')) {
-                    inlineStyle += ';';
-                }
-                inlineStyle += ' color: ' + targetColor + ' !important;';
-                el.setAttribute('style', inlineStyle);
-                
-                // Also use setProperty
-                el.style.setProperty('color', targetColor, 'important');
-                el.style.removeProperty('--agent-name-color');
-                
-                // Apply to all children
-                var children = el.querySelectorAll('*');
-                children.forEach(function(child) {
-                    var childStyle = child.getAttribute('style') || '';
-                    childStyle = childStyle.replace(/color\s*:\s*[^;!]*[!important]*;?/gi, '');
-                    childStyle = childStyle.replace(/--agent-name-color\s*:\s*[^;!]*[!important]*;?/gi, '');
-                    childStyle = childStyle.replace(/var\([^)]*\)/gi, '');
-                    childStyle = childStyle.replace(/;\s*;/g, ';').replace(/^\s*;\s*|\s*;\s*$/g, '').trim();
-                    if (childStyle && !childStyle.endsWith(';')) {
-                        childStyle += ';';
-                    }
-                    childStyle += ' color: ' + targetColor + ' !important;';
-                    child.setAttribute('style', childStyle);
-                    child.style.setProperty('color', targetColor, 'important');
-                    child.style.removeProperty('--agent-name-color');
-                });
-            });
-        });
-    }
-    
-    // Run immediately and continuously for agent names
-    forceAgentNamesLight();
-    setInterval(forceAgentNamesLight, 50);
-    
-    // Watch for theme changes
-    var agentNameThemeObserver = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-                setTimeout(forceAgentNamesLight, 10);
-            }
-        });
-    });
-    agentNameThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    // Removed all agent name/number color manipulation - let them inherit same styling as Character Profile
     
     // Force "Welcome to Denken Labs" to be light in dark mode - target div with ID welcome-title-element
     function forceWelcomeTitleLight() {
@@ -2557,10 +2353,7 @@ def main():
                             forceWelcomeTitleLight();
                         }
                         // Check for agent names
-                        var agentNames = node.querySelectorAll('[id^="agent-name-"], .agent-name');
-                        if (agentNames.length > 0) {
-                            forceAgentNamesLight();
-                        }
+                        // Agent names now inherit styling naturally, no manipulation needed
                     }
                     // Check if the node itself is story content
                     if (node.classList && node.classList.contains('story-content')) {
@@ -2572,11 +2365,7 @@ def main():
                         ((node.tagName === 'DIV' || node.tagName === 'H2') && node.textContent && node.textContent.includes('Welcome'))) {
                         forceWelcomeTitleLight();
                     }
-                    // Check if the node itself is an agent name
-                    if (node.id && node.id.startsWith('agent-name-') || 
-                        (node.classList && node.classList.contains('agent-name'))) {
-                        forceAgentNamesLight();
-                    }
+                    // Agent names now inherit styling naturally, no manipulation needed
                 }
             });
         });
@@ -2592,7 +2381,7 @@ def main():
             styleButtons();
             forceStoryTransparent();
             forceWelcomeTitleLight();
-            forceAgentNamesLight();
+            // Agent names now inherit styling naturally
             document.querySelectorAll('button').forEach(function(btn) {
                 styleObserver.observe(btn, { attributes: true, attributeFilter: ['style', 'class'] });
             });
