@@ -2005,8 +2005,8 @@ def main():
         color: #ffffff !important; /* White for good contrast in dark mode */
     }
     
-    /* Agent name and number - Use Streamlit's CSS variable (same as description) */
-    /* This automatically adapts to dark/light mode, just like .stMarkdown p */
+    /* Agent name and number - Use var(--text-secondary) like description, but slightly lighter */
+    /* This automatically adapts to dark/light mode, same logic as .stMarkdown p */
     .agent-name,
     .agent-name *,
     .agent-name strong,
@@ -2028,7 +2028,8 @@ def main():
     div.agent-number,
     div.agent-number *,
     div.agent-number strong {
-        color: var(--text-primary) !important; /* Use Streamlit's theme-aware variable - adapts automatically */
+        color: var(--text-secondary) !important; /* Same variable as description */
+        opacity: 0.85; /* Slightly lighter than description (85% opacity) */
     }
     
     /* CRITICAL: Ultra-specific dark mode overrides that come AFTER light mode rules */
