@@ -435,6 +435,69 @@ def clean_agent_description(desc):
     
     return str(desc)
 
+def clean_story_text(story_text):
+    """Aggressively clean story text to remove all HTML, CSS, and code-like content"""
+    import re
+    
+    if not story_text:
+        return ""
+    
+    # Step 1: Remove all HTML tags
+    story_text = re.sub(r'<[^>]*>', '', story_text)
+    
+    # Step 2: Remove style attributes in all formats
+    story_text = re.sub(r'style\s*=\s*["\'][^"\']*["\']', '', story_text, flags=re.IGNORECASE)
+    story_text = re.sub(r'style\s*=\s*[^;>}\s]+', '', story_text, flags=re.IGNORECASE)
+    
+    # Step 3: Remove CSS property declarations
+    css_patterns = [
+        r'padding\s*:\s*[^;]+;?',
+        r'border[^;]*:\s*[^;]+;?',
+        r'margin[^;]*:\s*[^;]+;?',
+        r'border-radius[^;]*:\s*[^;]+;?',
+        r'border-left[^;]*:\s*[^;]+;?',
+        r'text-align[^;]*:\s*[^;]+;?',
+        r'font-size[^;]*:\s*[^;]+;?',
+        r'line-height[^;]*:\s*[^;]+;?',
+        r'background[^;]*:\s*[^;]+;?',
+        r'color\s*:\s*[^;]+;?',
+    ]
+    for pattern in css_patterns:
+        story_text = re.sub(pattern, '', story_text, flags=re.IGNORECASE)
+    
+    # Step 4: Remove HTML entities
+    story_text = re.sub(r'&[a-zA-Z]+;', '', story_text)
+    story_text = re.sub(r'&#\d+;', '', story_text)
+    
+    # Step 5: Remove standalone CSS values
+    story_text = re.sub(r'\b\d+px\b', '', story_text)
+    story_text = re.sub(r'\b#[0-9a-fA-F]{6}\b', '', story_text)
+    
+    # Step 6: Clean whitespace
+    story_text = re.sub(r'[ \t]+', ' ', story_text)
+    story_text = re.sub(r'\n[ \t]+\n', '\n\n', story_text)
+    story_text = story_text.strip()
+    
+    # Step 7: Remove code-only lines
+    lines = story_text.split('\n')
+    cleaned_lines = []
+    css_keywords = ['padding', 'border', 'margin', 'style', 'div', 'class', 'radius', 'solid']
+    for line in lines:
+        line_stripped = line.strip()
+        if not line_stripped:
+            continue
+        words = line_stripped.split()
+        code_like_count = sum(1 for word in words if any(kw in word.lower() for kw in css_keywords))
+        if len(words) <= 5 and code_like_count >= len(words) * 0.5:
+            continue
+        cleaned_line = line_stripped
+        for pattern in css_patterns:
+            cleaned_line = re.sub(pattern, '', cleaned_line, flags=re.IGNORECASE)
+        if cleaned_line.strip():
+            cleaned_lines.append(cleaned_line.strip())
+    
+    return '\n\n'.join(cleaned_lines).strip()
+
 def generate_story_question_example(story_title, story_content, existing_questions=None):
     """Generate a relevant example question about the story with extensive variety"""
     # Extract key elements from the story for context
@@ -2714,6 +2777,18 @@ def main():
         st.session_state.mission_story = ""
     if 'mission_story_title' not in st.session_state:
         st.session_state.mission_story_title = ""
+    
+    # Clean any existing story to remove HTML/CSS code (in case it was stored before cleaning was added)
+    if st.session_state.mission_story:
+        cleaned_story = clean_story_text(st.session_state.mission_story)
+        if cleaned_story != st.session_state.mission_story:
+            st.session_state.mission_story = cleaned_story
+    
+    # Clean any existing story to remove HTML/CSS code (in case it was stored before cleaning was added)
+    if st.session_state.mission_story:
+        cleaned_story = clean_story_text(st.session_state.mission_story)
+        if cleaned_story != st.session_state.mission_story:
+            st.session_state.mission_story = cleaned_story
     if 'story_qa_history' not in st.session_state:
         st.session_state.story_qa_history = []
     if 'story_question_example' not in st.session_state:
@@ -3202,24 +3277,13 @@ def main():
                             story_title = story_data.get("title", "The Amazing Team Adventure")
                             story_content = story_data.get("story", "")
                             
-                            # Clean the story content - remove any HTML tags, attributes, or code
-                            import re
-                            import html
-                            # Remove all HTML tags and their attributes
-                            story_content = re.sub(r'<[^>]+>', '', story_content)
-                            # Remove any style attributes that might appear as plain text
-                            story_content = re.sub(r'style\s*=\s*["\'][^"\']*["\']', '', story_content, flags=re.IGNORECASE)
-                            # Remove any remaining HTML entities or code-like patterns
-                            story_content = re.sub(r'&[a-z]+;', '', story_content, flags=re.IGNORECASE)
-                            # Clean up extra whitespace
-                            story_content = story_content.strip()
+                            # Clean the story content using the helper function
+                            story_content = clean_story_text(story_content)
                             
                             # Validate story has paragraphs
                             if story_content and len(story_content.strip()) > 50:
                                 # Ensure story has proper paragraph breaks
-                                # Replace single \n with \n\n if not already present
                                 if '\n\n' not in story_content and '\n' in story_content:
-                                    # Split by \n and rejoin with \n\n
                                     paragraphs = [p.strip() for p in story_content.split('\n') if p.strip()]
                                     story_content = '\n\n'.join(paragraphs)
                                 
@@ -3264,17 +3328,8 @@ def main():
                                 retry_title = retry_data.get("title", "The Amazing Team Adventure")
                                 retry_story = retry_data.get("story", "")
                                 
-                                # Clean the retry story content - remove any HTML tags, attributes, or code
-                                import re
-                                import html
-                                # Remove all HTML tags and their attributes
-                                retry_story = re.sub(r'<[^>]+>', '', retry_story)
-                                # Remove any style attributes that might appear as plain text
-                                retry_story = re.sub(r'style\s*=\s*["\'][^"\']*["\']', '', retry_story, flags=re.IGNORECASE)
-                                # Remove any remaining HTML entities or code-like patterns
-                                retry_story = re.sub(r'&[a-z]+;', '', retry_story, flags=re.IGNORECASE)
-                                # Clean up extra whitespace
-                                retry_story = retry_story.strip()
+                                # Clean the retry story content using the helper function
+                                retry_story = clean_story_text(retry_story)
                                 
                                 if retry_story and len(retry_story.strip()) > 50:
                                     # Fix paragraph breaks if needed
@@ -3568,22 +3623,8 @@ def main():
                 # Display story content - use Streamlit container styling like agent descriptions
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("### 📚 The Story")
-                # Get story text and clean it aggressively
-                story_text = st.session_state.mission_story.strip()
-                
-                # Remove any HTML tags, attributes, or code that might have been included
-                import re
-                import html
-                # Remove all HTML tags and their attributes
-                story_text = re.sub(r'<[^>]+>', '', story_text)
-                # Remove any style attributes that might appear as plain text (even outside tags)
-                story_text = re.sub(r'style\s*=\s*["\'][^"\']*["\']', '', story_text, flags=re.IGNORECASE)
-                # Remove any HTML entities
-                story_text = re.sub(r'&[a-z]+;', '', story_text, flags=re.IGNORECASE)
-                # Remove any remaining code-like patterns (CSS, HTML attributes, etc.)
-                story_text = re.sub(r'\b(padding|border|margin|color|background|font|width|height|style)\s*[:=][^;}\s]+', '', story_text, flags=re.IGNORECASE)
-                # Clean up extra whitespace
-                story_text = story_text.strip()
+                # Get story text and clean it using the helper function
+                story_text = clean_story_text(st.session_state.mission_story)
                 
                 # Remove duplicate paragraphs
                 story_paragraphs = story_text.split('\n\n')
