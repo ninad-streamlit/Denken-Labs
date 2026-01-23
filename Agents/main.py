@@ -2005,8 +2005,8 @@ def main():
         color: #ffffff !important; /* White for good contrast in dark mode */
     }
     
-    /* Agent name and number - DEFAULT to white (works in dark mode) */
-    /* This is the rule that's actually being applied, so make it white */
+    /* Agent name and number - Use Streamlit's CSS variable (same as description) */
+    /* This automatically adapts to dark/light mode, just like .stMarkdown p */
     .agent-name,
     .agent-name *,
     .agent-name strong,
@@ -2028,32 +2028,7 @@ def main():
     div.agent-number,
     div.agent-number *,
     div.agent-number strong {
-        color: #ffffff !important; /* White - works in dark mode */
-    }
-    
-    /* Light mode override - only apply dark color when explicitly in light mode */
-    html[data-theme="light"] .agent-name,
-    html[data-theme="light"] .agent-name *,
-    html[data-theme="light"] .agent-name strong,
-    html[data-theme="light"] div.agent-name,
-    html[data-theme="light"] div.agent-name *,
-    html[data-theme="light"] div.agent-name strong,
-    html[data-theme="light"] .agent-name-bright,
-    html[data-theme="light"] .agent-name-bright *,
-    html[data-theme="light"] .agent-name-bright strong,
-    html[data-theme="light"] div.agent-name-bright,
-    html[data-theme="light"] div.agent-name-bright *,
-    html[data-theme="light"] div.agent-name-bright strong,
-    html[data-theme="light"] [data-agent-name="true"],
-    html[data-theme="light"] [data-agent-name="true"] *,
-    html[data-theme="light"] [data-agent-name="true"] strong,
-    html[data-theme="light"] .agent-number,
-    html[data-theme="light"] .agent-number *,
-    html[data-theme="light"] .agent-number strong,
-    html[data-theme="light"] div.agent-number,
-    html[data-theme="light"] div.agent-number *,
-    html[data-theme="light"] div.agent-number strong {
-        color: #1e293b !important; /* Dark color for light mode */
+        color: var(--text-primary) !important; /* Use Streamlit's theme-aware variable - adapts automatically */
     }
     
     /* CRITICAL: Ultra-specific dark mode overrides that come AFTER light mode rules */
