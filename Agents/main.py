@@ -2680,7 +2680,12 @@ def main():
         # User's Creative Name section (first time only)
         if 'user_creative_name' not in st.session_state or not st.session_state.user_creative_name:
             st.markdown("### ✨ Your Creative Name")
-            name_examples = generate_creative_name_examples()
+            
+            # Store examples in session state so they don't change on rerun
+            if 'name_examples' not in st.session_state:
+                st.session_state.name_examples = generate_creative_name_examples()
+            
+            name_examples = st.session_state.name_examples
             example_text = f"Examples: {', '.join(name_examples)}"
             st.markdown(f'<div class="creative-name-intro">**Enter your creative name!** *{example_text}*</div>', unsafe_allow_html=True)
             
@@ -2704,11 +2709,15 @@ def main():
                 name_submitted = st.form_submit_button("Continue", type="primary", use_container_width=True)
                 
                 if name_submitted:
-                    # Use example name if nothing entered or only whitespace
+                    # Use first example name if nothing entered or only whitespace
+                    # This will use the same example that was displayed
                     if not user_creative_name or not user_creative_name.strip():
                         st.session_state.user_creative_name = name_examples[0]
                     else:
                         st.session_state.user_creative_name = user_creative_name.strip()
+                    # Clear examples from session state after use
+                    if 'name_examples' in st.session_state:
+                        del st.session_state.name_examples
                     # Play sound for user name logged
                     play_sound('user_name')
                     st.rerun()
@@ -2719,6 +2728,9 @@ def main():
             st.markdown(f'<div class="welcome-message">**Welcome, {st.session_state.user_creative_name}!** 🎉</div>', unsafe_allow_html=True)
             if st.button("Change Name", key="change_name_btn"):
                 st.session_state.user_creative_name = ""
+                # Clear examples so new ones are generated
+                if 'name_examples' in st.session_state:
+                    del st.session_state.name_examples
                 st.rerun()
         
         # Display bot logo (only when creating agents)
