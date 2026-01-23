@@ -2005,8 +2005,7 @@ def main():
         color: #ffffff !important; /* White for good contrast in dark mode */
     }
     
-    /* Agent name and number - Use var(--text-secondary) like description, but slightly lighter */
-    /* This automatically adapts to dark/light mode, same logic as .stMarkdown p */
+    /* Agent name and number - Red color */
     .agent-name,
     .agent-name *,
     .agent-name strong,
@@ -2028,8 +2027,7 @@ def main():
     div.agent-number,
     div.agent-number *,
     div.agent-number strong {
-        color: var(--text-secondary) !important; /* Same variable as description */
-        opacity: 0.85; /* Slightly lighter than description (85% opacity) */
+        color: #dc2626 !important; /* Red color */
     }
     
     /* CRITICAL: Ultra-specific dark mode overrides that come AFTER light mode rules */
@@ -2058,7 +2056,7 @@ def main():
     html[data-theme="dark"] body div.agent-number,
     html[data-theme="dark"] body div.agent-number *,
     html[data-theme="dark"] body div.agent-number strong {
-        color: #ffffff !important; /* Force white in dark mode - override everything */
+        color: #dc2626 !important; /* Red color in dark mode */
     }
     
     /* Also handle if data-theme is on body instead of html */
@@ -2086,7 +2084,7 @@ def main():
     body[data-theme="dark"] div.agent-number,
     body[data-theme="dark"] div.agent-number *,
     body[data-theme="dark"] div.agent-number strong {
-        color: #ffffff !important; /* Force white in dark mode */
+        color: #dc2626 !important; /* Red color in dark mode */
     }
     
     /* CRITICAL: Override Streamlit's .stMarkdown strong rule specifically for agent elements */
@@ -2105,7 +2103,7 @@ def main():
     body[data-theme="dark"] .stMarkdown [id^="agent-name-"] strong,
     body[data-theme="dark"] .stMarkdown .agent-number strong,
     body[data-theme="dark"] .stMarkdown div.agent-number strong {
-        color: #ffffff !important; /* Override Streamlit's var(--text-primary) */
+        color: #dc2626 !important; /* Red color - override Streamlit's var(--text-primary) */
     }
     
     /* MAXIMUM SPECIFICITY: Use attribute selectors and multiple classes for highest priority */
@@ -2115,7 +2113,7 @@ def main():
     body[data-theme="dark"] div.stMarkdown div.agent-name-bright[data-agent-name="true"] strong,
     body[data-theme="dark"] div.stMarkdown div[id^="agent-name-"][data-agent-element="true"] strong,
     body[data-theme="dark"] div.stMarkdown div.agent-number[data-agent-element="true"] strong {
-        color: #ffffff !important; /* Maximum specificity override */
+        color: #dc2626 !important; /* Red color - maximum specificity override */
     }
     
     /* Override any Streamlit default dark mode text colors */
@@ -2310,7 +2308,7 @@ def main():
                 body[data-theme="dark"] div.agent-number,
                 body[data-theme="dark"] div.agent-number *,
                 body[data-theme="dark"] div.agent-number strong {
-                    color: #ffffff !important;
+                    color: #dc2626 !important;
                 }
                 /* CRITICAL: Override Streamlit's .stMarkdown strong rule */
                 html[data-theme="dark"] body .stMarkdown .agent-name-bright strong,
@@ -2325,7 +2323,7 @@ def main():
                 body[data-theme="dark"] .stMarkdown [id^="agent-name-"] strong,
                 body[data-theme="dark"] .stMarkdown .agent-number strong,
                 body[data-theme="dark"] .stMarkdown div.agent-number strong {
-                    color: #ffffff !important;
+                    color: #dc2626 !important;
                 }
                 /* MAXIMUM SPECIFICITY: Attribute selectors for highest priority */
                 html[data-theme="dark"] body div.stMarkdown div.agent-name-bright[data-agent-name="true"] strong,
@@ -2334,7 +2332,7 @@ def main():
                 body[data-theme="dark"] div.stMarkdown div.agent-name-bright[data-agent-name="true"] strong,
                 body[data-theme="dark"] div.stMarkdown div[id^="agent-name-"][data-agent-element="true"] strong,
                 body[data-theme="dark"] div.stMarkdown div.agent-number[data-agent-element="true"] strong {
-                    color: #ffffff !important;
+                    color: #dc2626 !important;
                 }
             `;
             document.head.appendChild(style);
@@ -2346,17 +2344,8 @@ def main():
         // Second, force inline styles as ultimate backup - VERY AGGRESSIVE
         function forceAgentColors() {
             try {
-                // Check both html and body for data-theme attribute
-                var htmlTheme = document.documentElement.getAttribute('data-theme');
-                var bodyTheme = document.body ? document.body.getAttribute('data-theme') : null;
-                var isDark = htmlTheme === 'dark' || bodyTheme === 'dark';
-                console.log('AGENT COLOR FIX: Theme check - html:', htmlTheme, 'body:', bodyTheme, 'isDark:', isDark);
-                if (!isDark) {
-                    console.log('AGENT COLOR FIX: Not dark mode, skipping');
-                    return; // Only force in dark mode
-                }
-                
-                var targetColor = '#ffffff';
+                // Apply red color in both dark and light modes
+                var targetColor = '#dc2626'; // Red color
                 var count = 0;
                 
                 // CRITICAL: Target ALL strong tags within .stMarkdown that are inside agent elements
