@@ -2100,6 +2100,16 @@ def main():
         color: #ffffff !important; /* Override Streamlit's var(--text-primary) */
     }
     
+    /* MAXIMUM SPECIFICITY: Use attribute selectors and multiple classes for highest priority */
+    html[data-theme="dark"] body div.stMarkdown div.agent-name-bright[data-agent-name="true"] strong,
+    html[data-theme="dark"] body div.stMarkdown div[id^="agent-name-"][data-agent-element="true"] strong,
+    html[data-theme="dark"] body div.stMarkdown div.agent-number[data-agent-element="true"] strong,
+    body[data-theme="dark"] div.stMarkdown div.agent-name-bright[data-agent-name="true"] strong,
+    body[data-theme="dark"] div.stMarkdown div[id^="agent-name-"][data-agent-element="true"] strong,
+    body[data-theme="dark"] div.stMarkdown div.agent-number[data-agent-element="true"] strong {
+        color: #ffffff !important; /* Maximum specificity override */
+    }
+    
     /* Override any Streamlit default dark mode text colors */
     [data-theme="dark"] p,
     [data-theme="dark"] span,
@@ -2306,11 +2316,20 @@ def main():
                 body[data-theme="dark"] .stMarkdown div.agent-number strong {
                     color: #ffffff !important;
                 }
+                /* MAXIMUM SPECIFICITY: Attribute selectors for highest priority */
+                html[data-theme="dark"] body div.stMarkdown div.agent-name-bright[data-agent-name="true"] strong,
+                html[data-theme="dark"] body div.stMarkdown div[id^="agent-name-"][data-agent-element="true"] strong,
+                html[data-theme="dark"] body div.stMarkdown div.agent-number[data-agent-element="true"] strong,
+                body[data-theme="dark"] div.stMarkdown div.agent-name-bright[data-agent-name="true"] strong,
+                body[data-theme="dark"] div.stMarkdown div[id^="agent-name-"][data-agent-element="true"] strong,
+                body[data-theme="dark"] div.stMarkdown div.agent-number[data-agent-element="true"] strong {
+                    color: #ffffff !important;
+                }
             `;
             document.head.appendChild(style);
         }
         
-        // Second, force inline styles as ultimate backup
+        // Second, force inline styles as ultimate backup - VERY AGGRESSIVE
         function forceAgentColors() {
             try {
                 // Check both html and body for data-theme attribute
@@ -2320,53 +2339,66 @@ def main():
                 if (!isDark) return; // Only force in dark mode
                 
                 var targetColor = '#ffffff';
+                var count = 0;
                 
-                // Target by data attribute (most reliable)
-                document.querySelectorAll('[data-agent-element="true"]').forEach(function(el) {
-                    // Preserve existing styles, just add/update color
-                    var existingStyle = el.getAttribute('style') || '';
-                    if (!existingStyle.includes('color')) {
-                        el.style.setProperty('color', targetColor, 'important');
-                    } else {
-                        el.style.setProperty('color', targetColor, 'important');
-                    }
-                    // Force on all children
-                    el.querySelectorAll('*').forEach(function(child) {
+                // CRITICAL: Target ALL strong tags within .stMarkdown that are inside agent elements
+                // Use multiple selectors to catch all variations
+                var strongSelectors = [
+                    '.stMarkdown .agent-name-bright strong',
+                    '.stMarkdown .agent-number strong',
+                    '.stMarkdown [data-agent-name="true"] strong',
+                    '.stMarkdown [id^="agent-name-"] strong',
+                    '.stMarkdown [data-agent-element="true"] strong',
+                    '.agent-name-bright strong',
+                    '.agent-number strong',
+                    '[data-agent-name="true"] strong',
+                    '[id^="agent-name-"] strong',
+                    '[data-agent-element="true"] strong'
+                ];
+                
+                strongSelectors.forEach(function(selector) {
+                    document.querySelectorAll(selector).forEach(function(el) {
+                        el.style.cssText = 'color: ' + targetColor + ' !important;';
+                        count++;
+                    });
+                });
+                
+                // Also target parent divs and force on all descendants
+                document.querySelectorAll('[data-agent-element="true"], .agent-number, .agent-name-bright, [data-agent-name="true"], [id^="agent-name-"]').forEach(function(el) {
+                    el.style.setProperty('color', targetColor, 'important');
+                    // Force on ALL descendants, especially strong tags
+                    el.querySelectorAll('strong, *').forEach(function(child) {
                         child.style.setProperty('color', targetColor, 'important');
                     });
                 });
                 
-                // Also target by class/ID
-                var selectors = ['.agent-number', '.agent-name-bright', '[data-agent-name="true"]', '[id^="agent-name-"]'];
-                selectors.forEach(function(selector) {
-                    document.querySelectorAll(selector).forEach(function(el) {
-                        el.style.setProperty('color', targetColor, 'important');
-                        el.querySelectorAll('*').forEach(function(child) {
-                            child.style.setProperty('color', targetColor, 'important');
-                        });
-                    });
-                });
-                
-                // CRITICAL: Specifically target strong tags within .stMarkdown that contain agent elements
-                // This directly overrides Streamlit's .stMarkdown strong rule
-                document.querySelectorAll('.stMarkdown .agent-name-bright strong, .stMarkdown .agent-number strong, .stMarkdown [data-agent-name="true"] strong, .stMarkdown [id^="agent-name-"] strong').forEach(function(el) {
-                    el.style.setProperty('color', targetColor, 'important');
-                });
+                // Debug: log if we found elements (remove in production if desired)
+                if (count > 0) {
+                    console.log('Applied white color to', count, 'agent strong elements');
+                }
             } catch(e) {
                 console.error('Error in forceAgentColors:', e);
             }
         }
         
-        // Run immediately
+        // Run immediately multiple times
         forceAgentColors();
+        setTimeout(forceAgentColors, 0);
+        setTimeout(forceAgentColors, 10);
+        setTimeout(forceAgentColors, 50);
         
         // Run on DOM ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', forceAgentColors);
+            document.addEventListener('DOMContentLoaded', function() {
+                forceAgentColors();
+                setTimeout(forceAgentColors, 0);
+                setTimeout(forceAgentColors, 10);
+                setTimeout(forceAgentColors, 50);
+            });
         }
         
-        // Run continuously
-        setInterval(forceAgentColors, 100);
+        // Run continuously - very frequent
+        setInterval(forceAgentColors, 50);
         
         // Watch for theme changes
         var themeObserver = new MutationObserver(function() {
