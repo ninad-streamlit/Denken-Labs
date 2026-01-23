@@ -2155,78 +2155,66 @@ def main():
     }
     </style>
     <script>
-    // Inject CSS dynamically AND use JavaScript to force white color in dark mode
+    // NEW APPROACH: Directly set inline styles on agent elements based on theme
     (function() {
-        // Inject CSS style element to ensure it loads after Streamlit's CSS
-        var styleId = 'agent-name-number-dark-mode-fix';
-        if (!document.getElementById(styleId)) {
-            var style = document.createElement('style');
-            style.id = styleId;
-            style.textContent = `
-                [data-theme="dark"] .agent-number,
-                [data-theme="dark"] .agent-number *,
-                [data-theme="dark"] .agent-number strong,
-                [data-theme="dark"] div.agent-number,
-                [data-theme="dark"] div.agent-number *,
-                [data-theme="dark"] div.agent-number strong,
-                [data-theme="dark"] .agent-name,
-                [data-theme="dark"] .agent-name *,
-                [data-theme="dark"] .agent-name strong,
-                [data-theme="dark"] div.agent-name,
-                [data-theme="dark"] div.agent-name *,
-                [data-theme="dark"] div.agent-name strong,
-                [data-theme="dark"] .agent-name-bright,
-                [data-theme="dark"] .agent-name-bright *,
-                [data-theme="dark"] .agent-name-bright strong,
-                [data-theme="dark"] div.agent-name-bright,
-                [data-theme="dark"] div.agent-name-bright *,
-                [data-theme="dark"] div.agent-name-bright strong,
-                [data-theme="dark"] [data-agent-name="true"],
-                [data-theme="dark"] [data-agent-name="true"] *,
-                [data-theme="dark"] [data-agent-name="true"] strong,
-                [data-theme="dark"] [id^="agent-name-"],
-                [data-theme="dark"] [id^="agent-name-"] *,
-                [data-theme="dark"] [id^="agent-name-"] strong {
-                    color: #ffffff !important;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        // Also use JavaScript to directly set colors as backup
-        function setAgentColors() {
+        function updateAgentColors() {
             var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            if (!isDark) return;
+            var targetColor = isDark ? '#ffffff' : '#1e293b';
             
-            var selectors = [
-                '.agent-number', 'div.agent-number',
-                '.agent-name', 'div.agent-name',
-                '.agent-name-bright', 'div.agent-name-bright',
-                '[data-agent-name="true"]', '[id^="agent-name-"]'
-            ];
+            // Find all agent elements by data attribute (most reliable)
+            var elements = document.querySelectorAll('[data-agent-element="true"]');
             
-            selectors.forEach(function(selector) {
-                document.querySelectorAll(selector).forEach(function(el) {
-                    el.style.setProperty('color', '#ffffff', 'important');
-                    el.querySelectorAll('*').forEach(function(child) {
-                        child.style.setProperty('color', '#ffffff', 'important');
-                    });
+            elements.forEach(function(el) {
+                // Set color on element itself
+                el.style.setProperty('color', targetColor, 'important');
+                
+                // Set color on all children (especially strong tags)
+                var children = el.querySelectorAll('*');
+                children.forEach(function(child) {
+                    child.style.setProperty('color', targetColor, 'important');
                 });
+            });
+            
+            // Also target by class as backup
+            var classElements = document.querySelectorAll('.agent-number, .agent-name, .agent-name-bright, [data-agent-name="true"], [id^="agent-name-"]');
+            classElements.forEach(function(el) {
+                if (!el.hasAttribute('data-agent-element')) {
+                    el.style.setProperty('color', targetColor, 'important');
+                    el.querySelectorAll('*').forEach(function(child) {
+                        child.style.setProperty('color', targetColor, 'important');
+                    });
+                }
             });
         }
         
-        // Run immediately and continuously
-        setAgentColors();
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setAgentColors);
-        }
-        setInterval(setAgentColors, 200);
+        // Run immediately - don't wait for anything
+        updateAgentColors();
         
-        // Watch for theme and DOM changes
-        new MutationObserver(function() { setTimeout(setAgentColors, 10); })
-            .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-        new MutationObserver(function() { setTimeout(setAgentColors, 10); })
-            .observe(document.body, { childList: true, subtree: true });
+        // Run on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateAgentColors);
+        }
+        
+        // Run continuously to catch new elements
+        setInterval(updateAgentColors, 100);
+        
+        // Watch for theme changes
+        var themeObserver = new MutationObserver(function() {
+            updateAgentColors();
+        });
+        themeObserver.observe(document.documentElement, { 
+            attributes: true, 
+            attributeFilter: ['data-theme'] 
+        });
+        
+        // Watch for new elements being added
+        var domObserver = new MutationObserver(function() {
+            updateAgentColors();
+        });
+        domObserver.observe(document.body, { 
+            childList: true, 
+            subtree: true 
+        });
     })();
     
     // Force "Welcome to Denken Labs" to be light in dark mode - target div with ID welcome-title-element
@@ -2999,7 +2987,7 @@ def main():
                     if is_editing:
                         # Edit mode
                         bot_number = bot.get('number', 'N/A')
-                        st.markdown(f'<div class="agent-number"><strong>Editing Agent #{bot_number}</strong></div>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="agent-number" data-agent-element="true"><strong>Editing Agent #{bot_number}</strong></div>', unsafe_allow_html=True)
                         
                         with st.form(f"edit_form_{bot['id']}", clear_on_submit=False):
                             edited_description = st.text_area(
@@ -3110,13 +3098,13 @@ def main():
                                         break
                             
                             # Display number below bot, left-aligned
-                            st.markdown(f"<div class='agent-number' style='text-align: left; margin-top: 5px;'><strong>#{bot.get('number', bot_number)}</strong></div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='agent-number' style='text-align: left; margin-top: 5px;' data-agent-element='true'><strong>#{bot.get('number', bot_number)}</strong></div>", unsafe_allow_html=True)
                         
                         with col2:
                             # Use ID and data attribute for targeting - NO inline color styles
                             # Let CSS handle colors based on theme
                             agent_name_id = f"agent-name-{bot['id']}"
-                            st.markdown(f'<div id="{agent_name_id}" class="agent-name-bright" data-agent-name="true"><strong>{bot["name"]}</strong></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div id="{agent_name_id}" class="agent-name-bright" data-agent-name="true" data-agent-element="true"><strong>{bot["name"]}</strong></div>', unsafe_allow_html=True)
                             st.markdown(f"{bot['description']}")
                             # Display character profile if available
                             if bot.get('character'):
