@@ -2155,61 +2155,99 @@ def main():
     }
     </style>
     <script>
-    // NEW APPROACH: Directly set inline styles on agent elements based on theme
+    // ULTIMATE FIX: Inject CSS dynamically AND force inline styles
     (function() {
-        function updateAgentColors() {
-            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            var targetColor = isDark ? '#ffffff' : '#1e293b';
-            
-            // Find all agent elements by data attribute (most reliable)
-            var elements = document.querySelectorAll('[data-agent-element="true"]');
-            
-            elements.forEach(function(el) {
-                // Set color on element itself
-                el.style.setProperty('color', targetColor, 'important');
+        // First, inject CSS rules dynamically to ensure they load after Streamlit's CSS
+        var styleId = 'agent-color-fix-dynamic';
+        if (!document.getElementById(styleId)) {
+            var style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                html[data-theme="dark"] [data-agent-element="true"],
+                html[data-theme="dark"] [data-agent-element="true"] *,
+                html[data-theme="dark"] [data-agent-element="true"] strong,
+                html[data-theme="dark"] .agent-number,
+                html[data-theme="dark"] .agent-number *,
+                html[data-theme="dark"] .agent-number strong,
+                html[data-theme="dark"] .agent-name-bright,
+                html[data-theme="dark"] .agent-name-bright *,
+                html[data-theme="dark"] .agent-name-bright strong,
+                html[data-theme="dark"] [data-agent-name="true"],
+                html[data-theme="dark"] [data-agent-name="true"] *,
+                html[data-theme="dark"] [data-agent-name="true"] strong,
+                html[data-theme="dark"] [id^="agent-name-"],
+                html[data-theme="dark"] [id^="agent-name-"] *,
+                html[data-theme="dark"] [id^="agent-name-"] strong {
+                    color: #ffffff !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Second, force inline styles as ultimate backup
+        function forceAgentColors() {
+            try {
+                var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (!isDark) return; // Only force in dark mode
                 
-                // Set color on all children (especially strong tags)
-                var children = el.querySelectorAll('*');
-                children.forEach(function(child) {
-                    child.style.setProperty('color', targetColor, 'important');
-                });
-            });
-            
-            // Also target by class as backup
-            var classElements = document.querySelectorAll('.agent-number, .agent-name, .agent-name-bright, [data-agent-name="true"], [id^="agent-name-"]');
-            classElements.forEach(function(el) {
-                if (!el.hasAttribute('data-agent-element')) {
-                    el.style.setProperty('color', targetColor, 'important');
+                var targetColor = '#ffffff';
+                
+                // Target by data attribute (most reliable)
+                document.querySelectorAll('[data-agent-element="true"]').forEach(function(el) {
+                    // Preserve existing styles, just add/update color
+                    var existingStyle = el.getAttribute('style') || '';
+                    if (!existingStyle.includes('color')) {
+                        el.style.setProperty('color', targetColor, 'important');
+                    } else {
+                        el.style.setProperty('color', targetColor, 'important');
+                    }
+                    // Force on all children
                     el.querySelectorAll('*').forEach(function(child) {
                         child.style.setProperty('color', targetColor, 'important');
                     });
-                }
-            });
+                });
+                
+                // Also target by class/ID
+                var selectors = ['.agent-number', '.agent-name-bright', '[data-agent-name="true"]', '[id^="agent-name-"]'];
+                selectors.forEach(function(selector) {
+                    document.querySelectorAll(selector).forEach(function(el) {
+                        el.style.setProperty('color', targetColor, 'important');
+                        el.querySelectorAll('*').forEach(function(child) {
+                            child.style.setProperty('color', targetColor, 'important');
+                        });
+                    });
+                });
+            } catch(e) {
+                console.error('Error in forceAgentColors:', e);
+            }
         }
         
-        // Run immediately - don't wait for anything
-        updateAgentColors();
+        // Run immediately
+        forceAgentColors();
         
         // Run on DOM ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', updateAgentColors);
+            document.addEventListener('DOMContentLoaded', forceAgentColors);
         }
         
-        // Run continuously to catch new elements
-        setInterval(updateAgentColors, 100);
+        // Run continuously
+        setInterval(forceAgentColors, 100);
         
         // Watch for theme changes
         var themeObserver = new MutationObserver(function() {
-            updateAgentColors();
+            forceAgentColors();
+            setTimeout(forceAgentColors, 10);
+            setTimeout(forceAgentColors, 50);
         });
         themeObserver.observe(document.documentElement, { 
             attributes: true, 
             attributeFilter: ['data-theme'] 
         });
         
-        // Watch for new elements being added
+        // Watch for DOM changes
         var domObserver = new MutationObserver(function() {
-            updateAgentColors();
+            setTimeout(forceAgentColors, 0);
+            setTimeout(forceAgentColors, 10);
         });
         domObserver.observe(document.body, { 
             childList: true, 
