@@ -3955,23 +3955,7 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # 30-second story video: generate on demand if missing, then show
-                if st.session_state.get("mission_story_video"):
-                    st.markdown("### 🎬 Story video")
-                    st.video(st.session_state.mission_story_video, format="video/mp4")
-                elif st.session_state.get("mission_story_image") and st.session_state.mission_story:
-                    with st.spinner("Generating 30-second story video…"):
-                        video_bytes = generate_story_video(
-                            st.session_state.mission_story_image,
-                            st.session_state.mission_story_title,
-                            st.session_state.mission_story,
-                            duration_seconds=30
-                        )
-                        if video_bytes:
-                            st.session_state.mission_story_video = video_bytes
-                            st.rerun()
-                        else:
-                            st.caption("Video generation requires the moviepy library and ffmpeg. Install with: pip install moviepy imageio-ffmpeg")
+                # 30-second story video section hidden for now (generate_story_video + session state kept for later)
                 
                 # Modify the Story — box and button directly below the story
                 st.markdown("---")
