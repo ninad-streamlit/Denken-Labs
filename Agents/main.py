@@ -3917,7 +3917,7 @@ def main():
                 st.markdown("---")
                 st.markdown("### ✏️ Modify the story")
                 st.markdown("Suggest how you'd like to change the story, then click **Apply modification**.")
-                _default_modification = "Make the story more longer and more interesting"
+                _default_modification = "Example: Make the story more longer and interesting"
                 modification_suggestion = st.text_area(
                     "Your suggestion",
                     value="",
