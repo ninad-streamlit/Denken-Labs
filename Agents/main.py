@@ -3277,10 +3277,7 @@ def main():
                             
                             if save_clicked and edited_description and edited_description.strip():
                                 try:
-                                    # Regenerate name, description, and character based on new description
-                                    # Get existing agent names to avoid duplicates (excluding current bot)
-                                    existing_names = [b.get('name', '').lower() for b in st.session_state.created_bots if b['id'] != bot['id']]
-                                    
+                                    # Keep the user's edited description as-is; regenerate only the character profile from it
                                     api_key = get_openai_api_key()
                                     if not api_key:
                                         st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
@@ -3289,36 +3286,14 @@ def main():
                                         response = client.chat.completions.create(
                                             model="gpt-4o-mini",
                                             messages=[
-                                                {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. The name should be inspired by cartoon characters, superheroes, or famous personalities - it should feel like an actual character name (e.g., 'Flash Writer', 'Captain Code', 'Sparky Bot') rather than an adjective. Make it unique and original, catchy, adventurous, and playful. Description should be 1-2 sentences in SIMPLE English. Character should be a personality profile (3-5 sentences) in VERY SIMPLE English words that a 5-10 year old can understand. Use short sentences (6-10 words each). Describe the agent's traits, working style, expertise, and approach using simple words like 'help', 'work', 'team', 'friend', 'smart', 'kind', 'brave'."},
-                                                {"role": "user", "content": f"Based on this agent description, create a unique character name (inspired by cartoon characters/superheroes/famous personalities but original), short description, and elaborate character profile. Avoid these existing names: {', '.join(existing_names) if existing_names else 'none'}\n\nAgent description:\n{edited_description}"}
+                                                {"role": "system", "content": "You are a creative assistant. Given an agent description, respond in JSON with a single 'character' field: a personality profile (3-5 sentences) in VERY SIMPLE English that a 5-10 year old can understand. Use short sentences (6-10 words). Describe the agent's traits, working style, and approach. Use simple words like 'help', 'work', 'team', 'friend', 'smart', 'kind', 'brave'. Do not repeat the description; expand it into a character profile only."},
+                                                {"role": "user", "content": f"Generate only a character profile (personality) for this agent description. Return JSON with one field: \"character\".\n\nAgent description:\n{edited_description}"}
                                             ],
                                             response_format={"type": "json_object"},
-                                            temperature=0.9
+                                            temperature=0.7
                                         )
-                                        
                                         bot_data = json.loads(response.choices[0].message.content)
-                                        new_name = bot_data.get("name", "AI Agent")
-                                        new_desc = bot_data.get("description", edited_description[:100])
                                         new_character = bot_data.get("character", "A versatile AI agent ready to assist.")
-                                        
-                                        # Handle case where description might be a dict or contain dict-like structure
-                                        if isinstance(new_desc, dict):
-                                            # If description is a dict, format it as readable text
-                                            desc_parts = []
-                                            if 'traits' in new_desc:
-                                                desc_parts.append(f"Traits: {', '.join(new_desc['traits']) if isinstance(new_desc['traits'], list) else new_desc['traits']}")
-                                            if 'working_style' in new_desc:
-                                                desc_parts.append(f"Working Style: {new_desc['working_style']}")
-                                            if 'expertise' in new_desc:
-                                                desc_parts.append(f"Expertise: {new_desc['expertise']}")
-                                            if 'approach' in new_desc:
-                                                desc_parts.append(f"Approach: {new_desc['approach']}")
-                                            new_desc = ". ".join(desc_parts) if desc_parts else edited_description[:100]
-                                        elif isinstance(new_desc, str) and (new_desc.startswith('{') or new_desc.startswith("'")):
-                                            # If description is a string representation of a dict, use fallback
-                                            new_desc = edited_description[:100]
-                                        
-                                        # Handle case where character might be a dict
                                         if isinstance(new_character, dict):
                                             char_parts = []
                                             if 'traits' in new_character:
@@ -3331,18 +3306,15 @@ def main():
                                                 char_parts.append(f"Approach: {new_character['approach']}")
                                             new_character = ". ".join(char_parts) if char_parts else "A versatile AI agent ready to assist."
                                         elif isinstance(new_character, str) and (new_character.startswith('{') or new_character.startswith("'")):
-                                            # If character is a string representation of a dict, use fallback
                                             new_character = "A versatile AI agent ready to assist."
-                                        
-                                        # Update bot (keep same number and id); default agent (Agastya) name never changes
+                                        # Update bot: keep name, use edited description as description and full_description, regenerate character only
                                         for i, b in enumerate(st.session_state.created_bots):
                                             if b['id'] == bot['id']:
-                                                st.session_state.created_bots[i]['name'] = "Agastya" if b.get("is_default", False) else new_name
-                                                st.session_state.created_bots[i]['description'] = new_desc
+                                                st.session_state.created_bots[i]['name'] = "Agastya" if b.get("is_default", False) else b.get("name", "Agent")
+                                                st.session_state.created_bots[i]['description'] = edited_description
                                                 st.session_state.created_bots[i]['character'] = new_character
                                                 st.session_state.created_bots[i]['full_description'] = edited_description
                                                 break
-                                        
                                         st.session_state.editing_bot = None
                                         st.rerun()
                                 except Exception as e:
