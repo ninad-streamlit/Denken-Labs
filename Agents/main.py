@@ -522,6 +522,44 @@ def generate_mission_image(story_title, mission_description):
     except Exception:
         return None
 
+def generate_story_video(image_bytes, story_title, story_text, duration_seconds=30):
+    """Generate a ~30 second MP4 video from the mission image (slideshow style). Returns video bytes or None."""
+    if not image_bytes:
+        return None
+    try:
+        import tempfile
+        # moviepy may be optional
+        try:
+            from moviepy.editor import ImageClip
+        except ImportError:
+            try:
+                from moviepy import ImageClip
+            except ImportError:
+                return None
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as img_f:
+            img_f.write(image_bytes)
+            img_path = img_f.name
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as out_f:
+                out_path = out_f.name
+            clip = ImageClip(img_path, duration=duration_seconds)
+            clip.write_videofile(out_path, fps=24, codec="libx264", audio=False, logger=None, verbose=False)
+            clip.close()
+            with open(out_path, "rb") as f:
+                video_bytes = f.read()
+            try:
+                os.unlink(out_path)
+            except Exception:
+                pass
+            return video_bytes
+        finally:
+            try:
+                os.unlink(img_path)
+            except Exception:
+                pass
+    except Exception:
+        return None
+
 def generate_story_question_example(story_title, story_content, existing_questions=None):
     """Generate a relevant example question about the story with extensive variety"""
     # Extract key elements from the story for context
@@ -2970,6 +3008,8 @@ def main():
         st.session_state.mission_story_title = ""
     if 'mission_story_image' not in st.session_state:
         st.session_state.mission_story_image = None  # bytes or None; image for the mission story
+    if 'mission_story_video' not in st.session_state:
+        st.session_state.mission_story_video = None  # bytes or None; ~30s story video
     
     # Clean any existing story to remove HTML/CSS code (in case it was stored before cleaning was added)
     if st.session_state.mission_story:
@@ -3495,6 +3535,7 @@ def main():
                                     # Clear Q&A history for the new mission
                                     st.session_state.story_qa_history = []
                                     st.session_state.story_question_example = ""
+                                    st.session_state.mission_story_video = None  # will be generated on first display
                                     
                                     # Play sound for story rendered
                                     play_sound('story_rendered')
@@ -3552,6 +3593,7 @@ def main():
                                     # Clear Q&A history for the new mission
                                     st.session_state.story_qa_history = []
                                     st.session_state.story_question_example = ""
+                                    st.session_state.mission_story_video = None  # will be generated on first display
                                     
                                     st.success("Story generated successfully!")
                                 else:
@@ -3913,6 +3955,24 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                 
+                # 30-second story video: generate on demand if missing, then show
+                if st.session_state.get("mission_story_video"):
+                    st.markdown("### 🎬 Story video")
+                    st.video(st.session_state.mission_story_video, format="video/mp4")
+                elif st.session_state.get("mission_story_image") and st.session_state.mission_story:
+                    with st.spinner("Generating 30-second story video…"):
+                        video_bytes = generate_story_video(
+                            st.session_state.mission_story_image,
+                            st.session_state.mission_story_title,
+                            st.session_state.mission_story,
+                            duration_seconds=30
+                        )
+                        if video_bytes:
+                            st.session_state.mission_story_video = video_bytes
+                            st.rerun()
+                        else:
+                            st.caption("Video generation requires the moviepy library and ffmpeg. Install with: pip install moviepy imageio-ffmpeg")
+                
                 # Modify the Story — box and button directly below the story
                 st.markdown("---")
                 st.markdown("### ✏️ Modify the story")
@@ -3970,6 +4030,7 @@ def main():
                                         story_theme
                                     )
                                     st.session_state.mission_story_image = new_image if new_image else st.session_state.get("mission_story_image")
+                                    st.session_state.mission_story_video = None  # regenerate video for modified story
                                     st.success("Story updated based on your suggestion!")
                                     st.rerun()
                                 else:
