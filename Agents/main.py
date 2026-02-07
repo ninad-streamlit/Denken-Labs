@@ -2990,14 +2990,14 @@ def main():
     if 'show_agent_builder' not in st.session_state:
         st.session_state.show_agent_builder = False
     if 'created_bots' not in st.session_state:
-        # Default agent: Agent Agastya — always part of every mission
+        # Default agent: Agent Agastya — always part of every mission (7 years old)
         default_agastya = {
             "id": 0,
             "number": 1,
             "name": "Agent Agastya",
-            "description": "Bold, fast and intelligent. A natural leader who thinks quickly and acts with confidence.",
-            "character": "Agent Agastya is bold, fast and intelligent. He leads with confidence and is never afraid to take the first step. He thinks quickly and finds smart answers when the team is stuck. He loves working with others and always cheers on his friends. He is brave in tough moments and kind when someone needs help. A default member of every mission.",
-            "full_description": "Agent Agastya is bold, fast and intelligent. He leads with confidence and is never afraid to take the first step. He thinks quickly and finds smart answers when the team is stuck. He loves working with others and always cheers on his friends. He is brave in tough moments and kind when someone needs help. A default member of every mission.",
+            "description": "Agent Agastya is 7 years old. Bold, fast and intelligent. A natural leader who thinks quickly and acts with confidence.",
+            "character": "Agent Agastya is 7 years old. He is bold, fast and intelligent. He leads with confidence and is never afraid to take the first step. He thinks quickly and finds smart answers when the team is stuck. He loves working with others and always cheers on his friends. He is brave in tough moments and kind when someone needs help. A default member of every mission.",
+            "full_description": "Agent Agastya is 7 years old. He is bold, fast and intelligent. He leads with confidence and is never afraid to take the first step. He thinks quickly and finds smart answers when the team is stuck. He loves working with others and always cheers on his friends. He is brave in tough moments and kind when someone needs help. A default member of every mission.",
             "is_default": True,
         }
         st.session_state.created_bots = [default_agastya]
@@ -3334,11 +3334,15 @@ def main():
                                         st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
                                     elif api_key:
                                         client = openai.OpenAI(api_key=api_key)
+                                        is_agastya = bot.get("is_default", False)
+                                        user_char_prompt = f"Generate only a character profile (personality) for this agent description. Return JSON with one field: \"character\".\n\nAgent description:\n{edited_description}"
+                                        if is_agastya:
+                                            user_char_prompt += "\n\nIMPORTANT: This agent is Agent Agastya. The character profile MUST mention that he is 7 years old (e.g. start with 'Agent Agastya is 7 years old.')."
                                         response = client.chat.completions.create(
                                             model="gpt-4o-mini",
                                             messages=[
                                                 {"role": "system", "content": "You are a creative assistant. Given an agent description, respond in JSON with a single 'character' field: a personality profile (3-5 sentences) in VERY SIMPLE English that a 5-10 year old can understand. Use short sentences (6-10 words). Describe the agent's traits, working style, and approach. Use simple words like 'help', 'work', 'team', 'friend', 'smart', 'kind', 'brave'. Do not repeat the description; expand it into a character profile only."},
-                                                {"role": "user", "content": f"Generate only a character profile (personality) for this agent description. Return JSON with one field: \"character\".\n\nAgent description:\n{edited_description}"}
+                                                {"role": "user", "content": user_char_prompt}
                                             ],
                                             response_format={"type": "json_object"},
                                             temperature=0.7
@@ -3358,6 +3362,8 @@ def main():
                                             new_character = ". ".join(char_parts) if char_parts else "A versatile AI agent ready to assist."
                                         elif isinstance(new_character, str) and (new_character.startswith('{') or new_character.startswith("'")):
                                             new_character = "A versatile AI agent ready to assist."
+                                        if is_agastya and isinstance(new_character, str) and "7 years old" not in new_character.lower():
+                                            new_character = "Agent Agastya is 7 years old. " + new_character.strip()
                                         # Update bot: keep name, use edited description as description and full_description, regenerate character only
                                         for i, b in enumerate(st.session_state.created_bots):
                                             if b['id'] == bot['id']:
