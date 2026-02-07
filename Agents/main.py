@@ -3262,11 +3262,14 @@ def main():
                         st.markdown(f'<div class="agent-number" data-agent-element="true"><strong>Editing Agent #{bot_number}</strong></div>', unsafe_allow_html=True)
                         
                         with st.form(f"edit_form_{bot['id']}", clear_on_submit=False):
+                            # Show the agent description (text below the name), not the character profile
+                            edit_value = bot.get("description") or bot.get("full_description") or ""
                             edited_description = st.text_area(
                                 "Edit agent description:",
-                                value=bot['full_description'],
+                                value=edit_value,
                                 height=150,
-                                key=f"edit_desc_{bot['id']}"
+                                key=f"edit_desc_{bot['id']}",
+                                help="This is the description shown below the agent name. The character profile is generated automatically from it when you save."
                             )
                             
                             col_save, col_cancel = st.columns(2)
