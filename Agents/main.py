@@ -3917,16 +3917,20 @@ def main():
                 st.markdown("---")
                 st.markdown("### ✏️ Modify the story")
                 st.markdown("Suggest how you'd like to change the story, then click **Apply modification**.")
+                _default_modification = "Make the story more longer and more interesting"
                 modification_suggestion = st.text_area(
                     "Your suggestion",
-                    placeholder="e.g. Make the ending happier, or add more detail when the team faces the obstacle...",
+                    value="",
+                    placeholder=_default_modification,
                     height=90,
                     key="modify_story_ta_below_story",
                     label_visibility="collapsed"
                 )
                 submit_modification = st.button("Apply modification", key="modify_story_btn_below_story", type="primary")
+                # If no text entered, use the default example to regenerate the story
+                effective_suggestion = (modification_suggestion or "").strip() or _default_modification
                 
-                if submit_modification and modification_suggestion and modification_suggestion.strip():
+                if submit_modification and effective_suggestion:
                     api_key = get_openai_api_key()
                     if not api_key:
                         st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
@@ -3942,7 +3946,7 @@ def main():
                             )
                             user_edit = (
                                 f"Existing story:\n\n{st.session_state.mission_story}\n\n"
-                                f"User's modification request: {modification_suggestion.strip()}\n\n"
+                                f"User's modification request: {effective_suggestion}\n\n"
                                 "Return the same story with only these modifications applied (full 4 paragraphs, \\n\\n between paragraphs):"
                             )
                             response = client.chat.completions.create(
@@ -3974,8 +3978,6 @@ def main():
                                 st.warning("No modified story was returned. Please try again.")
                         except Exception as e:
                             st.error(f"Could not apply modification: {str(e)}")
-                elif submit_modification and (not modification_suggestion or not modification_suggestion.strip()):
-                    st.warning("Please enter a suggestion before clicking Apply.")
                 
                 # Q&A Section
                 st.markdown("<br>", unsafe_allow_html=True)
