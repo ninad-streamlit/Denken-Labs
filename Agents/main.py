@@ -3607,6 +3607,19 @@ def main():
                     # Use the module-level imports (they should work if reportlab is installed)
                     if REPORTLAB_AVAILABLE:
                         try:
+                            # Keep references to image buffers so ReportLab can read them during doc.build()
+                            _pdf_image_buffers = []
+                            _pdf_tmp_image_path = None
+                            # Ensure we have a mission image for the PDF (generate on demand if missing)
+                            pdf_image_bytes = st.session_state.get('mission_story_image')
+                            if pdf_image_bytes is None and st.session_state.mission_story_title and st.session_state.get('team_mission'):
+                                pdf_image_bytes = generate_mission_image(
+                                    st.session_state.mission_story_title,
+                                    st.session_state.team_mission
+                                )
+                                if pdf_image_bytes is not None:
+                                    st.session_state.mission_story_image = pdf_image_bytes
+                            
                             buffer = BytesIO()
                             doc = SimpleDocTemplate(buffer, pagesize=letter)
                             story = []
@@ -3653,16 +3666,32 @@ def main():
                                 else:
                                     story.append(Spacer(1, 0.2*inch))
                             
-                            # Add mission story image if available
-                            if st.session_state.get('mission_story_image') and REPORTLAB_AVAILABLE and ImageReader is not None:
+                            # Add mission story image to PDF (always include when we have bytes)
+                            if pdf_image_bytes and REPORTLAB_AVAILABLE and ImageReader is not None:
                                 try:
-                                    img_buffer = BytesIO(st.session_state.mission_story_image)
-                                    img_buffer.seek(0)
-                                    img = Image(ImageReader(img_buffer), width=4*inch, height=4*inch)
-                                    story.append(img)
+                                    from PIL import Image as PILImage
+                                    # Load with PIL and re-save to a clean PNG stream (keeps buffer alive for ReportLab)
+                                    pil_img = PILImage.open(BytesIO(pdf_image_bytes))
+                                    if pil_img.mode in ("RGBA", "P"):
+                                        pil_img = pil_img.convert("RGB")
+                                    img_io = BytesIO()
+                                    pil_img.save(img_io, format="PNG")
+                                    img_io.seek(0)
+                                    _pdf_image_buffers.append(img_io)  # keep reference until after doc.build()
+                                    rl_img = Image(ImageReader(img_io), width=4*inch, height=4*inch)
+                                    story.append(rl_img)
                                     story.append(Spacer(1, 0.25*inch))
                                 except Exception:
-                                    pass
+                                    try:
+                                        # Fallback: direct BytesIO + ImageReader
+                                        img_buffer = BytesIO(pdf_image_bytes)
+                                        img_buffer.seek(0)
+                                        _pdf_image_buffers.append(img_buffer)
+                                        rl_img = Image(ImageReader(img_buffer), width=4*inch, height=4*inch)
+                                        story.append(rl_img)
+                                        story.append(Spacer(1, 0.25*inch))
+                                    except Exception:
+                                        pass
                             
                             # Add mission if available
                             if st.session_state.team_mission:
@@ -3809,6 +3838,12 @@ def main():
                             # Build PDF
                             doc.build(story)
                             buffer.seek(0)
+                            # Clean up temp image file if we created one
+                            if _pdf_tmp_image_path and os.path.isfile(_pdf_tmp_image_path):
+                                try:
+                                    os.unlink(_pdf_tmp_image_path)
+                                except Exception:
+                                    pass
                             
                             # Download button
                             st.download_button(
@@ -3876,6 +3911,53 @@ def main():
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
+                
+                # Modify the Story section - box with input for user to suggest modifications (always visible after story)
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("---")
+                with st.expander("✏️ **Modify the Story** — suggest changes", expanded=True):
+                    st.caption("Describe how you'd like to change the story (e.g. \"Make the ending happier\" or \"Add more detail when the team faces the obstacle\").")
+                    with st.form("modify_story_form", clear_on_submit=True):
+                        modification_suggestion = st.text_area(
+                            "Your suggestion:",
+                            placeholder="e.g. Make the second paragraph more exciting, or add a twist at the end...",
+                            height=100,
+                            key="modify_story_suggestion_input"
+                        )
+                        submit_modification = st.form_submit_button("Apply modification")
+                    
+                    if submit_modification and modification_suggestion and modification_suggestion.strip():
+                        api_key = get_openai_api_key()
+                        if not api_key:
+                            st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
+                        else:
+                            try:
+                                client = openai.OpenAI(api_key=api_key)
+                                response = client.chat.completions.create(
+                                    model="gpt-4o-mini",
+                                    messages=[
+                                        {"role": "system", "content": "You are a children's story editor. Given the current story and the user's modification request, return the FULL modified story. Keep the same structure: 4 paragraphs separated by double newlines (\\n\\n). Use very simple English for ages 5-10. Keep short sentences (6-10 words). Return ONLY the story text, no title, no explanation, no JSON."},
+                                        {"role": "user", "content": f"Current story:\n\n{st.session_state.mission_story}\n\nUser's modification request: {modification_suggestion.strip()}\n\nReturn the complete modified story (same 4 paragraphs, \\n\\n between paragraphs):"}
+                                    ],
+                                    temperature=0.7,
+                                    max_tokens=1500
+                                )
+                                modified_content = response.choices[0].message.content.strip()
+                                if modified_content:
+                                    cleaned = clean_story_text(modified_content)
+                                    if cleaned:
+                                        st.session_state.mission_story = cleaned
+                                        st.session_state.mission_story_image = None  # clear so image can be regenerated for new story
+                                        st.success("Story updated based on your suggestion!")
+                                        st.rerun()
+                                    else:
+                                        st.warning("The modification didn't produce valid story text. Please try a different suggestion.")
+                                else:
+                                    st.warning("No modified story was returned. Please try again.")
+                            except Exception as e:
+                                st.error(f"Could not apply modification: {str(e)}")
+                    elif submit_modification and (not modification_suggestion or not modification_suggestion.strip()):
+                        st.warning("Please enter a suggestion before clicking Apply.")
                 
                 # Q&A Section
                 st.markdown("<br>", unsafe_allow_html=True)
