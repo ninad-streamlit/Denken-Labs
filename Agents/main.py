@@ -2944,7 +2944,20 @@ def main():
     if 'show_agent_builder' not in st.session_state:
         st.session_state.show_agent_builder = False
     if 'created_bots' not in st.session_state:
-        st.session_state.created_bots = []
+        # Default agent: Agastya — always part of every mission
+        default_agastya = {
+            "id": 0,
+            "number": 1,
+            "name": "Agastya",
+            "description": "Bold, fast and intelligent.",
+            "character": "Agastya is bold, fast and intelligent. He leads with confidence and quick thinking.",
+            "full_description": "Agastya is bold, fast and intelligent. He leads with confidence and quick thinking. A default member of every mission.",
+            "is_default": True,
+        }
+        st.session_state.created_bots = [default_agastya]
+        if 'used_numbers' not in st.session_state:
+            st.session_state.used_numbers = set()
+        st.session_state.used_numbers.add(1)
     if 'delete_confirm' not in st.session_state:
         st.session_state.delete_confirm = {}
     if 'editing_bot' not in st.session_state:
@@ -3379,7 +3392,7 @@ def main():
                             edit_key = f"edit_{bot['id']}"
                             confirm_key = f"confirm_{bot['id']}"
                             
-                            if st.session_state.delete_confirm.get(confirm_key, False):
+                            if not bot.get("is_default", False) and st.session_state.delete_confirm.get(confirm_key, False):
                                 st.warning(f"Delete {bot['name']}?")
                                 col_yes, col_no = st.columns(2)
                                 with col_yes:
@@ -3401,9 +3414,13 @@ def main():
                                         st.session_state.editing_bot = bot['id']
                                         st.rerun()
                                 with col_delete:
-                                    if st.button("🗑️", key=delete_key, help="Delete this agent", use_container_width=True):
-                                        st.session_state.delete_confirm[confirm_key] = True
-                                        st.rerun()
+                                    # Default agent (e.g. Agastya) cannot be deleted
+                                    if not bot.get("is_default", False):
+                                        if st.button("🗑️", key=delete_key, help="Delete this agent", use_container_width=True):
+                                            st.session_state.delete_confirm[confirm_key] = True
+                                            st.rerun()
+                                    else:
+                                        st.caption("Default agent")
                     
                     st.markdown("---")
         
@@ -3937,13 +3954,25 @@ def main():
                     else:
                         try:
                             client = openai.OpenAI(api_key=api_key)
+                            system_edit = (
+                                "You are a children's story editor. Your job is to ALTER the existing story according to the user's request only. "
+                                "Do NOT write a new story. Keep the same characters, setting, plot, and tone. Apply ONLY the changes the user asks for; "
+                                "leave everything else identical. Keep exactly 4 paragraphs separated by double newlines (\\n\\n). "
+                                "Use very simple English for ages 5-10 and short sentences (6-10 words). "
+                                "Return ONLY the full story text, no title, no explanation, no JSON."
+                            )
+                            user_edit = (
+                                f"Existing story:\n\n{st.session_state.mission_story}\n\n"
+                                f"User's modification request: {modification_suggestion.strip()}\n\n"
+                                "Return the same story with only these modifications applied (full 4 paragraphs, \\n\\n between paragraphs):"
+                            )
                             response = client.chat.completions.create(
                                 model="gpt-4o-mini",
                                 messages=[
-                                    {"role": "system", "content": "You are a children's story editor. Given the current story and the user's modification request, return the FULL modified story. Keep the same structure: 4 paragraphs separated by double newlines (\\n\\n). Use very simple English for ages 5-10. Keep short sentences (6-10 words). Return ONLY the story text, no title, no explanation, no JSON."},
-                                    {"role": "user", "content": f"Current story:\n\n{st.session_state.mission_story}\n\nUser's modification request: {modification_suggestion.strip()}\n\nReturn the complete modified story (same 4 paragraphs, \\n\\n between paragraphs):"}
+                                    {"role": "system", "content": system_edit},
+                                    {"role": "user", "content": user_edit}
                                 ],
-                                temperature=0.7,
+                                temperature=0.4,
                                 max_tokens=1500
                             )
                             modified_content = response.choices[0].message.content.strip()
@@ -3951,7 +3980,13 @@ def main():
                                 cleaned = clean_story_text(modified_content)
                                 if cleaned:
                                     st.session_state.mission_story = cleaned
-                                    st.session_state.mission_story_image = None  # clear so image can be regenerated for new story
+                                    # Regenerate image to match the modified story (use story theme from modified text)
+                                    story_theme = (cleaned[:250] + "…") if len(cleaned) > 250 else cleaned
+                                    new_image = generate_mission_image(
+                                        st.session_state.mission_story_title,
+                                        story_theme
+                                    )
+                                    st.session_state.mission_story_image = new_image if new_image else st.session_state.get("mission_story_image")
                                     st.success("Story updated based on your suggestion!")
                                     st.rerun()
                                 else:
