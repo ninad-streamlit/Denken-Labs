@@ -3575,6 +3575,11 @@ def main():
             
             # Display collaboration story if mission is activated
             if st.session_state.team_mission and st.session_state.mission_story:
+                # Ensure mission image exists for display (generate on demand if missing)
+                if st.session_state.get('mission_story_image') is None and st.session_state.mission_story_title and st.session_state.team_mission:
+                    _img = generate_mission_image(st.session_state.mission_story_title, st.session_state.team_mission)
+                    if _img is not None:
+                        st.session_state.mission_story_image = _img
                 st.markdown("---")
                 st.markdown("### 📖 The Story of Teamwork")
                 
@@ -3873,8 +3878,12 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                 
+                # Mission image in main content (full width) so it always shows even if title column is narrow
+                if st.session_state.get("mission_story_image"):
+                    st.image(st.session_state.mission_story_image, use_container_width=True, caption="")
+                    st.markdown("<br>", unsafe_allow_html=True)
+                
                 # Display story content - use Streamlit container styling like agent descriptions
-                st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("### 📚 The Story")
                 # Get story text and clean it using the helper function
                 story_text = clean_story_text(st.session_state.mission_story)
@@ -3912,52 +3921,50 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # Modify the Story section - box with input for user to suggest modifications (always visible after story)
-                st.markdown("<br>", unsafe_allow_html=True)
+                # Modify the Story section - always visible after story
                 st.markdown("---")
-                with st.expander("✏️ **Modify the Story** — suggest changes", expanded=True):
-                    st.caption("Describe how you'd like to change the story (e.g. \"Make the ending happier\" or \"Add more detail when the team faces the obstacle\").")
-                    with st.form("modify_story_form", clear_on_submit=True):
-                        modification_suggestion = st.text_area(
-                            "Your suggestion:",
-                            placeholder="e.g. Make the second paragraph more exciting, or add a twist at the end...",
-                            height=100,
-                            key="modify_story_suggestion_input"
-                        )
-                        submit_modification = st.form_submit_button("Apply modification")
-                    
-                    if submit_modification and modification_suggestion and modification_suggestion.strip():
-                        api_key = get_openai_api_key()
-                        if not api_key:
-                            st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
-                        else:
-                            try:
-                                client = openai.OpenAI(api_key=api_key)
-                                response = client.chat.completions.create(
-                                    model="gpt-4o-mini",
-                                    messages=[
-                                        {"role": "system", "content": "You are a children's story editor. Given the current story and the user's modification request, return the FULL modified story. Keep the same structure: 4 paragraphs separated by double newlines (\\n\\n). Use very simple English for ages 5-10. Keep short sentences (6-10 words). Return ONLY the story text, no title, no explanation, no JSON."},
-                                        {"role": "user", "content": f"Current story:\n\n{st.session_state.mission_story}\n\nUser's modification request: {modification_suggestion.strip()}\n\nReturn the complete modified story (same 4 paragraphs, \\n\\n between paragraphs):"}
-                                    ],
-                                    temperature=0.7,
-                                    max_tokens=1500
-                                )
-                                modified_content = response.choices[0].message.content.strip()
-                                if modified_content:
-                                    cleaned = clean_story_text(modified_content)
-                                    if cleaned:
-                                        st.session_state.mission_story = cleaned
-                                        st.session_state.mission_story_image = None  # clear so image can be regenerated for new story
-                                        st.success("Story updated based on your suggestion!")
-                                        st.rerun()
-                                    else:
-                                        st.warning("The modification didn't produce valid story text. Please try a different suggestion.")
+                st.markdown("### ✏️ Modify the Story")
+                st.markdown("Suggest how you'd like to change the story (e.g. *Make the ending happier* or *Add more detail when the team faces the obstacle*).")
+                modification_suggestion = st.text_area(
+                    "Your suggestion:",
+                    placeholder="e.g. Make the second paragraph more exciting, or add a twist at the end...",
+                    height=100,
+                    key="modify_story_suggestion_ta"
+                )
+                submit_modification = st.button("Apply modification", key="modify_story_apply_btn")
+                
+                if submit_modification and modification_suggestion and modification_suggestion.strip():
+                    api_key = get_openai_api_key()
+                    if not api_key:
+                        st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
+                    else:
+                        try:
+                            client = openai.OpenAI(api_key=api_key)
+                            response = client.chat.completions.create(
+                                model="gpt-4o-mini",
+                                messages=[
+                                    {"role": "system", "content": "You are a children's story editor. Given the current story and the user's modification request, return the FULL modified story. Keep the same structure: 4 paragraphs separated by double newlines (\\n\\n). Use very simple English for ages 5-10. Keep short sentences (6-10 words). Return ONLY the story text, no title, no explanation, no JSON."},
+                                    {"role": "user", "content": f"Current story:\n\n{st.session_state.mission_story}\n\nUser's modification request: {modification_suggestion.strip()}\n\nReturn the complete modified story (same 4 paragraphs, \\n\\n between paragraphs):"}
+                                ],
+                                temperature=0.7,
+                                max_tokens=1500
+                            )
+                            modified_content = response.choices[0].message.content.strip()
+                            if modified_content:
+                                cleaned = clean_story_text(modified_content)
+                                if cleaned:
+                                    st.session_state.mission_story = cleaned
+                                    st.session_state.mission_story_image = None  # clear so image can be regenerated for new story
+                                    st.success("Story updated based on your suggestion!")
+                                    st.rerun()
                                 else:
-                                    st.warning("No modified story was returned. Please try again.")
-                            except Exception as e:
-                                st.error(f"Could not apply modification: {str(e)}")
-                    elif submit_modification and (not modification_suggestion or not modification_suggestion.strip()):
-                        st.warning("Please enter a suggestion before clicking Apply.")
+                                    st.warning("The modification didn't produce valid story text. Please try a different suggestion.")
+                            else:
+                                st.warning("No modified story was returned. Please try again.")
+                        except Exception as e:
+                            st.error(f"Could not apply modification: {str(e)}")
+                elif submit_modification and (not modification_suggestion or not modification_suggestion.strip()):
+                    st.warning("Please enter a suggestion before clicking Apply.")
                 
                 # Q&A Section
                 st.markdown("<br>", unsafe_allow_html=True)
