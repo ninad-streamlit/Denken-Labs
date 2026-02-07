@@ -2944,14 +2944,14 @@ def main():
     if 'show_agent_builder' not in st.session_state:
         st.session_state.show_agent_builder = False
     if 'created_bots' not in st.session_state:
-        # Default agent: Agastya — always part of every mission
+        # Default agent: Agent Agastya — always part of every mission
         default_agastya = {
             "id": 0,
             "number": 1,
-            "name": "Agastya",
-            "description": "Bold, fast and intelligent.",
-            "character": "Agastya is bold, fast and intelligent. He leads with confidence and quick thinking.",
-            "full_description": "Agastya is bold, fast and intelligent. He leads with confidence and quick thinking. A default member of every mission.",
+            "name": "Agent Agastya",
+            "description": "Bold, fast and intelligent. A natural leader who thinks quickly and acts with confidence.",
+            "character": "Agent Agastya is bold, fast and intelligent. He leads with confidence and is never afraid to take the first step. He thinks quickly and finds smart answers when the team is stuck. He loves working with others and always cheers on his friends. He is brave in tough moments and kind when someone needs help. A default member of every mission.",
+            "full_description": "Agent Agastya is bold, fast and intelligent. He leads with confidence and is never afraid to take the first step. He thinks quickly and finds smart answers when the team is stuck. He loves working with others and always cheers on his friends. He is brave in tough moments and kind when someone needs help. A default member of every mission.",
             "is_default": True,
         }
         st.session_state.created_bots = [default_agastya]
@@ -3310,7 +3310,7 @@ def main():
                                         # Update bot: keep name, use edited description as description and full_description, regenerate character only
                                         for i, b in enumerate(st.session_state.created_bots):
                                             if b['id'] == bot['id']:
-                                                st.session_state.created_bots[i]['name'] = "Agastya" if b.get("is_default", False) else b.get("name", "Agent")
+                                                st.session_state.created_bots[i]['name'] = "Agent Agastya" if b.get("is_default", False) else b.get("name", "Agent")
                                                 st.session_state.created_bots[i]['description'] = edited_description
                                                 st.session_state.created_bots[i]['character'] = new_character
                                                 st.session_state.created_bots[i]['full_description'] = edited_description
