@@ -509,9 +509,9 @@ def generate_mission_image(story_title, mission_description, agent_names=None):
     agents_text = ", ".join(agent_names) if agent_names else "Agent Agastya and the team"
     prompt = (
         f"Child-friendly, colorful illustration for a children's story. "
+        f"REQUIRED BY DEFAULT: The text 'Agent Agastya' must always appear prominently on the image — large, clear, readable text (e.g. a banner, label, or title card). This is mandatory. "
         f"The image must show ONLY the agents/characters from the story: {agents_text}. "
-        f"No landscapes, no locations, no scenery as the main focus — only these agent characters, drawn as friendly cartoon figures. "
-        f"The words 'Agent Agastya' must appear prominently on the image (e.g. large, clear text, as a label or banner). "
+        f"No landscapes or scenery as the main focus — only these agent characters as friendly cartoon figures. "
         f"Story title: {story_title}. Theme: {(mission_description[:150] if mission_description else 'teamwork')}. "
         f"Style: friendly, cartoon-like, suitable for ages 5-10."
     )
