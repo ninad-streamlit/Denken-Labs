@@ -3878,12 +3878,8 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
                 
-                # Mission image in main content (full width) so it always shows even if title column is narrow
-                if st.session_state.get("mission_story_image"):
-                    st.image(st.session_state.mission_story_image, use_container_width=True, caption="")
-                    st.markdown("<br>", unsafe_allow_html=True)
-                
                 # Display story content - use Streamlit container styling like agent descriptions
+                st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("### 📚 The Story")
                 # Get story text and clean it using the helper function
                 story_text = clean_story_text(st.session_state.mission_story)
@@ -3921,17 +3917,18 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # Modify the Story section - always visible after story
+                # Modify the Story — box and button directly below the story
                 st.markdown("---")
-                st.markdown("### ✏️ Modify the Story")
-                st.markdown("Suggest how you'd like to change the story (e.g. *Make the ending happier* or *Add more detail when the team faces the obstacle*).")
+                st.markdown("### ✏️ Modify the story")
+                st.markdown("Suggest how you'd like to change the story, then click **Apply modification**.")
                 modification_suggestion = st.text_area(
-                    "Your suggestion:",
-                    placeholder="e.g. Make the second paragraph more exciting, or add a twist at the end...",
-                    height=100,
-                    key="modify_story_suggestion_ta"
+                    "Your suggestion",
+                    placeholder="e.g. Make the ending happier, or add more detail when the team faces the obstacle...",
+                    height=90,
+                    key="modify_story_ta_below_story",
+                    label_visibility="collapsed"
                 )
-                submit_modification = st.button("Apply modification", key="modify_story_apply_btn")
+                submit_modification = st.button("Apply modification", key="modify_story_btn_below_story", type="primary")
                 
                 if submit_modification and modification_suggestion and modification_suggestion.strip():
                     api_key = get_openai_api_key()
