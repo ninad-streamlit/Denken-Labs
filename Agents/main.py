@@ -500,15 +500,23 @@ def clean_story_text(story_text):
     
     return '\n\n'.join(cleaned_lines).strip()
 
-def generate_mission_image(story_title, mission_description):
-    """Generate an image appropriate for the mission/story using DALL-E. Returns image bytes or None."""
+def generate_mission_image(story_title, mission_description, agent_names=None):
+    """Generate an image showing only the story's agents, with 'Agent Agastya' written prominently. Returns image bytes or None."""
     import base64
     api_key = get_openai_api_key()
     if not api_key:
         return None
+    agents_text = ", ".join(agent_names) if agent_names else "Agent Agastya and the team"
+    prompt = (
+        f"Child-friendly, colorful illustration for a children's story. "
+        f"The image must show ONLY the agents/characters from the story: {agents_text}. "
+        f"No landscapes, no locations, no scenery as the main focus — only these agent characters, drawn as friendly cartoon figures. "
+        f"The words 'Agent Agastya' must appear prominently on the image (e.g. large, clear text, as a label or banner). "
+        f"Story title: {story_title}. Theme: {(mission_description[:150] if mission_description else 'teamwork')}. "
+        f"Style: friendly, cartoon-like, suitable for ages 5-10."
+    )
     try:
         client = openai.OpenAI(api_key=api_key)
-        prompt = f"Child-friendly, colorful illustration for a children's story. Story title: {story_title}. Mission theme: {mission_description[:200] if mission_description else 'teamwork and adventure'}. Style: friendly, cartoon-like, space or adventure theme, suitable for ages 5-10. No text in the image."
         response = client.images.generate(
             model="dall-e-3",
             prompt=prompt,
@@ -3527,9 +3535,10 @@ def main():
                                     st.session_state.mission_story_title = story_title
                                     st.session_state.mission_story = story_content
                                     
-                                    # Generate mission image for display and PDF
+                                    # Generate mission image for display and PDF (agents only, Agent Agastya prominent)
+                                    _agent_names = [b.get("name", "Agent") for b in st.session_state.created_bots]
                                     st.session_state.mission_story_image = generate_mission_image(
-                                        story_title, mission_description
+                                        story_title, mission_description, agent_names=_agent_names
                                     )
                                     
                                     # Clear Q&A history for the new mission
@@ -3586,8 +3595,9 @@ def main():
                                     st.session_state.mission_story = retry_story
                                     
                                     # Generate mission image for display and PDF
+                                    _agent_names = [b.get("name", "Agent") for b in st.session_state.created_bots]
                                     st.session_state.mission_story_image = generate_mission_image(
-                                        retry_title, mission_description
+                                        retry_title, mission_description, agent_names=_agent_names
                                     )
                                     
                                     # Clear Q&A history for the new mission
@@ -3615,7 +3625,8 @@ def main():
             if st.session_state.team_mission and st.session_state.mission_story:
                 # Ensure mission image exists for display (generate on demand if missing)
                 if st.session_state.get('mission_story_image') is None and st.session_state.mission_story_title and st.session_state.team_mission:
-                    _img = generate_mission_image(st.session_state.mission_story_title, st.session_state.team_mission)
+                    _agent_names = [b.get("name", "Agent") for b in st.session_state.created_bots]
+                    _img = generate_mission_image(st.session_state.mission_story_title, st.session_state.team_mission, agent_names=_agent_names)
                     if _img is not None:
                         st.session_state.mission_story_image = _img
                 st.markdown("---")
@@ -3656,9 +3667,11 @@ def main():
                             # Ensure we have a mission image for the PDF (generate on demand if missing)
                             pdf_image_bytes = st.session_state.get('mission_story_image')
                             if pdf_image_bytes is None and st.session_state.mission_story_title and st.session_state.get('team_mission'):
+                                _agent_names = [b.get("name", "Agent") for b in st.session_state.created_bots]
                                 pdf_image_bytes = generate_mission_image(
                                     st.session_state.mission_story_title,
-                                    st.session_state.team_mission
+                                    st.session_state.team_mission,
+                                    agent_names=_agent_names
                                 )
                                 if pdf_image_bytes is not None:
                                     st.session_state.mission_story_image = pdf_image_bytes
@@ -4009,9 +4022,11 @@ def main():
                                     st.session_state.mission_story = cleaned
                                     # Regenerate image to match the modified story (use story theme from modified text)
                                     story_theme = (cleaned[:250] + "…") if len(cleaned) > 250 else cleaned
+                                    _agent_names = [b.get("name", "Agent") for b in st.session_state.created_bots]
                                     new_image = generate_mission_image(
                                         st.session_state.mission_story_title,
-                                        story_theme
+                                        story_theme,
+                                        agent_names=_agent_names
                                     )
                                     st.session_state.mission_story_image = new_image if new_image else st.session_state.get("mission_story_image")
                                     st.session_state.mission_story_video = None  # regenerate video for modified story
