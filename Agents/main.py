@@ -9,11 +9,13 @@ try:
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.lib.utils import ImageReader
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
     from reportlab.lib.enums import TA_CENTER
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
+    ImageReader = None
 
 def play_sound(sound_type):
     """Play a sound effect based on the event type using Web Audio API with better initialization"""
@@ -498,6 +500,28 @@ def clean_story_text(story_text):
     
     return '\n\n'.join(cleaned_lines).strip()
 
+def generate_mission_image(story_title, mission_description):
+    """Generate an image appropriate for the mission/story using DALL-E. Returns image bytes or None."""
+    import base64
+    api_key = get_openai_api_key()
+    if not api_key:
+        return None
+    try:
+        client = openai.OpenAI(api_key=api_key)
+        prompt = f"Child-friendly, colorful illustration for a children's story. Story title: {story_title}. Mission theme: {mission_description[:200] if mission_description else 'teamwork and adventure'}. Style: friendly, cartoon-like, space or adventure theme, suitable for ages 5-10. No text in the image."
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1024x1024",
+            quality="standard",
+            response_format="b64_json",
+            n=1
+        )
+        b64 = response.data[0].b64_json
+        return base64.b64decode(b64) if b64 else None
+    except Exception:
+        return None
+
 def generate_story_question_example(story_title, story_content, existing_questions=None):
     """Generate a relevant example question about the story with extensive variety"""
     # Extract key elements from the story for context
@@ -539,7 +563,11 @@ def generate_story_question_example(story_title, story_content, existing_questio
     
     # Generate a question example using OpenAI with emphasis on variety
     try:
-        client = openai.OpenAI(api_key=get_openai_api_key())
+        api_key = get_openai_api_key()
+        if not api_key:
+            st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** (or **api_key**) to your Streamlit Cloud secrets (Settings → Secrets) or to a `.env` file for local development.")
+            return None
+        client = openai.OpenAI(api_key=api_key)
         
         # Build more comprehensive context including all previously generated questions
         all_previous = list(set(asked_questions + st.session_state.all_generated_questions[-20:]))
@@ -2927,6 +2955,8 @@ def main():
         st.session_state.mission_story = ""
     if 'mission_story_title' not in st.session_state:
         st.session_state.mission_story_title = ""
+    if 'mission_story_image' not in st.session_state:
+        st.session_state.mission_story_image = None  # bytes or None; image for the mission story
     
     # Clean any existing story to remove HTML/CSS code (in case it was stored before cleaning was added)
     if st.session_state.mission_story:
@@ -3116,84 +3146,88 @@ def main():
                 if agent_description and agent_description.strip():
                     try:
                         # Generate bot name, description, and elaborate character using OpenAI
-                        client = openai.OpenAI(api_key=get_openai_api_key())
-                        # Get existing agent names to avoid duplicates
-                        existing_names = [bot.get('name', '').lower() for bot in st.session_state.created_bots]
-                        
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=[
-                                {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. The name should be inspired by cartoon characters, superheroes, or famous personalities - it should feel like an actual character name (e.g., 'Flash Writer', 'Captain Code', 'Sparky Bot') rather than an adjective. Make it unique and original, catchy, adventurous, and playful. Description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
-                                {"role": "user", "content": f"Based on this agent description, create a unique character name (inspired by cartoon characters/superheroes/famous personalities but original), short description, and elaborate character profile. Avoid these existing names: {', '.join(existing_names) if existing_names else 'none'}\n\nAgent description:\n{agent_description}"}
-                            ],
-                            response_format={"type": "json_object"},
-                            temperature=0.9
-                        )
-                        
-                        bot_data = json.loads(response.choices[0].message.content)
-                        bot_name = bot_data.get("name", "AI Agent")
-                        bot_desc = bot_data.get("description", agent_description[:100])
-                        bot_character = bot_data.get("character", "A versatile AI agent ready to assist.")
-                        
-                        # Handle case where description might be a dict or contain dict-like structure
-                        if isinstance(bot_desc, dict):
-                            # If description is a dict, format it as readable text
-                            desc_parts = []
-                            if 'traits' in bot_desc:
-                                desc_parts.append(f"Traits: {', '.join(bot_desc['traits']) if isinstance(bot_desc['traits'], list) else bot_desc['traits']}")
-                            if 'working_style' in bot_desc:
-                                desc_parts.append(f"Working Style: {bot_desc['working_style']}")
-                            if 'expertise' in bot_desc:
-                                desc_parts.append(f"Expertise: {bot_desc['expertise']}")
-                            if 'approach' in bot_desc:
-                                desc_parts.append(f"Approach: {bot_desc['approach']}")
-                            bot_desc = ". ".join(desc_parts) if desc_parts else agent_description[:100]
-                        elif isinstance(bot_desc, str) and (bot_desc.startswith('{') or bot_desc.startswith("'")):
-                            # If description is a string representation of a dict, use fallback
-                            bot_desc = agent_description[:100]
-                        
-                        # Handle case where character might be a dict
-                        if isinstance(bot_character, dict):
-                            char_parts = []
-                            if 'traits' in bot_character:
-                                char_parts.append(f"Traits: {', '.join(bot_character['traits']) if isinstance(bot_character['traits'], list) else bot_character['traits']}")
-                            if 'working_style' in bot_character:
-                                char_parts.append(f"Working Style: {bot_character['working_style']}")
-                            if 'expertise' in bot_character:
-                                char_parts.append(f"Expertise: {bot_character['expertise']}")
-                            if 'approach' in bot_character:
-                                char_parts.append(f"Approach: {bot_character['approach']}")
-                            bot_character = ". ".join(char_parts) if char_parts else "A versatile AI agent ready to assist."
-                        elif isinstance(bot_character, str) and (bot_character.startswith('{') or bot_character.startswith("'")):
-                            # If character is a string representation of a dict, use fallback
-                            bot_character = "A versatile AI agent ready to assist."
-                        
-                        # Generate unique 3-digit number
-                        import random
-                        while True:
-                            bot_number = random.randint(100, 999)
-                            if bot_number not in st.session_state.used_numbers:
-                                st.session_state.used_numbers.add(bot_number)
-                                break
-                        
-                        # Add bot to session state
-                        bot_id = len(st.session_state.created_bots)
-                        st.session_state.created_bots.append({
-                            "id": bot_id,
-                            "number": bot_number,
-                            "name": bot_name,
-                            "description": bot_desc,
-                            "character": bot_character,
-                            "full_description": agent_description
-                        })
-                        
-                        # Regenerate example for next agent creation
-                        st.session_state.agent_example = generate_agent_example()
-                        
-                        # Play sound for agent created
-                        play_sound('agent_created')
-                        
-                        st.rerun()
+                        api_key = get_openai_api_key()
+                        if not api_key:
+                            st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** (or **api_key**) to Streamlit Cloud secrets or `.env` for local development.")
+                        if api_key:
+                            client = openai.OpenAI(api_key=api_key)
+                            # Get existing agent names to avoid duplicates
+                            existing_names = [bot.get('name', '').lower() for bot in st.session_state.created_bots]
+                            
+                            response = client.chat.completions.create(
+                                model="gpt-4o-mini",
+                                messages=[
+                                    {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. The name should be inspired by cartoon characters, superheroes, or famous personalities - it should feel like an actual character name (e.g., 'Flash Writer', 'Captain Code', 'Sparky Bot') rather than an adjective. Make it unique and original, catchy, adventurous, and playful. Description should be 1-2 sentences, and character should be an elaborate personality profile (3-5 sentences) describing the agent's traits, working style, expertise, and approach."},
+                                    {"role": "user", "content": f"Based on this agent description, create a unique character name (inspired by cartoon characters/superheroes/famous personalities but original), short description, and elaborate character profile. Avoid these existing names: {', '.join(existing_names) if existing_names else 'none'}\n\nAgent description:\n{agent_description}"}
+                                ],
+                                response_format={"type": "json_object"},
+                                temperature=0.9
+                            )
+                            
+                            bot_data = json.loads(response.choices[0].message.content)
+                            bot_name = bot_data.get("name", "AI Agent")
+                            bot_desc = bot_data.get("description", agent_description[:100])
+                            bot_character = bot_data.get("character", "A versatile AI agent ready to assist.")
+                            
+                            # Handle case where description might be a dict or contain dict-like structure
+                            if isinstance(bot_desc, dict):
+                                # If description is a dict, format it as readable text
+                                desc_parts = []
+                                if 'traits' in bot_desc:
+                                    desc_parts.append(f"Traits: {', '.join(bot_desc['traits']) if isinstance(bot_desc['traits'], list) else bot_desc['traits']}")
+                                if 'working_style' in bot_desc:
+                                    desc_parts.append(f"Working Style: {bot_desc['working_style']}")
+                                if 'expertise' in bot_desc:
+                                    desc_parts.append(f"Expertise: {bot_desc['expertise']}")
+                                if 'approach' in bot_desc:
+                                    desc_parts.append(f"Approach: {bot_desc['approach']}")
+                                bot_desc = ". ".join(desc_parts) if desc_parts else agent_description[:100]
+                            elif isinstance(bot_desc, str) and (bot_desc.startswith('{') or bot_desc.startswith("'")):
+                                # If description is a string representation of a dict, use fallback
+                                bot_desc = agent_description[:100]
+                            
+                            # Handle case where character might be a dict
+                            if isinstance(bot_character, dict):
+                                char_parts = []
+                                if 'traits' in bot_character:
+                                    char_parts.append(f"Traits: {', '.join(bot_character['traits']) if isinstance(bot_character['traits'], list) else bot_character['traits']}")
+                                if 'working_style' in bot_character:
+                                    char_parts.append(f"Working Style: {bot_character['working_style']}")
+                                if 'expertise' in bot_character:
+                                    char_parts.append(f"Expertise: {bot_character['expertise']}")
+                                if 'approach' in bot_character:
+                                    char_parts.append(f"Approach: {bot_character['approach']}")
+                                bot_character = ". ".join(char_parts) if char_parts else "A versatile AI agent ready to assist."
+                            elif isinstance(bot_character, str) and (bot_character.startswith('{') or bot_character.startswith("'")):
+                                # If character is a string representation of a dict, use fallback
+                                bot_character = "A versatile AI agent ready to assist."
+                            
+                            # Generate unique 3-digit number
+                            import random
+                            while True:
+                                bot_number = random.randint(100, 999)
+                                if bot_number not in st.session_state.used_numbers:
+                                    st.session_state.used_numbers.add(bot_number)
+                                    break
+                            
+                            # Add bot to session state
+                            bot_id = len(st.session_state.created_bots)
+                            st.session_state.created_bots.append({
+                                "id": bot_id,
+                                "number": bot_number,
+                                "name": bot_name,
+                                "description": bot_desc,
+                                "character": bot_character,
+                                "full_description": agent_description
+                            })
+                            
+                            # Regenerate example for next agent creation
+                            st.session_state.agent_example = generate_agent_example()
+                            
+                            # Play sound for agent created
+                            play_sound('agent_created')
+                            
+                            st.rerun()
                     except Exception as e:
                         st.error(f"Error creating bot: {str(e)}")
                 else:
@@ -3234,66 +3268,70 @@ def main():
                                     # Get existing agent names to avoid duplicates (excluding current bot)
                                     existing_names = [b.get('name', '').lower() for b in st.session_state.created_bots if b['id'] != bot['id']]
                                     
-                                    client = openai.OpenAI(api_key=get_openai_api_key())
-                                    response = client.chat.completions.create(
-                                        model="gpt-4o-mini",
-                                        messages=[
-                                            {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. The name should be inspired by cartoon characters, superheroes, or famous personalities - it should feel like an actual character name (e.g., 'Flash Writer', 'Captain Code', 'Sparky Bot') rather than an adjective. Make it unique and original, catchy, adventurous, and playful. Description should be 1-2 sentences in SIMPLE English. Character should be a personality profile (3-5 sentences) in VERY SIMPLE English words that a 5-10 year old can understand. Use short sentences (6-10 words each). Describe the agent's traits, working style, expertise, and approach using simple words like 'help', 'work', 'team', 'friend', 'smart', 'kind', 'brave'."},
-                                            {"role": "user", "content": f"Based on this agent description, create a unique character name (inspired by cartoon characters/superheroes/famous personalities but original), short description, and elaborate character profile. Avoid these existing names: {', '.join(existing_names) if existing_names else 'none'}\n\nAgent description:\n{edited_description}"}
-                                        ],
-                                        response_format={"type": "json_object"},
-                                        temperature=0.9
-                                    )
-                                    
-                                    bot_data = json.loads(response.choices[0].message.content)
-                                    new_name = bot_data.get("name", "AI Agent")
-                                    new_desc = bot_data.get("description", edited_description[:100])
-                                    new_character = bot_data.get("character", "A versatile AI agent ready to assist.")
-                                    
-                                    # Handle case where description might be a dict or contain dict-like structure
-                                    if isinstance(new_desc, dict):
-                                        # If description is a dict, format it as readable text
-                                        desc_parts = []
-                                        if 'traits' in new_desc:
-                                            desc_parts.append(f"Traits: {', '.join(new_desc['traits']) if isinstance(new_desc['traits'], list) else new_desc['traits']}")
-                                        if 'working_style' in new_desc:
-                                            desc_parts.append(f"Working Style: {new_desc['working_style']}")
-                                        if 'expertise' in new_desc:
-                                            desc_parts.append(f"Expertise: {new_desc['expertise']}")
-                                        if 'approach' in new_desc:
-                                            desc_parts.append(f"Approach: {new_desc['approach']}")
-                                        new_desc = ". ".join(desc_parts) if desc_parts else edited_description[:100]
-                                    elif isinstance(new_desc, str) and (new_desc.startswith('{') or new_desc.startswith("'")):
-                                        # If description is a string representation of a dict, use fallback
-                                        new_desc = edited_description[:100]
-                                    
-                                    # Handle case where character might be a dict
-                                    if isinstance(new_character, dict):
-                                        char_parts = []
-                                        if 'traits' in new_character:
-                                            char_parts.append(f"Traits: {', '.join(new_character['traits']) if isinstance(new_character['traits'], list) else new_character['traits']}")
-                                        if 'working_style' in new_character:
-                                            char_parts.append(f"Working Style: {new_character['working_style']}")
-                                        if 'expertise' in new_character:
-                                            char_parts.append(f"Expertise: {new_character['expertise']}")
-                                        if 'approach' in new_character:
-                                            char_parts.append(f"Approach: {new_character['approach']}")
-                                        new_character = ". ".join(char_parts) if char_parts else "A versatile AI agent ready to assist."
-                                    elif isinstance(new_character, str) and (new_character.startswith('{') or new_character.startswith("'")):
-                                        # If character is a string representation of a dict, use fallback
-                                        new_character = "A versatile AI agent ready to assist."
-                                    
-                                    # Update bot (keep same number and id)
-                                    for i, b in enumerate(st.session_state.created_bots):
-                                        if b['id'] == bot['id']:
-                                            st.session_state.created_bots[i]['name'] = new_name
-                                            st.session_state.created_bots[i]['description'] = new_desc
-                                            st.session_state.created_bots[i]['character'] = new_character
-                                            st.session_state.created_bots[i]['full_description'] = edited_description
-                                            break
-                                    
-                                    st.session_state.editing_bot = None
-                                    st.rerun()
+                                    api_key = get_openai_api_key()
+                                    if not api_key:
+                                        st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
+                                    elif api_key:
+                                        client = openai.OpenAI(api_key=api_key)
+                                        response = client.chat.completions.create(
+                                            model="gpt-4o-mini",
+                                            messages=[
+                                                {"role": "system", "content": "You are a creative assistant that creates AI agent profiles. Respond in JSON format with 'name', 'description', and 'character' fields. The name should be inspired by cartoon characters, superheroes, or famous personalities - it should feel like an actual character name (e.g., 'Flash Writer', 'Captain Code', 'Sparky Bot') rather than an adjective. Make it unique and original, catchy, adventurous, and playful. Description should be 1-2 sentences in SIMPLE English. Character should be a personality profile (3-5 sentences) in VERY SIMPLE English words that a 5-10 year old can understand. Use short sentences (6-10 words each). Describe the agent's traits, working style, expertise, and approach using simple words like 'help', 'work', 'team', 'friend', 'smart', 'kind', 'brave'."},
+                                                {"role": "user", "content": f"Based on this agent description, create a unique character name (inspired by cartoon characters/superheroes/famous personalities but original), short description, and elaborate character profile. Avoid these existing names: {', '.join(existing_names) if existing_names else 'none'}\n\nAgent description:\n{edited_description}"}
+                                            ],
+                                            response_format={"type": "json_object"},
+                                            temperature=0.9
+                                        )
+                                        
+                                        bot_data = json.loads(response.choices[0].message.content)
+                                        new_name = bot_data.get("name", "AI Agent")
+                                        new_desc = bot_data.get("description", edited_description[:100])
+                                        new_character = bot_data.get("character", "A versatile AI agent ready to assist.")
+                                        
+                                        # Handle case where description might be a dict or contain dict-like structure
+                                        if isinstance(new_desc, dict):
+                                            # If description is a dict, format it as readable text
+                                            desc_parts = []
+                                            if 'traits' in new_desc:
+                                                desc_parts.append(f"Traits: {', '.join(new_desc['traits']) if isinstance(new_desc['traits'], list) else new_desc['traits']}")
+                                            if 'working_style' in new_desc:
+                                                desc_parts.append(f"Working Style: {new_desc['working_style']}")
+                                            if 'expertise' in new_desc:
+                                                desc_parts.append(f"Expertise: {new_desc['expertise']}")
+                                            if 'approach' in new_desc:
+                                                desc_parts.append(f"Approach: {new_desc['approach']}")
+                                            new_desc = ". ".join(desc_parts) if desc_parts else edited_description[:100]
+                                        elif isinstance(new_desc, str) and (new_desc.startswith('{') or new_desc.startswith("'")):
+                                            # If description is a string representation of a dict, use fallback
+                                            new_desc = edited_description[:100]
+                                        
+                                        # Handle case where character might be a dict
+                                        if isinstance(new_character, dict):
+                                            char_parts = []
+                                            if 'traits' in new_character:
+                                                char_parts.append(f"Traits: {', '.join(new_character['traits']) if isinstance(new_character['traits'], list) else new_character['traits']}")
+                                            if 'working_style' in new_character:
+                                                char_parts.append(f"Working Style: {new_character['working_style']}")
+                                            if 'expertise' in new_character:
+                                                char_parts.append(f"Expertise: {new_character['expertise']}")
+                                            if 'approach' in new_character:
+                                                char_parts.append(f"Approach: {new_character['approach']}")
+                                            new_character = ". ".join(char_parts) if char_parts else "A versatile AI agent ready to assist."
+                                        elif isinstance(new_character, str) and (new_character.startswith('{') or new_character.startswith("'")):
+                                            # If character is a string representation of a dict, use fallback
+                                            new_character = "A versatile AI agent ready to assist."
+                                        
+                                        # Update bot (keep same number and id)
+                                        for i, b in enumerate(st.session_state.created_bots):
+                                            if b['id'] == bot['id']:
+                                                st.session_state.created_bots[i]['name'] = new_name
+                                                st.session_state.created_bots[i]['description'] = new_desc
+                                                st.session_state.created_bots[i]['character'] = new_character
+                                                st.session_state.created_bots[i]['full_description'] = edited_description
+                                                break
+                                        
+                                        st.session_state.editing_bot = None
+                                        st.rerun()
                                 except Exception as e:
                                     st.error(f"Error updating bot: {str(e)}")
                             
@@ -3412,54 +3450,63 @@ def main():
                             
                             agent_info = "\n".join(agent_list)
                             
-                            client = openai.OpenAI(api_key=get_openai_api_key())
-                            story_response = client.chat.completions.create(
-                                model="gpt-4o-mini",
-                                messages=[
-                                    {"role": "system", "content": "You are a creative children's storyteller inspired by Star Trek adventures. Write engaging stories for children aged 5-10. Use VERY SIMPLE English words. Write short sentences (6-10 words each). CRITICAL: The story MUST have exactly 4 paragraphs separated by blank lines. Each paragraph MUST have exactly 5-6 sentences. Use double line breaks (\\n\\n) to separate paragraphs. Stories should be about teamwork, friendship, and space adventures. Respond in JSON format with 'title' and 'story' fields. Title should be catchy and fun (5-10 words). Story must have 4 paragraphs with 5-6 short sentences each, separated by \\n\\n."},
-                                    {"role": "user", "content": f"Write a Star Trek-style adventure story with a catchy title about how these AI agents worked together to complete a mission:\n\nAgents:\n{agent_info}\n\nMission: {mission_description}\n\nCRITICAL REQUIREMENTS:\n1. Title: A fun, catchy Star Trek-style title (5-10 words)\n2. Story MUST have exactly 4 paragraphs\n3. Use double line breaks (\\n\\n) to separate each paragraph\n4. Each paragraph MUST have exactly 5-6 sentences\n5. Each sentence MUST be short (6-10 words only)\n6. Use VERY SIMPLE English words that a 5-10 year old can understand\n7. Paragraph 1: Agents gather, receive mission briefing, and plan together (5-6 sentences)\n8. Paragraph 2: They begin the mission, face first challenges (5-6 sentences)\n9. Paragraph 3: They overcome obstacles and work together creatively (5-6 sentences)\n10. Paragraph 4: Mission success, agents compliment and thank each other (5-6 sentences)\n\nIMPORTANT: Separate paragraphs with \\n\\n. Use simple words like 'help', 'work', 'team', 'friend', 'space', 'ship'. Avoid complex words. Respond in JSON with 'title' and 'story' fields."}
-                                ],
-                                response_format={"type": "json_object"},
-                                temperature=0.8
-                            )
-                            
-                            story_data = json.loads(story_response.choices[0].message.content)
-                            story_title = story_data.get("title", "The Amazing Team Adventure")
-                            story_content = story_data.get("story", "")
-                            
-                            # Clean the story content using the helper function
-                            story_content = clean_story_text(story_content)
-                            
-                            # Validate story has paragraphs
-                            if story_content and len(story_content.strip()) > 50:
-                                # Ensure story has proper paragraph breaks
-                                if '\n\n' not in story_content and '\n' in story_content:
-                                    paragraphs = [p.strip() for p in story_content.split('\n') if p.strip()]
-                                    story_content = '\n\n'.join(paragraphs)
-                                
-                                # Remove duplicate paragraphs
-                                paragraphs = story_content.split('\n\n')
-                                seen_paragraphs = set()
-                                unique_paragraphs = []
-                                for para in paragraphs:
-                                    para_clean = para.strip()
-                                    if para_clean and para_clean not in seen_paragraphs:
-                                        seen_paragraphs.add(para_clean)
-                                        unique_paragraphs.append(para_clean)
-                                story_content = '\n\n'.join(unique_paragraphs)
-                                
-                                st.session_state.mission_story_title = story_title
-                                st.session_state.mission_story = story_content
-                                
-                                # Clear Q&A history for the new mission
-                                st.session_state.story_qa_history = []
-                                st.session_state.story_question_example = ""
-                                
-                                # Play sound for story rendered
-                                play_sound('story_rendered')
+                            api_key = get_openai_api_key()
+                            if not api_key:
+                                st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
                             else:
-                                # If story is too short or empty, try again with a simpler prompt
-                                raise ValueError("Generated story is too short or empty")
+                                client = openai.OpenAI(api_key=api_key)
+                                story_response = client.chat.completions.create(
+                                    model="gpt-4o-mini",
+                                    messages=[
+                                        {"role": "system", "content": "You are a creative children's storyteller inspired by Star Trek adventures. Write engaging stories for children aged 5-10. Use VERY SIMPLE English words. Write short sentences (6-10 words each). CRITICAL: The story MUST have exactly 4 paragraphs separated by blank lines. Each paragraph MUST have exactly 5-6 sentences. Use double line breaks (\\n\\n) to separate paragraphs. Stories should be about teamwork, friendship, and space adventures. Respond in JSON format with 'title' and 'story' fields. Title should be catchy and fun (5-10 words). Story must have 4 paragraphs with 5-6 short sentences each, separated by \\n\\n."},
+                                        {"role": "user", "content": f"Write a Star Trek-style adventure story with a catchy title about how these AI agents worked together to complete a mission:\n\nAgents:\n{agent_info}\n\nMission: {mission_description}\n\nCRITICAL REQUIREMENTS:\n1. Title: A fun, catchy Star Trek-style title (5-10 words)\n2. Story MUST have exactly 4 paragraphs\n3. Use double line breaks (\\n\\n) to separate each paragraph\n4. Each paragraph MUST have exactly 5-6 sentences\n5. Each sentence MUST be short (6-10 words only)\n6. Use VERY SIMPLE English words that a 5-10 year old can understand\n7. Paragraph 1: Agents gather, receive mission briefing, and plan together (5-6 sentences)\n8. Paragraph 2: They begin the mission, face first challenges (5-6 sentences)\n9. Paragraph 3: They overcome obstacles and work together creatively (5-6 sentences)\n10. Paragraph 4: Mission success, agents compliment and thank each other (5-6 sentences)\n\nIMPORTANT: Separate paragraphs with \\n\\n. Use simple words like 'help', 'work', 'team', 'friend', 'space', 'ship'. Avoid complex words. Respond in JSON with 'title' and 'story' fields."}
+                                    ],
+                                    response_format={"type": "json_object"},
+                                    temperature=0.8
+                                )
+                                
+                                story_data = json.loads(story_response.choices[0].message.content)
+                                story_title = story_data.get("title", "The Amazing Team Adventure")
+                                story_content = story_data.get("story", "")
+                                
+                                # Clean the story content using the helper function
+                                story_content = clean_story_text(story_content)
+                                
+                                # Validate story has paragraphs
+                                if story_content and len(story_content.strip()) > 50:
+                                    # Ensure story has proper paragraph breaks
+                                    if '\n\n' not in story_content and '\n' in story_content:
+                                        paragraphs = [p.strip() for p in story_content.split('\n') if p.strip()]
+                                        story_content = '\n\n'.join(paragraphs)
+                                    
+                                    # Remove duplicate paragraphs
+                                    paragraphs = story_content.split('\n\n')
+                                    seen_paragraphs = set()
+                                    unique_paragraphs = []
+                                    for para in paragraphs:
+                                        para_clean = para.strip()
+                                        if para_clean and para_clean not in seen_paragraphs:
+                                            seen_paragraphs.add(para_clean)
+                                            unique_paragraphs.append(para_clean)
+                                    story_content = '\n\n'.join(unique_paragraphs)
+                                    
+                                    st.session_state.mission_story_title = story_title
+                                    st.session_state.mission_story = story_content
+                                    
+                                    # Generate mission image for display and PDF
+                                    st.session_state.mission_story_image = generate_mission_image(
+                                        story_title, mission_description
+                                    )
+                                    
+                                    # Clear Q&A history for the new mission
+                                    st.session_state.story_qa_history = []
+                                    st.session_state.story_question_example = ""
+                                    
+                                    # Play sound for story rendered
+                                    play_sound('story_rendered')
+                                else:
+                                    # If story is too short or empty, try again with a simpler prompt
+                                    raise ValueError("Generated story is too short or empty")
                         except Exception as e:
                             # Show error and try again with a simpler prompt
                             st.error(f"Error generating story: {str(e)}. Retrying with simpler prompt...")
@@ -3501,6 +3548,11 @@ def main():
                                     st.session_state.mission_story_title = retry_title
                                     st.session_state.mission_story = retry_story
                                     
+                                    # Generate mission image for display and PDF
+                                    st.session_state.mission_story_image = generate_mission_image(
+                                        retry_title, mission_description
+                                    )
+                                    
                                     # Clear Q&A history for the new mission
                                     st.session_state.story_qa_history = []
                                     st.session_state.story_question_example = ""
@@ -3511,6 +3563,7 @@ def main():
                             except Exception as retry_error:
                                 st.session_state.mission_story_title = "The Amazing Team Adventure"
                                 st.session_state.mission_story = f"Once upon a time, the agents worked together to complete the mission! They planned, executed, and thanked each other for their wonderful teamwork! Error: {str(retry_error)}"
+                                st.session_state.mission_story_image = None
                                 st.error(f"Story generation failed. Please try again. Error: {str(retry_error)}")
                         
                         # Regenerate mission example for next mission
@@ -3544,6 +3597,10 @@ def main():
                             """, unsafe_allow_html=True)
                         else:
                             st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+                    # Display mission image below title if available
+                    if st.session_state.get('mission_story_image'):
+                        st.image(st.session_state.mission_story_image, use_container_width=True, caption="")
+                        st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
                 with col_pdf:
                     st.markdown("<br>", unsafe_allow_html=True)  # Spacing
                     # Generate PDF using reportlab
@@ -3595,6 +3652,17 @@ def main():
                                     story.append(Spacer(1, 0.2*inch))
                                 else:
                                     story.append(Spacer(1, 0.2*inch))
+                            
+                            # Add mission story image if available
+                            if st.session_state.get('mission_story_image') and REPORTLAB_AVAILABLE and ImageReader is not None:
+                                try:
+                                    img_buffer = BytesIO(st.session_state.mission_story_image)
+                                    img_buffer.seek(0)
+                                    img = Image(ImageReader(img_buffer), width=4*inch, height=4*inch)
+                                    story.append(img)
+                                    story.append(Spacer(1, 0.25*inch))
+                                except Exception:
+                                    pass
                             
                             # Add mission if available
                             if st.session_state.team_mission:
@@ -3847,42 +3915,46 @@ def main():
                         if user_question and user_question.strip():
                             try:
                                 # Generate answer using OpenAI
-                                client = openai.OpenAI(api_key=get_openai_api_key())
-                                # Get user's name for personalization
-                                user_name = st.session_state.get('user_creative_name', 'friend')
-                                
-                                answer_response = client.chat.completions.create(
-                                    model="gpt-4o-mini",
-                                    messages=[
-                                        {"role": "system", "content": f"You are a creative storyteller and teacher explaining children's stories to kids aged 5-10. Answer questions in a simple, friendly way using very simple words. IMPORTANT: You are NOT limited to just the story content. Be creative and build upon the story with additional details, background, character motivations, and fun nuances that enhance the story. Expand on the story world while staying consistent with what was told. Keep answers engaging and imaginative (2-4 sentences). Make it fun and easy to understand. Address the reader by their name '{user_name}' to make it personal and friendly."},
-                                        {"role": "user", "content": f"Story Title: {st.session_state.mission_story_title}\n\nStory:\n{st.session_state.mission_story}\n\nQuestion from {user_name}: {user_question}\n\nAnswer this question creatively for {user_name}, building upon and expanding the story with additional details and nuances. You can add background information, character motivations, fun facts, or imaginative details that enhance the story world. Address {user_name} by name to make it personal. Keep it simple and child-friendly (2-4 short sentences)."}
-                                    ],
-                                    temperature=0.9,  # Higher temperature for more creativity
-                                    max_tokens=200  # Increased to allow for more detailed, creative answers
-                                )
-                                answer = answer_response.choices[0].message.content.strip()
-                                
-                                # Add to Q&A history
-                                st.session_state.story_qa_history.append({
-                                    "question": user_question,
-                                    "answer": answer
-                                })
-                                
-                                # Play sound for answer generated
-                                play_sound('answer_generated')
-                                
-                                # Regenerate example question after answer is generated
-                                # Get updated list of asked questions (including the one just asked)
-                                updated_existing_questions = [qa['question'] for qa in st.session_state.story_qa_history]
-                                st.session_state.story_question_example = generate_story_question_example(
-                                    st.session_state.mission_story_title,
-                                    st.session_state.mission_story,
-                                    existing_questions=updated_existing_questions
-                                )
-                                # Set flag to ensure example is refreshed on next render
-                                st.session_state.refresh_question_example = True
-                                
-                                st.rerun()
+                                api_key = get_openai_api_key()
+                                if not api_key:
+                                    st.error("OpenAI API key is not set. Add **OPENAI_API_KEY** to Streamlit Cloud secrets or `.env` for local development.")
+                                else:
+                                    client = openai.OpenAI(api_key=api_key)
+                                    # Get user's name for personalization
+                                    user_name = st.session_state.get('user_creative_name', 'friend')
+                                    
+                                    answer_response = client.chat.completions.create(
+                                        model="gpt-4o-mini",
+                                        messages=[
+                                            {"role": "system", "content": f"You are a creative storyteller and teacher explaining children's stories to kids aged 5-10. Answer questions in a simple, friendly way using very simple words. IMPORTANT: You are NOT limited to just the story content. Be creative and build upon the story with additional details, background, character motivations, and fun nuances that enhance the story. Expand on the story world while staying consistent with what was told. Keep answers engaging and imaginative (2-4 sentences). Make it fun and easy to understand. Address the reader by their name '{user_name}' to make it personal and friendly."},
+                                            {"role": "user", "content": f"Story Title: {st.session_state.mission_story_title}\n\nStory:\n{st.session_state.mission_story}\n\nQuestion from {user_name}: {user_question}\n\nAnswer this question creatively for {user_name}, building upon and expanding the story with additional details and nuances. You can add background information, character motivations, fun facts, or imaginative details that enhance the story world. Address {user_name} by name to make it personal. Keep it simple and child-friendly (2-4 short sentences)."}
+                                        ],
+                                        temperature=0.9,  # Higher temperature for more creativity
+                                        max_tokens=200  # Increased to allow for more detailed, creative answers
+                                    )
+                                    answer = answer_response.choices[0].message.content.strip()
+                                    
+                                    # Add to Q&A history
+                                    st.session_state.story_qa_history.append({
+                                        "question": user_question,
+                                        "answer": answer
+                                    })
+                                    
+                                    # Play sound for answer generated
+                                    play_sound('answer_generated')
+                                    
+                                    # Regenerate example question after answer is generated
+                                    # Get updated list of asked questions (including the one just asked)
+                                    updated_existing_questions = [qa['question'] for qa in st.session_state.story_qa_history]
+                                    st.session_state.story_question_example = generate_story_question_example(
+                                        st.session_state.mission_story_title,
+                                        st.session_state.mission_story,
+                                        existing_questions=updated_existing_questions
+                                    )
+                                    # Set flag to ensure example is refreshed on next render
+                                    st.session_state.refresh_question_example = True
+                                    
+                                    st.rerun()
                             except Exception as e:
                                 st.error(f"Error generating answer: {str(e)}")
                 
