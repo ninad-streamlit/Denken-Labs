@@ -3334,10 +3334,10 @@ def main():
                                             # If character is a string representation of a dict, use fallback
                                             new_character = "A versatile AI agent ready to assist."
                                         
-                                        # Update bot (keep same number and id)
+                                        # Update bot (keep same number and id); default agent (Agastya) name never changes
                                         for i, b in enumerate(st.session_state.created_bots):
                                             if b['id'] == bot['id']:
-                                                st.session_state.created_bots[i]['name'] = new_name
+                                                st.session_state.created_bots[i]['name'] = "Agastya" if b.get("is_default", False) else new_name
                                                 st.session_state.created_bots[i]['description'] = new_desc
                                                 st.session_state.created_bots[i]['character'] = new_character
                                                 st.session_state.created_bots[i]['full_description'] = edited_description
