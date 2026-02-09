@@ -35,11 +35,12 @@ function App() {
   const [analysisSummary, setAnalysisSummary] = useState(null);
   const [view, setView] = useState('overview'); // overview, category, email
   const [dateFrom, setDateFrom] = useState(`${new Date().getFullYear()}-01-01`);
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const [dateTo, setDateTo] = useState((() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })());
   const [hasSavedData, setHasSavedData] = useState(false);
   const [matches, setMatches] = useState({});
 
   useEffect(() => {
+    setDateTo((() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })());
     fetchStats();
     loadSavedData();
   }, []);
@@ -96,10 +97,12 @@ function App() {
     const controller = new AbortController();
     abortControllerRef.current = controller;
     setAnalyzing(true);
+    const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+    setDateTo(today);
     setProgress({ phase: 'listing', message: 'Connecting to Gmail...' });
     try {
       const after = dateFrom.replaceAll('-', '/');
-      const beforeDate = new Date(dateTo);
+      const beforeDate = new Date(today);
       beforeDate.setDate(beforeDate.getDate() + 1);
       const before = beforeDate.toISOString().split('T')[0].replaceAll('-', '/');
       const response = await fetch(`${API_URL}/analyze?after=${after}&before=${before}`, {
