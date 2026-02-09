@@ -405,10 +405,14 @@ ${categoryEmails.map(e => {
                     <h3 className="font-semibold text-gray-900 mb-1">
                       {email.subject}
                       {match && (
-                        <span className={`ml-2 text-xs font-normal px-1.5 py-0.5 rounded ${
-                          match.status === 'rejected' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
-                        }`}>
-                          {match.status === 'rejected' ? 'Rejected' : 'Followup'}
+                        <span
+                          onClick={(e) => { e.stopPropagation(); viewEmail(match.matched_email_id); }}
+                          className={`ml-2 text-xs font-normal px-1.5 py-0.5 rounded cursor-pointer hover:underline ${
+                            match.status === 'rejected' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                          }`}
+                          title={`View ${match.status} email`}
+                        >
+                          {match.status === 'rejected' ? 'Rejected' : 'Followup'} →
                         </span>
                       )}
                     </h3>
